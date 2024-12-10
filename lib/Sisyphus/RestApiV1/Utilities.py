@@ -21,6 +21,15 @@ import json
 
 import concurrent.futures
 
+# This is probably not recommended, but I wanted the ThreadPoolExecutor to
+# reuse its threads each time it is run, because each thread has to get its
+# own session object, which has some overhead. If the threads are reused,
+# they can keep their session objects from before.
+NUM_THREADS = 50
+_executor = concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS)
+
+from contextlib import nullcontext
+_nullcontext = nullcontext()
 
 #######################################################################
 
@@ -376,7 +385,8 @@ def fetch_hwitems(part_type_id = None,
                 pages_needed += 1
 
             # # Generate a bunch of async requests to get our data in parallel
-            with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
+            #with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
+            with _nullcontext:
                 page_res = {}
                 for page_num in range(num_pages, max(1, num_pages - pages_needed), -1):
                     kwargs = \
@@ -387,7 +397,7 @@ def fetch_hwitems(part_type_id = None,
                         "size": page_size,
                         "page": page_num,
                     }
-                    page_res[page_num] = executor.submit(ra.get_hwitems, **kwargs)
+                    page_res[page_num] = _executor.submit(ra.get_hwitems, **kwargs)
                 # # Read all the data that was gathered
                 for page_num, res in page_res.items():
                     pages[page_num] = res.result()["data"]
@@ -406,15 +416,15 @@ def fetch_hwitems(part_type_id = None,
         
         hwitems = {part_id: {} for part_id in part_ids}
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
-
+        #with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
+        with _nullcontext:
             # Generate more async requests
             hwitems_res = {}
             for part_id in part_ids:
 
-                item_res = executor.submit(ra.get_hwitem, part_id=part_id)
-                subcomp_res = executor.submit(ra.get_subcomponents, part_id=part_id)
-                location_res = executor.submit(ra.get_hwitem_locations, part_id=part_id)
+                item_res = _executor.submit(ra.get_hwitem, part_id=part_id)
+                subcomp_res = _executor.submit(ra.get_subcomponents, part_id=part_id)
+                location_res = _executor.submit(ra.get_hwitem_locations, part_id=part_id)
                 hwitems_res[part_id] = {
                     "Item": item_res, 
                     "Subcomponents": subcomp_res,
@@ -434,10 +444,11 @@ def fetch_hwitems(part_type_id = None,
 
     def fetch_single(part_id):
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
-            item_res = executor.submit(ra.get_hwitem, part_id=part_id)
-            subcomp_res = executor.submit(ra.get_subcomponents, part_id=part_id)
-            location_res = executor.submit(ra.get_locations, part_id=part_id)
+        #with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
+        with _nullcontext:
+            item_res = _executor.submit(ra.get_hwitem, part_id=part_id)
+            subcomp_res = _executor.submit(ra.get_subcomponents, part_id=part_id)
+            location_res = _executor.submit(ra.get_locations, part_id=part_id)
 
             hwitems = {
                 part_id:
