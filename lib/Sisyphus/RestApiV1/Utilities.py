@@ -448,7 +448,7 @@ def fetch_hwitems(part_type_id = None,
         with _nullcontext:
             item_res = _executor.submit(ra.get_hwitem, part_id=part_id)
             subcomp_res = _executor.submit(ra.get_subcomponents, part_id=part_id)
-            location_res = _executor.submit(ra.get_locations, part_id=part_id)
+            location_res = _executor.submit(ra.get_hwitem_locations, part_id=part_id)
 
             hwitems = {
                 part_id:
