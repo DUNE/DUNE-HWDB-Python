@@ -616,7 +616,7 @@ if __name__ == '__main__':
     parts_list = sys.argv[1:]
 
     pdf_labels = PDFLabels(parts_list)
-    pdf_labels.generate_label_sheets("label_test.pdf")
+    pdf_labels.generate_label_sheets("labels.pdf")
 
 
 
