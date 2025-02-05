@@ -14,7 +14,6 @@ logger = config.getLogger(__name__)
 from Sisyphus.HWDBUtility.Upload import Uploader
 from Sisyphus.Utils.Terminal.Style import Style
 from Sisyphus import RestApiV1 as ra
-ra.session_kwargs["timeout"] = 10
 from shutil import get_terminal_size
 
 

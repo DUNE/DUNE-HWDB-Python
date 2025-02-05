@@ -89,6 +89,52 @@ class Config:
         return logger
         #}}}
 
+    def load_additional_config(self, filename, recopy_on_error=False):
+        filepath = os.path.join(USER_SETTINGS_DIR, filename)
+
+        def load_config():
+            with open(filepath, 'r') as fp:
+                raw_data = fp.read()
+
+                _locals, _globals = {}, {}
+                exec(raw_data, _globals, _locals)
+            
+            return _locals["contents"]
+
+        def reset_config():
+            try:
+                src_file = os.path.join(MY_PATH, filename)
+                with open(src_file, "r") as f:
+                    raw_data = f.read()
+            except Exception:
+                msg = f"The configuration file at '{src_file}' could not be read."
+                raise RuntimeError(msg)
+
+            raw_data = raw_data.replace("${SISYPHUS_VERSION}", Sisyphus.version)
+
+            try:
+                with open(filepath, "w") as fp:
+                    fp.write(raw_data)
+                os.chmod(filepath, mode=0o600)
+            except Exception:
+                msg = f"The config file '{filepath}' could not be created."
+                raise RuntimeError(msg)
+
+        try:
+            config = load_config()
+        except:
+            if recopy_on_error:
+                reset_config()
+                config = load_config()
+            else:
+                raise
+
+        return config
+            
+            
+            
+    
+
     def _init_logging(self):
         #{{{ 
         # We need to create the directory the logs will be written to

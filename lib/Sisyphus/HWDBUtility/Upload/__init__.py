@@ -116,7 +116,7 @@ class Uploader():
         logger.debug(f"create_labels: part_id_list={part_id_list}")
 
         pdflabels = PDFLabels(part_id_list)
-        pdflabels.use_default_label_types()
+        #pdflabels.use_default_label_types()
         pdflabels.generate_label_sheets(
                 os.path.join(self.output_path, "ItemLabels.pdf"))
 
@@ -125,7 +125,8 @@ class Uploader():
     #--------------------------------------------------------------------------
 
     def output_receipts(self):
-        
+        #{{{
+            
         Style.notice.print("Outputting receipts")
         item_jobs = self.jobmanager.item_jobs
         
@@ -183,7 +184,7 @@ class Uploader():
             EW = ExcelWriter(path)
             EW.add_sheet(header["Part Type ID"], header, table)
             EW.close()
-
+        #}}}
     #--------------------------------------------------------------------------
     
     def create_item_sheet(self, item_summary):
@@ -558,9 +559,6 @@ class Uploader():
             'Values': values,
             'Includes': docket_files,
         }
-
-        
-        #print(json.dumps(cmd_docket, indent=4))
 
         return Uploader(cmd_docket, args)
         #}}}

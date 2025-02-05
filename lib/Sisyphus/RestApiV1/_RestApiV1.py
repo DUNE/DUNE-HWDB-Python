@@ -27,7 +27,6 @@ import threading
 import time
 #import faulthandler
 #faulthandler.enable()
-import warnings
 from contextlib import nullcontext
 
 # Define any key/value pairs here that you wish to add to all session
@@ -43,9 +42,13 @@ session_kwargs = {}
 # away if you disable 'verify' with requests
 # The default behavior right now will be to disable 'verify', even 
 # though this is highly NOT RECOMMENDED. It throws a bunch of warnings
-# when you do this, so we have to use a warning handle to squelch it.
+# when you do this, so we have to use a warning handler to squelch it.
 if config.settings.get("disable_host_certificate_verification", True):
     session_kwargs["verify"] = False
+import warnings
+import urllib3
+warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWarning)
+
 
 # A second hack for Requests 2.32
 # A different way to avoid seg faults is to just allow only one thread
@@ -86,7 +89,6 @@ def get_session(use_config=None):
         adapter = requests.adapters.HTTPAdapter(pool_connections=100, pool_maxsize=100)
         session.mount(f'https://{config.rest_api}', adapter)
         session.cert = use_config.certificate
-        #session.verify = config.certificate
         thread_local.session = session
     else:
         logger.info(f"REUSING session for thread {threading.current_thread().name}")
@@ -272,33 +274,13 @@ def _request(method, url, *args, return_type="json", **kwargs):
                     logger.info(f"prepped.body: {prepped.body}")
 
 
-            with throttle_lock, warnings.catch_warnings():
-                warnings.simplefilter("ignore")
+            with throttle_lock:
                 resp = session.send(prepped)
 
-            # if enable_throttle_lock:    
-            #     with throttle_lock:
-            #         with warnings.catch_warnings():
-            #             warnings.simplefilter("ignore")
-            # else:
-            #     with warnings.catch_warnings():
-            #         warnings.simplefilter("ignore")
-            #         resp = session.send(prepped)
-
         else:
-            with throttle_lock, warnings.catch_warnings():
-                warnings.simplefilter("ignore")
+            with throttle_lock:
                 resp = session.request(method, url, *args, **augmented_kwargs)
-            
-            # if enable_throttle_lock:
-            #     with throttle_lock:
-            #         with warnings.catch_warnings():
-            #             warnings.simplefilter("ignore")
-            #             resp = session.request(method, url, *args, **augmented_kwargs)
-            # else:
-            #     with warnings.catch_warnings():
-            #         warnings.simplefilter("ignore")
-            #         resp = session.request(method, url, *args, **augmented_kwargs)
+
 
     except requests.exceptions.ConnectionError as conn_err:
         extra_info.append(f"| exception: {repr(conn_err)}")
