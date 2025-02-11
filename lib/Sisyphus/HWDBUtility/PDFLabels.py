@@ -394,6 +394,7 @@ class PDFLabels:
                 img = None,
                 text = None,
                 font_size = 10,
+                font_face = "Helvetica-Bold",
                 preserve_aspect = False, 
                 align = 'top_left', 
                 debug = False,
@@ -439,9 +440,6 @@ class PDFLabels:
                 h_offset = w
                 hh_offset = ww
 
-            
-
-
             #print(f"x: {x}, y: {y}, w: {w}, h: {h}")
             #print(f"label: {label_width} x {label_height}")
             #print(f"align: {align}")
@@ -451,7 +449,6 @@ class PDFLabels:
 
             cvs.translate(x, -y)
             cvs.rotate(rotate)
-
 
             if img is not None:
                 with tempfile.NamedTemporaryFile() as tf:
@@ -463,13 +460,16 @@ class PDFLabels:
                             ww,
                             hh)
 
-
-
             if text is not None:
                 cvs.saveState()
                 cvs.setFillColorRGB(0, 0, 0)
                 cvs.setStrokeColorRGB(0, 0, 0)
-                cvs.setFont("Helvetica-Bold", font_size*1.35)
+                try:
+                    cvs.setFont(font_face, font_size*1.35)
+                except KeyError:
+                    logger.warning(f"Could not find font '{font_face}'")
+                    cvs.setFont("Helvetica-Bold", font_size*1.35)
+
                 if halign == "left":
                     cvs.drawString(0, -font_size+v_offset, text)
                 elif halign == "center":
@@ -477,22 +477,7 @@ class PDFLabels:
                 elif halign == "right":
                     cvs.drawRightString(0, -font_size+v_offset, text)
                 
-
-                #text_object = cvs.beginText()
-                #text_object.setTextOrigin(0, 0)
-                #text_object.textLine("above")
-                #text_object.textLine(text)
-                #text_object.textLine("below")
-                #cvs.drawText(text_object)
-                
-
-
                 cvs.restoreState()
-
-
-
-
-
 
             if debug and img is not None:
                 cvs.rect(
@@ -557,7 +542,6 @@ class PDFLabels:
             label_width, label_height = label_height, label_width
             
 
-
         if debug:
             draw_marker(0, 0, color=(0.5, 0.5, 0.8), r=2.5, text="label origin")
 
@@ -568,6 +552,7 @@ class PDFLabels:
             preserve_aspect = element.get("preserve aspect ratio", False)
             align = element.get("alignment", "top-left")
             font_size = element.get("font size", 10)
+            font_face = element.get("font face", "Helvetica-Bold")
             rotate = element.get("rotate", 0)
 
             anchor_h = convert_percent(anchor_h, label_width)
@@ -577,22 +562,25 @@ class PDFLabels:
             font_size = convert_percent(font_size, label_height)           
  
             element.setdefault("element type", None)
-            if element["element type"] in ("part id", "external id", "part name"):
+            if element["element type"] in ("part id", "external id", "part name", "text"):
 
-                key = {
-                    "part id": "part_id",
-                    "external id": "ext_id",
-                    "part name": "part_name"
-                }[element["element type"]]         
+                if element["element type"] == "text":
+                    text = element.get("text", "")
+                else:
+                    key = {
+                        "part id": "part_id",
+                        "external id": "ext_id",
+                        "part name": "part_name"
+                    }[element["element type"]]         
 
-
-                text = part_data[key]
+                    text = part_data[key]
 
                 draw_element(
                     anchor_h, anchor_v,
                     size_h, size_v,
                     text = text,
                     font_size = font_size,
+                    font_face = font_face,
                     align = align,
                     debug = debug,
                     rotate = rotate)
@@ -606,7 +594,7 @@ class PDFLabels:
                     align = align,
                     debug = debug,
                     rotate = rotate)
-
+    
         cvs.restoreState()
         #}}}
 
