@@ -89,7 +89,7 @@ class Config:
         return logger
         #}}}
 
-    def load_additional_config(self, filename, recopy_on_error=False):
+    def load_additional_config(self, filename, recopy_if_missing=True, recopy_on_error=False):
         filepath = os.path.join(USER_SETTINGS_DIR, filename)
 
         def load_config():
@@ -102,8 +102,9 @@ class Config:
             return _locals["contents"]
 
         def reset_config():
+            default_filename = f"default_{filename}"
             try:
-                src_file = os.path.join(MY_PATH, filename)
+                src_file = os.path.join(MY_PATH, default_filename)
                 with open(src_file, "r") as f:
                     raw_data = f.read()
             except Exception:
@@ -122,12 +123,12 @@ class Config:
 
         try:
             config = load_config()
-        except:
-            if recopy_on_error:
+        except Exception as exc:
+            if (type(exc) is FileNotFoundError and recopy_if_missing) or recopy_on_error:
                 reset_config()
                 config = load_config()
             else:
-                raise
+                raise exc
 
         return config
             
