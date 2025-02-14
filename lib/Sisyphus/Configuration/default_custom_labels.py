@@ -33,44 +33,43 @@ contents = \
         # Use this node to define the dimensions of label sheets. You may
         # name these however you like, but the convention we've been using
         # is <page size>-<columns>x<rows>-<brand name>.
-        "A4-6x11-Herma": {
 
+        "Letter-2x7-Avery":
+        {
             # "description" will be displayed on the first page of the pdf
             # label sheet for the set of labels using that label template
-            "description": "A4 (210×297 mm), 25.4×25.4 mm labels, 66 per sheet",
-    
+            "description": '''Letter (8.5”×11”), 4”×1.333” labels, 14 per sheet''',
+            
             # "page size" is required. The units defined for that page size
             # will be used throughout the template definition.
-            "page size": "A4",
+            "page size": "Letter",
 
             # "label size": (width, height), all labels must be the same size.
             # If sheets have multiple sizes, the software will need to be updated
             # to accommodate.
-            "label size": (25.4, 25.4),
-
+            "label size": (4.0, 1.33333),
+            
+            
             # "horizontal offsets": (list of offsets), offsets from the left
             # edge of the page to the left edge of each label.
-            "horizontal offsets": (16.1, 46.58, 77.06, 107.54, 138.02, 168.5),
-
+            "horizontal offsets": (0.15625, 4.34375),
+            
             # "vertical offsets": (list of offsets), offsets from the top 
             # edge of the page to the top edge of each label.
-            "vertical offsets": (
-                      8.8,  34.2,  59.6,  85.0,
-                    110.4, 135.8, 161.2, 186.6,
-                    212.0 ,237.4, 262.8),
-
+            "vertical offsets": (0.833, 2.167, 3.500, 4.833, 6.167, 7.500, 8.833),
+            
             # "rounding" defines the radius of curvature for the rounding at
             # the corners of the labels. It is only used when drawing the
             # outlines of labels. It does not affect or interfere with the 
             # printing of the contents of the label.
-            "rounding": 2.0,
-
+            "rounding": 0.125,
+            
             # "draw outline" determines if the outline should be drawn for 
             # labels after the alignment sheet. (Outlines will always be 
             # drawn on the alignment sheet regardless.) Typically, you will
             # want this value to be False unless you troubleshooting.
             "draw outline": False,
-        }
+        },
     },
 
     "layouts": {

@@ -16,33 +16,6 @@ custom configuration file overriding those in this file. (A node may
 be set to None to effectively remove it.)
 """
 
-
-# This is just a convenience, since many label layouts can use this as-is
-qr_elements = [
-    {
-        "element type": "qr",
-        "alignment": "top-center",
-        "anchor": ["50%", "4%"],
-        "size": ["100%", "73%"],
-        "preserve aspect ratio": True,
-    },
-    {
-        "element type": "part id",
-        "alignment": "top-center",
-        "anchor": ["50%", "82%"],
-        "font size": "5%",
-        "preserve aspect ratio": True,
-    },
-    {
-        "element type": "part name",
-        "alignment": "top-center",
-        "anchor": ["50%", "90%"],
-        "font size": "5%",
-        "preserve aspect ratio": True,
-    },
-]
-
-
 contents = \
 {
     "page sizes": {
@@ -59,57 +32,62 @@ contents = \
         "A4-4x11-Generic": {
             "description": "A4 (210×297 mm), 51.5×26.6 mm labels, 44 per sheet",
             "page size": "A4",
-            "label size": [51.50, 26.60],
-            "horizontal offsets": [
+            "label size": (51.50, 26.60),
+            "horizontal offsets": (
                   2.00, 53.50, 105.00, 156.50
-            ],
-            "vertical offsets": [
+            ),
+            "vertical offsets": (
                   2.20,  28.80,  55.40,  82.00,
                 108.60, 135.20, 161.80, 188.40,
                 215.00, 241.60, 268.02
-            ],
-            "draw outline": True,
+            ),
             "rounding": 2.00
         },
         "A4-3x4-Generic": {
             "description": '''A4 (210×297 mm), 67×72 mm labels, 12 per sheet''',
-            "units": "mm",
             "page size": "A4",
             "label size": (67, 72),
-            "vertical offsets": [2.5 + 73 * n for n in range(4)],
-            "horizontal offsets": [3.0 + 69 * n for n in range(3)],
+            "horizontal offsets": (3.0, 72.0, 141.0),
+            "vertical offsets": (2.5, 75.5, 148.5, 221.5),
             "rounding": 2.00,
         },
+        "A4-6x11-Herma": {
+            "description": "A4 (210×297 mm), 25.4×25.4 mm labels, 66 per sheet",
+            "page size": "A4",
+            "label size": (25.4, 25.4),
+            "horizontal offsets": (16.1, 46.58, 77.06, 107.54, 138.02, 168.5),
+            "vertical offsets": (
+                       11.3,  36.7,  62.1,  87.5, 112.9, 
+                      138.3, 163.7, 189.1, 214.5, 239.9,
+                      265.3
+            ),
+            "rounding": 2.0,
+        },
+
         "Letter-2x2-Avery":
         {
             "description": '''Letter (8.5”×11”), 5”×3.5” labels, 4 per sheet''',
-            "units": "inch",
             "page size": "Letter",
             "label size": (3.5, 5.0),
-            "vertical offsets": [0.5, 5.5],
-            "horizontal offsets": [0.5, 4.5],
+            "horizontal offsets": (0.5, 4.5),
+            "vertical offsets": (0.5, 5.5),
             "rounding": 0.125,
         },
         "Letter-2x3-Avery": {
             "description": "Letter (8.5”×11”), 4”×3.333” labels, 6 per sheet",
             "page size": "Letter",
-            "label size": [4.00, 3.333],
-            "horizontal offsets": [
-                0.156, 4.344
-            ],
-            "vertical offsets": [
-                 0.500, 3.833, 7.167
-            ],
+            "label size": (4.00, 3.333),
+            "horizontal offsets": (0.156, 4.344),
+            "vertical offsets": (0.500, 3.833, 7.167),
             "rounding": 0.125
         },
         "Letter-2x4-Avery":
         {
             "description": '''Letter (8.5”×11”), 4”×2.5” labels, 8 per sheet''',
-            "units": "inch",
             "page size": "Letter",
             "label size": (4.0, 2.5),
-            "vertical offsets": [0.5, 3.0, 5.5, 8.0],
-            "horizontal offsets": [0.15625, 4.34375],
+            "horizontal offsets": (0.156, 4.344),
+            "vertical offsets": (0.5, 3.0, 5.5, 8.0),
             "rounding": 0.125,
         },
         "Letter-2x5-Avery":
@@ -118,28 +96,44 @@ contents = \
             "units": "inch",
             "page size": "Letter",
             "label size": (4.0, 2.0),
-            "vertical offsets": [0.5, 2.5, 4.5, 6.5, 8.5],
-            "horizontal offsets": [0.15625, 4.34375],
+            "horizontal offsets": (0.156, 4.344),
+            "vertical offsets": (0.5, 2.5, 4.5, 6.5, 8.5),
             "rounding": 0.125,
         },
         "Letter-2x6-Avery":
         {
             "description": '''Letter (8.5”×11”), 4”×1.5” labels, 12 per sheet''',
-            "units": "inch",
             "page size": "Letter",
             "label size": (4.0, 1.5),
-            "vertical offsets": [1.0, 2.5, 4.0, 5.5, 7.0, 8.5],
-            "horizontal offsets": [0.15625, 4.34375],
+            "horizontal offsets": (0.156, 4.344),
+            "vertical offsets": (1.0, 2.5, 4.0, 5.5, 7.0, 8.5),
             "rounding": 0.125,
         },
         "Letter-2x7-Avery":
         {
             "description": '''Letter (8.5”×11”), 4”×1.333” labels, 14 per sheet''',
-            "units": "inch",
             "page size": "Letter",
             "label size": (4.0, 1.33333),
-            "vertical offsets": [0.83333, 2.16667, 3.50000, 4.83333, 6.16667, 7.50000, 8.83333],
-            "horizontal offsets": [0.15625, 4.34375],
+            "horizontal offsets": (0.15625, 4.34375),
+            "vertical offsets": (0.833, 2.167, 3.500, 4.833, 6.167, 7.500, 8.833),
+            "rounding": 0.125,
+        },
+        "Letter-3x5-Avery":
+        {
+            "description": '''Letter (8.5”×11”), 2.625”×2” labels, 15 per sheet''',
+            "page size": "Letter",
+            "label size": (2.625, 2.0),
+            "horizontal offsets": (0.156, 2.906, 5.656),
+            "vertical offsets": (0.5, 2.5, 4.5, 6.5, 8.5),
+            "rounding": 0.125,
+        },
+        "Letter-3x10-Avery":
+        {
+            "description": '''Letter (8.5”×11”), 2.625”×1” labels, 30 per sheet''',
+            "page size": "Letter",
+            "label size": (2.625, 1.0),
+            "horizontal offsets": (0.156, 2.906, 5.656),
+            "vertical offsets": (0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5),
             "rounding": 0.125,
         },
     },
@@ -161,29 +155,66 @@ contents = \
                     "alignment": "top-center",
                     "anchor": ["50%", "82%"],
                     "font size": "5%",
-                    "preserve aspect ratio": True,
                 },
                 {
                     "element type": "part name",
                     "alignment": "top-center",
                     "anchor": ["50%", "90%"],
                     "font size": "5%",
-                    "preserve aspect ratio": True,
-                },
+                }
             ]
         },
 
         "QR-Letter-2x2-Avery":
         {
             "label template": "Letter-2x2-Avery",
-            "elements": qr_elements,
-            "debug": False,
+            "elements": [
+                {
+                    "element type": "qr",
+                    "alignment": "top-center",
+                    "anchor": ["50%", "4%"],
+                    "size": ["100%", "73%"],
+                    "preserve aspect ratio": True,
+                },
+                {
+                    "element type": "part id",
+                    "alignment": "top-center",
+                    "anchor": ["50%", "82%"],
+                    "font size": "5%",
+                },
+                {
+                    "element type": "part name",
+                    "alignment": "top-center",
+                    "anchor": ["50%", "90%"],
+                    "font size": "5%",
+                }
+            ]
         },
         "QR-Letter-2x3-Avery": {
             "label template": "Letter-2x3-Avery",
             "orientation": "landscape",
             "debug": False,
-            "elements": qr_elements,
+            "elements": [
+                {
+                    "element type": "qr",
+                    "alignment": "top-center",
+                    "anchor": ["50%", "4%"],
+                    "size": ["100%", "73%"],
+                    "preserve aspect ratio": True,
+                },
+                {
+                    "element type": "part id",
+                    "alignment": "top-center",
+                    "anchor": ["50%", "82%"],
+                    "font size": "5%",
+                },
+                {
+                    "element type": "part name",
+                    "alignment": "top-center",
+                    "anchor": ["50%", "90%"],
+                    "font size": "5%",
+                }
+            ]
         },
         "QR-Letter-2x4-Avery": {
             "label template": "Letter-2x4-Avery",
@@ -202,22 +233,40 @@ contents = \
                     "alignment": "top-center",
                     "anchor": ["50%", "75%"],
                     "font size": "4%",
-                    "preserve aspect ratio": True,
                 },
                 {
                     "element type": "part name",
                     "alignment": "top-center",
                     "anchor": ["50%", "83%"],
                     "font size": "4%",
-                    "preserve aspect ratio": True,
                 },
             ]
         },
         "QR-Letter-2x5-Avery": {
             "label template": "Letter-2x5-Avery",
             "orientation": "landscape",
-            "debug": True,
-            "elements": qr_elements,
+            "debug": False,
+            "elements": [
+                {
+                    "element type": "qr",
+                    "alignment": "top-center",
+                    "anchor": ["50%", "15%"],
+                    "size": ["90%", "73%"],
+                    "preserve aspect ratio": True,
+                },
+                {
+                    "element type": "part id",
+                    "alignment": "top-center",
+                    "anchor": ["50%", "75%"],
+                    "font size": "4%",
+                },
+                {
+                    "element type": "part name",
+                    "alignment": "top-center",
+                    "anchor": ["50%", "83%"],
+                    "font size": "4%",
+                },
+            ]
         },
         "QR-Letter-2x6-Avery": {
             "label template": "Letter-2x6-Avery",
@@ -236,87 +285,102 @@ contents = \
                     "alignment": "top-center",
                     "anchor": ["70%", "35%"],
                     "font size": "10%",
-                    "preserve aspect ratio": True,
                 },
                 {
                     "element type": "part name",
                     "alignment": "top-center",
                     "anchor": ["70%", "53%"],
                     "font size": "10%",
-                    "preserve aspect ratio": True,
                 },
             ]
         },
-        "QR-Letter-2x7-Avery": {
-            "label template": "Letter-2x7-Avery",
-            "orientation": "portrait",
+        "QR-Letter-3x5-Avery": {
+            "label template": "Letter-3x5-Avery",
+            "orientation": "landscape",
             "debug": False,
             "elements": [
                 {
                     "element type": "qr",
-                    "alignment": "top-left",
-                    "anchor": ["6%", "4%"],
-                    "size": ["90%", "90%"],
+                    "alignment": "top-center",
+                    "anchor": ["50%", "4%"],
+                    "size": ["100%", "73%"],
                     "preserve aspect ratio": True,
                 },
                 {
                     "element type": "part id",
                     "alignment": "top-center",
-                    "anchor": ["65%", "35%"],
-                    "font size": "10%",
-                    "preserve aspect ratio": True,
+                    "anchor": ["50%", "82%"],
+                    "font size": "5%",
                 },
                 {
                     "element type": "part name",
                     "alignment": "top-center",
-                    "anchor": ["65%", "53%"],
-                    "font size": "10%",
-                    "preserve aspect ratio": True,
-                },
+                    "anchor": ["50%", "90%"],
+                    "font size": "5%",
+                }
             ]
         },
 
-
-
-        "Bar-Letter-2x3-Avery": {
-            "label template": "Letter-2x3-Avery",
+        "Bar-Letter-2x7-Avery": {
+            "label template": "Letter-2x7-Avery",
             "orientation": "portrait",
-            "debug": False,
             "elements": [
                 {
                     "element type": "bar",
                     "alignment": "top-center",
-                    "anchor": ["50%", "20%"],
-                    "size": ["90%", "40%"],
+                    "anchor": ["50%", "10%"],
+                    "size": ["90%", "55%"],
                     "preserve aspect ratio": False,
                 },
                 {
                     "element type": "external id",
                     "alignment": "top-center",
-                    "anchor": ["50%", "65%"],
-                    "font size": "6%",
-                    "preserve aspect ratio": True,
+                    "anchor": ["50%", "68%"],
+                    "font size": "10%",
                 },
                 {
                     "element type": "part name",
                     "alignment": "top-center",
-                    "anchor": ["50%", "75%"],
-                    "font size": "6%",
+                    "anchor": ["50%", "81%"],
+                    "font size": "8%",
+                    "font face": "Helvetica"
+                },
+            ]
+        },
+        "QR-A4-6x11-Herma_10107": {
+            "label template": "A4-6x11-Herma",
+            "orientation": "portrait", # or portrait
+            "debug": False,
+            "elements": [
+                {
+                    "element type": "qr",
+                    "alignment": "top-center",
+                    "anchor": ["50%", "4%"],
+                    "size": ["75%", "75%"],
                     "preserve aspect ratio": True,
+                },
+                {
+                    "element type": "part id",
+                    "alignment": "top-center",
+                    "anchor": ["50%", "83%"],
+                    "font size": "5%",
+                },
+                {
+                    "element type": "part name",
+                    "alignment": "top-center",
+                    "anchor": ["50%", "90%"],
+                    "font size": "5%",
                 },
             ]
         },
     },
     "label sets": {
         "default": [
-            "QR-Letter-2x2-Avery",
-            "QR-Letter-2x3-Avery",
-            "QR-Letter-2x4-Avery",
-            "QR-Letter-2x5-Avery",
-            "QR-Letter-2x6-Avery",
-            "QR-Letter-2x7-Avery",
-            "Bar-Letter-2x3-Avery",
             "QR-A4-3x4-Generic",
+            "QR-A4-6x11-Herma_10107",
+            "QR-Letter-2x4-Avery",
+            "QR-Letter-3x5-Avery",
+            "Bar-Letter-2x7-Avery",
         ],
     }
 }
