@@ -112,12 +112,20 @@ class PDFLabels:
 
                 ext_id = f'''{part_id}-{cc}{inst:03d}'''
 
-                retval = {
-                    "part_id": part_id,
-                    "ext_id": ext_id,
-                    "part_type_id": data["Item"]["component_type"]["part_type_id"],
-                    "part_name": data["Item"]["component_type"]["name"],
-                }
+                #retval = {
+                #    "part_id": part_id,
+                #    "ext_id": ext_id,
+                #    "part_type_id": data["Item"]["component_type"]["part_type_id"],
+                #    "part_name": data["Item"]["component_type"]["name"],
+                #}
+                retval = data["Item"]
+                retval['external_id'] = ext_id
+                retval['part_type_id'] = data["Item"]["component_type"]["part_type_id"]
+                retval['part_name'] = data["Item"]["component_type"]["name"]
+
+                retval['specifications'] = retval['specifications'][0]
+                
+                logger.warning(json.dumps(retval, indent=4))
 
                 return retval
             return pool.apply_async(async_fn, ((), {"part_id": part_id}))
@@ -499,6 +507,32 @@ class PDFLabels:
             cvs.restoreState()
             #}}}
 
+        def resolve_text(text, data):
+
+            substitutions = re.findall("[$]\\{([^}]*)\\}", text)
+            for substitution in substitutions:
+                value = data
+                parts = substitution.split('.')
+
+                try:
+                    for part in parts:
+                        if type(value) is dict:
+                            value = value[part]
+                        elif type(value) is list:
+                            value = value[int(part)]
+                        else:
+                            raise ValueError("invalid variable name")
+
+                except:
+                    logger.error(f"Unable to resolve '$({substitution})'")
+                    value = ""
+
+                sub = f"${{{substitution}}}"
+                text = text.replace(sub, str(value))    
+        
+
+            return text
+
         cvs = self.cvs
 
         unit = label_template['units']
@@ -565,11 +599,14 @@ class PDFLabels:
             if element["element type"] in ("part id", "external id", "part name", "text"):
 
                 if element["element type"] == "text":
-                    text = element.get("text", "")
+                    text = resolve_text(element.get("text", ""), part_data)
+
+                    
+
                 else:
                     key = {
                         "part id": "part_id",
-                        "external id": "ext_id",
+                        "external id": "external_id",
                         "part name": "part_name"
                     }[element["element type"]]         
 

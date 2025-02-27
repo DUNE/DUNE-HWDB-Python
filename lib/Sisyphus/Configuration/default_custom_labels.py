@@ -165,6 +165,77 @@ contents = \
             # anchor point. (Note that if the size is defined in percentages,
             # it is still the percentages of the width or height of the label
             # without factoring in any rotations.)
+            #
+            # ***************************
+            # *** NEW as of 2/27/2025 ***
+            # ***************************
+            # Elements of type 'text' now allow variable substitutions for 
+            # data associated with the part as is returned from the REST API
+            # (with a couple of extra fields added for convenience).
+            # For example, if you want the serial number, you can use:
+            #
+            #       {
+            #           "element type": "text",
+            #           "text": "${serial_number}",
+            #           ...
+            #       }
+            #
+            # Data that is more than one level deep can be accessed by 
+            # placing a period between keys. If accessing an element of 
+            # a list, use the index of the desired element as the key
+            # (e.g., "${specifications.mylist.0.name}")
+            #
+            # Note that the REST API returns specifications as a 
+            # dictionary inside of a one-element list, but for simplification,
+            # the dictionary has been moved to be directly under
+            # specifications. So, it is not necessary to use
+            # ${specifications.0.field_name}. Just use
+            # ${specifications.field_name} instead.
+            #
+            # The data available for the part from the REST API is as follows:
+            #
+            #   comments
+            #   component_id
+            #   component_type.name (see below)
+            #   component_type.part_type_id (see below)
+            #   country_code
+            #   created
+            #   creator.id
+            #   creator.name
+            #   creator.username
+            #   institution.id
+            #   institution.name
+            #   location
+            #   manufacturer.id
+            #   manufacturer.name
+            #   part_id
+            #   serial_number
+            #   specifications.(as per specification definition)
+            #   specs_version
+            #   status.id
+            #   status.name
+            #
+            # For convenience, these additional values are inserted into the
+            # REST API data:
+            #
+            #   external_id (derived from part_id, country_code, and institution.id)
+            #   part_type_id (copied from component_type.part_id)
+            #   part_name (copied from component_type.name)
+            #
+            # A text string may contain more than one variable name or 
+            # additional text, e.g.:
+            #
+            #       {
+            #           "element type": "text",
+            #           "text": "${institution.name} (${institution.id})",
+            #           ...
+            #       }
+            #
+            # This update makes element types "part id", "part name", and 
+            # "external id" unnecessary, since the same effect can be created
+            # using just "text", but these element types remain available
+            # for backwards compatibility.
+
 
             "elements": [
                 {
@@ -201,7 +272,7 @@ contents = \
                 },
                 {
                     "element type": "text",
-                    "text": "Have a nice day!",
+                    "text": "${serial_number}",
                     "alignment": "top-left",
                     "anchor": ["10%", "85%"],
                     "font size": "5%",
@@ -261,6 +332,20 @@ contents = \
                     "anchor": ["90%", "50%"],
                     "size": ["80%", "40%"],
                     "preserve aspect ratio": True,
+                },
+                {
+                    "element type": "text",
+                    "text": "Serial Number: ${serial_number}",
+                    "alignment": "top-left",
+                    "anchor": ("10%", "53%"),
+                    "font size": "3.5%"
+                },
+                {
+                    "element type": "text",
+                    "text": "Color: ${specifications.Color}",
+                    "alignment": "top-left",
+                    "anchor": ("10%", "57%"),
+                    "font size": "3.5%"
                 },
             ]
         },
