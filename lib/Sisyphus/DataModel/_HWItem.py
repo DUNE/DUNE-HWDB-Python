@@ -358,6 +358,7 @@ class HWItem:
 
         new_hwitem._last_commit = deepcopy(hwdb_record)
         new_hwitem._current = deepcopy(hwdb_record)
+        
         return new_hwitem
         #}}}
     #--------------------------------------------------------------------------
@@ -463,7 +464,7 @@ class HWItem:
 
         hwdb_record["specifications"] = utils.restore_order(deepcopy(it["specifications"][-1]))
         _ = hwdb_record["specifications"].pop("_meta", None)
-        
+      
         #meta = deepcopy(it["specifications"][-1].get("_meta", None))
         #if meta:
         #    hwdb_record["specifications"]["_meta"] = meta
@@ -534,6 +535,10 @@ class HWItem:
 
         last_commit = self._last_commit
         current = self._current
+       
+        ct_all = ut.fetch_component_type(part_type_id=current['part_type_id'])
+        ct = ct_all["ComponentType"]
+        spec_def = ct['properties']['specifications'][-1]['datasheet']
         
         if self.is_new():
             post_data = {
@@ -548,8 +553,10 @@ class HWItem:
                 #"subcomponents": current['subcomponents']
             }
 
-            if "_meta" not in post_data['specifications']:
-                post_data['specifications']['_meta'] = {}
+            if '_meta' in spec_def:
+                post_data['specifications'].setdefault('_meta', {})
+            else:
+                _ = post_data['specifications'].pop('_meta', None)
 
             logger.info("Posting new item")
             resp = ra.post_hwitem(part_type_id=current['part_type_id'], data=post_data)
@@ -579,8 +586,10 @@ class HWItem:
                 "comments": current['comments'],
             }        
             
-            if "_meta" not in patch_data['specifications']:
-                patch_data['specifications']['_meta'] = {}
+            if "_meta" in spec_def:
+                patch_data['specifications'].setdefault('_meta', {})
+            else:
+                _ = patch_data['specifications'].pop('_meta', None)
 
             logger.info("Patching item")
             resp = ra.patch_hwitem(part_id=current['part_id'], data=patch_data)
