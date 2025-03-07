@@ -39,6 +39,9 @@ USER_CONFIG_FILE = os.path.join(USER_SETTINGS_DIR, "config.json")
 DEFAULT_LOG_CONFIG_FILE = os.path.join(MY_PATH, "default_log_config.py")
 LOG_CONFIG_FILE = os.path.join(USER_SETTINGS_DIR, "log_config.py")
 
+VAULT_TOKEN_FILE = os.path.join(USER_SETTINGS_DIR, 'vault_token')
+BEARER_TOKEN_FILE = os.path.join(USER_SETTINGS_DIR, 'bearer_token')
+
 KW_DEFAULT_PROFILE = "default profile"
 KW_PROFILES = "profiles"
 KW_REST_API = "rest api"
@@ -49,6 +52,7 @@ KW_PEM = "pem"
 KW_LOGGING = "logging"
 KW_LOGLEVEL = "loglevel"
 KW_SETTINGS = "settings"
+KW_BEARER_TOKEN = "bearer token"
 
 class Config:
     def __init__(self, *, 
@@ -210,6 +214,11 @@ class Config:
     @property
     def settings(self):
         return self.config_data.get(KW_SETTINGS, {})
+
+    @property
+    def bearer_token(self):
+        return self.active_profile.get(KW_BEARER_TOKEN, BEARER_TOKEN_FILE)
+
 
     def _extract_cert_info(self):
         #{{{

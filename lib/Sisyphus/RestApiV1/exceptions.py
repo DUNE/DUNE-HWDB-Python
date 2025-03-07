@@ -79,6 +79,12 @@ class InvalidResponse(RestApiException):
     returns something else, use this exception.
     """
 
+class ExpiredSignature(RestApiException):
+    """The REST API server returned 'ExpiredSignatureError'
+
+    This is for the new verification system implemented in March 2025
+    """
+
 class CertificateError(RestApiException):
     """The REST API server complained about the certificate
 

@@ -25,6 +25,8 @@ import urllib.parse
 import functools
 import threading
 import time
+import subprocess
+import os
 #import faulthandler
 #faulthandler.enable()
 from contextlib import nullcontext
@@ -35,6 +37,7 @@ from contextlib import nullcontext
 #     session_kwargs['timeout'] = 10
 # (Don't add it here. Just set it after loading this module.) 
 session_kwargs = {}
+#session_kwargs['log_headers'] = True
 
 # A hack for Requests 2.32
 # If using requests in a multithreaded fashion, the app will sometimes
@@ -67,7 +70,13 @@ else:
 def sanitize(s, safe=""):
     return urllib.parse.quote(str(s), safe=safe)
 
-
+# Use this lock to prevent multiple threads from trying to refresh
+# the bearer token at the same time. If multiple threads tried to 
+# refresh, and each one tried to bring up a browser window, that would
+# be a problem. But once one of the threads has come back from the 
+# browser window, the other threads' attempts would succeed without
+# needing to bring up a browser window.
+authentication_lock = threading.Lock()
 
 log_lock = threading.Lock()
 log_request_json = True
@@ -80,7 +89,9 @@ log_request_json = True
 # thread.
 
 thread_local = threading.local()
-def get_session(use_config=None):
+bearer_header = None
+def get_session(use_config=config):
+
     if not hasattr(thread_local, "session") or use_config is not None:
         if use_config is None:
             use_config = config
@@ -88,12 +99,62 @@ def get_session(use_config=None):
         session = requests.Session()
         adapter = requests.adapters.HTTPAdapter(pool_connections=100, pool_maxsize=100)
         session.mount(f'https://{config.rest_api}', adapter)
-        session.cert = use_config.certificate
+        #session.cert = use_config.certificate
         thread_local.session = session
+
+
     else:
         logger.info(f"REUSING session for thread {threading.current_thread().name}")
 
     return thread_local.session
+
+#-----------------------------------------------------------------------------
+
+_refresh_required = True
+def refresh_token():
+    global thread_local
+    global bearer_header
+
+    def do_refresh():
+        global _refresh_required
+
+        config_dir = Config.USER_SETTINGS_DIR
+        vault_token_file = Config.VAULT_TOKEN_FILE
+        bearer_token_file = Config.BEARER_TOKEN_FILE
+
+        tokens = [
+            'htgettoken',
+            '-q',
+            f'--configdir={config_dir}',
+            f'--vaulttokenfile={vault_token_file}',
+            f'--outfile={bearer_token_file}',
+            f'--vaultserver=htvaultprod.fnal.gov',
+            f'--issuer=fermilab'
+        ]
+
+        refresh_subprocess = subprocess.Popen(
+                                tokens,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+        refresh_subprocess.wait(timeout=120)        
+
+
+        if refresh_subprocess.returncode != 0:
+            raise RuntimeError("Unable to refresh authentication token. "
+                            "(Have you installed htgettoken?)")
+        _refresh_required = False
+
+    logger.debug("Attempting to refresh token")
+    with authentication_lock:
+        if _refresh_required:
+
+            do_refresh()
+            bearer_header = None
+
+            logger.debug("Finished refreshing token")
+        else:
+            logger.debug("Token already refreshed by another thread (?)")
+            
 
 #-----------------------------------------------------------------------------
 
@@ -124,6 +185,8 @@ class retry:
 
         @functools.wraps(function)
         def wrapped_function(*args, **kwargs):
+            global _refresh_required
+
             timeouts = kwargs.pop("timeouts", None)
             retries = kwargs.pop("retries", None)
             timeout = kwargs.pop("timeout", None)
@@ -139,7 +202,16 @@ class retry:
 
             last_err = None
             default_timeout = kwargs.get('timeout', None)
+            logger.debug(f"Wrapper function is assigned {retries} retries")
             for try_num in range(retries):
+                try:
+                    if type(last_err) is ExpiredSignature:
+                        _refresh_required = True
+                        logger.debug("Signature expired. Must refresh.")
+                        refresh_token()
+                except Exception as exc:
+                    logger.error(f"Failed to refresh token: {exc}")
+
                 try:
                     if timeouts[try_num]:
                         kwargs['timeout'] = timeouts[try_num]
@@ -169,6 +241,21 @@ class retry:
                             f"(attempt #{try_num+1})")
                     logger.warning(msg)
                     last_err = err
+                except ExpiredSignature as err:
+                    msg = (f"Signature expired while calling {function.__name__} "
+                            f"in thread '{threading.current_thread().name}' "
+                            f"(attempt #{try_num+1})")
+                    logger.warning(msg)
+                    last_err = err
+                except Exception as exc:
+                    msg = (f"General exception '{exc}' while calling {function.__name__} "
+                            f"in thread '{threading.current_thread().name}' "
+                            f"(attempt #{try_num+1})")
+                    logger.error(msg)
+                    last_err = err
+                    raise
+
+
                 finally:
                     if threading.current_thread().name == "MainThread":
                         msg = "".join([
@@ -227,7 +314,13 @@ def _request(method, url, *args, return_type="json", **kwargs):
     InsufficientPermissions
             The user does not have adequate authority for this request.
 
+    ExpiredSignature
+            The bearer token has expired 
+            (new authentication system, March 2025)
+    
     '''
+    global bearer_header
+
     threadname = threading.current_thread().name
     msg = (f"<_request> [{method.upper()}] "
             f"url='{url}' method='{method.lower()}'")
@@ -242,7 +335,20 @@ def _request(method, url, *args, return_type="json", **kwargs):
         with log_lock:
             logger.debug(msg)
 
+
     session = get_session()
+
+    if bearer_header is None:
+        try:
+            with open(config.bearer_token, 'r') as fp:
+                contents = fp.read().strip()
+                bearer_header = {'Authorization': f'Bearer {contents}'}
+        except FileNotFoundError as err:
+            _refresh_required = True
+            refresh_token()
+            with open(config.bearer_token, 'r') as fp:
+                contents = fp.read().strip()
+                bearer_header = {'Authorization': f'Bearer {contents}'}
 
     #
     #  Send the "get" request and handle possible errors
@@ -262,6 +368,8 @@ def _request(method, url, *args, return_type="json", **kwargs):
     
     try:
         if log_headers:
+            verify = augmented_kwargs.pop('verify', True)
+            timeout = augmented_kwargs.pop('timeout', True)
             req = requests.Request(method, url, *args, **augmented_kwargs)
             prepped = req.prepare()
 
@@ -279,6 +387,10 @@ def _request(method, url, *args, return_type="json", **kwargs):
 
         else:
             with throttle_lock:
+                augmented_kwargs['headers'] = {
+                        **augmented_kwargs.get('headers', {}),
+                        **bearer_header
+                }
                 resp = session.request(method, url, *args, **augmented_kwargs)
 
 
@@ -311,6 +423,14 @@ def _request(method, url, *args, return_type="json", **kwargs):
             logger.error(msg)
             logger.info('\n'.join(extra_info))
         raise ConnectionFailed(msg) from None
+    except Exception as exc:
+        extra_info.append(f"| exception: {repr(exc)}")
+        msg = ("An unhandled error occurred while attempting to retrieve data from "
+                 f"the REST API.")
+        with log_lock:
+            logger.error(msg)
+            logger.info('\n'.join(extra_info))
+
 
     #extra_info.append(f"| request headers: {resp.request.headers}")
     extra_info.append(f"| status code: {resp.status_code}")
@@ -396,6 +516,12 @@ def _request(method, url, *args, return_type="json", **kwargs):
                     "signature": "Not authorized",
                     "message": "The user does not have the authority for this request",
                     "exc_type": InsufficientPermissions,
+                },
+                {
+                    "signature": "Verification failed: JWT decode failed "
+                                "ExpiredSignatureError('Signature has expired')",
+                    "message": "The user's token has expired",
+                    "exc_type": ExpiredSignature,
                 },
             ]
             

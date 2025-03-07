@@ -55,7 +55,8 @@ def check_server(config):
     #    config.logger.info(msg)
     #else:
     try:
-        resp = whoami(timeout=10)
+        #resp = whoami(timeout=10)
+        resp = whoami()
     except ra.CertificateError as err:
         msg = "The server does not recognize the certificate"
         config.logger.error(msg)
@@ -91,20 +92,22 @@ def show_summary(config):
         rest_api_msg = "(custom)"
 
     print(f"REST API:     {config.rest_api} {rest_api_msg}")
-    
+   
+    ''' 
     if config.cert_type is None:
         print( "certificate:  None, all commands will require '--cert <certificate>' to function")
     elif config.cert_type == Config.KW_P12:
         print(f"certificate:  {Config.KW_P12}, all commands will require '--password <password> to function")
     else:
         print(f"certificate:  {Config.KW_PEM}")
-        
+ 
     if config.cert_type == Config.KW_PEM:
         print(f"cert info:    {config.cert_fullname} ({config.cert_username})")
         if config.cert_has_expired:
             print("cert status:  Expired")
         else:
             print(f"cert status:  Expires in {config.cert_days_left} days")
+    '''
     
     #print(f"server check: {check_server(config)}")
     sys.stdout.write("server check: (please wait)")
