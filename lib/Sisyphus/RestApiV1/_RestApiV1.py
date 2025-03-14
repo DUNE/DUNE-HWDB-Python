@@ -99,14 +99,20 @@ def get_session(use_config=config):
         session = requests.Session()
         adapter = requests.adapters.HTTPAdapter(pool_connections=100, pool_maxsize=100)
         session.mount(f'https://{config.rest_api}', adapter)
-        #session.cert = use_config.certificate
-        thread_local.session = session
 
+        if use_config.authentication == 'certificate':
+            logger.info("authentication for this session will be 'certificate'")
+            session.cert = use_config.certificate
+        else:
+            logger.info("authentication for this session will be 'token'")
+
+        thread_local.session = session
+        thread_local.authentication = use_config.authentication
 
     else:
         logger.info(f"REUSING session for thread {threading.current_thread().name}")
 
-    return thread_local.session
+    return thread_local.session, thread_local.authentication
 
 #-----------------------------------------------------------------------------
 
@@ -252,7 +258,7 @@ class retry:
                             f"in thread '{threading.current_thread().name}' "
                             f"(attempt #{try_num+1})")
                     logger.error(msg)
-                    last_err = err
+                    last_err = exc
                     raise
 
 
@@ -336,9 +342,9 @@ def _request(method, url, *args, return_type="json", **kwargs):
             logger.debug(msg)
 
 
-    session = get_session()
+    session, authentication = get_session()
 
-    if bearer_header is None:
+    if authentication == 'token' and bearer_header is None:
         try:
             with open(config.bearer_token, 'r') as fp:
                 contents = fp.read().strip()
@@ -349,6 +355,8 @@ def _request(method, url, *args, return_type="json", **kwargs):
             with open(config.bearer_token, 'r') as fp:
                 contents = fp.read().strip()
                 bearer_header = {'Authorization': f'Bearer {contents}'}
+    else:
+        bearer_header = {}
 
     #
     #  Send the "get" request and handle possible errors

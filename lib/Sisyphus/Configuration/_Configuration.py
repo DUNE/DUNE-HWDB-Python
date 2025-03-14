@@ -53,6 +53,7 @@ KW_LOGGING = "logging"
 KW_LOGLEVEL = "loglevel"
 KW_SETTINGS = "settings"
 KW_BEARER_TOKEN = "bearer token"
+KW_AUTHENTICATION = "authentication"
 
 class Config:
     def __init__(self, *, 
@@ -190,7 +191,11 @@ class Config:
 
         self._logging_initialized = True   
         #}}}
-        
+   
+    @property 
+    def authentication(self):
+        return self.active_profile.get(KW_AUTHENTICATION, 'token')
+    
     @property 
     def log_settings(self):
         return self.log_config_dict #[KW_LOGGING]
