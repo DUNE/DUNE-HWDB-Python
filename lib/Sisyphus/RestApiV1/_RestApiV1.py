@@ -90,11 +90,23 @@ log_request_json = True
 
 thread_local = threading.local()
 bearer_header = None
-def get_session(use_config=config):
+def get_session(use_config=None):
 
-    if not hasattr(thread_local, "session") or use_config is not None:
-        if use_config is None:
-            use_config = config
+    if use_config is None:
+        use_config = config
+
+    if not hasattr(thread_local, 'config'):
+        thread_local.config = use_config
+        new_session = True
+    else:
+        if thread_local.config == use_config:
+            new_session = False
+        else:
+            thread_local.config = use_config
+            new_session = True
+
+    #if not hasattr(thread_local, "session") or use_config is not None:
+    if new_session:
         logger.info(f"CREATING session for thread {threading.current_thread().name}")
         session = requests.Session()
         adapter = requests.adapters.HTTPAdapter(pool_connections=100, pool_maxsize=100)
@@ -103,14 +115,17 @@ def get_session(use_config=config):
         if use_config.authentication == 'certificate':
             logger.info("authentication for this session will be 'certificate'")
             session.cert = use_config.certificate
+            logger.info(f"certificate={session.cert}")
         else:
+            #session.cert = use_config.certificate
             logger.info("authentication for this session will be 'token'")
 
         thread_local.session = session
         thread_local.authentication = use_config.authentication
 
     else:
-        logger.info(f"REUSING session for thread {threading.current_thread().name}")
+        logger.info(f"REUSING session for thread {threading.current_thread().name} "
+                    f"using {thread_local.authentication.upper()}")
 
     return thread_local.session, thread_local.authentication
 
@@ -122,6 +137,7 @@ def refresh_token():
     global bearer_header
 
     def do_refresh():
+        logger.warning("Refreshing tokens")
         global _refresh_required
 
         config_dir = Config.USER_SETTINGS_DIR
@@ -355,7 +371,7 @@ def _request(method, url, *args, return_type="json", **kwargs):
             with open(config.bearer_token, 'r') as fp:
                 contents = fp.read().strip()
                 bearer_header = {'Authorization': f'Bearer {contents}'}
-    else:
+    elif authentication != 'token':
         bearer_header = {}
 
     #
