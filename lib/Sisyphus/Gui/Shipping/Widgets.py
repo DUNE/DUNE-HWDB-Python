@@ -46,10 +46,10 @@ class PageWidget(QWidget):
         self.page_state = self.tab_state.setdefault(self.page_name, {})
 
     def save(self):
-        logger.debug("PageWidget.save()")
+        logger.debug(f"{self.__class__.__name__}.save()")
 
     def restore(self):
-        logger.debug("PageWidget.restore()")
+        logger.debug(f"{self.__class__.__name__}.restore()")
 
         if self.tab_state.get("part_id", None) is not None:
             #self.workflow.update_title(f"{self.tab_state['part_id']} - {self.page_name}")
@@ -57,8 +57,12 @@ class PageWidget(QWidget):
         else:
             self.workflow.update_title(f"{self.page_name}")
 
+        self.update()
+
     def update(self):
-        logger.debug("PageWidget.update()")
+        # overload this method to add an action when the content of the page
+        # has changed, e.g., to enable/disable nav buttons
+        logger.debug(f"{self.__class__.__name__}.update()")
 
 
     def on_navigate_next(self):
@@ -80,12 +84,13 @@ class ZCheckBox(QCheckBox):
         self.tab_state = self.parent().tab_state
         self.page_state = self.parent().page_state
 
-        self.toggled.connect(self.handle_toggled)
+        self.toggled.connect(self.handle_changed)
 
         self.restore_state()
 
-    def handle_toggled(self, status):
+    def handle_changed(self, status):
         self.page_state[self.page_state_key] = status
+        self.parent().update()
 
     def restore_state(self):
         status = self.page_state.setdefault(self.page_state_key, False)
@@ -102,12 +107,13 @@ class ZDateTimeEdit(QDateTimeEdit):
 
         self.tab_state = self.parent().tab_state
         self.page_state = self.parent().page_state
-        self.dateTimeChanged.connect(self.update_state)
+        self.dateTimeChanged.connect(self.handle_changed)
 
         self.restore_state()
     
-    def update_state(self):
+    def handle_changed(self):
         self.page_state[self.page_state_key] = self.dateTime().toString()
+        self.parent().update()
 
     def restore_state(self):
         now = QDateTime.currentDateTime().toString()
@@ -134,12 +140,13 @@ class ZLineEdit(QLineEdit):
 
         self.tab_state = self.parent().tab_state
         self.page_state = self.parent().page_state
-        self.editingFinished.connect(self.update_state)
+        self.editingFinished.connect(self.handle_changed)
 
         self.restore_state()
     
-    def update_state(self):
+    def handle_changed(self):
         self.page_state[self.page_state_key] = self.text()
+        self.parent().update()
 
     def restore_state(self):
         self.setText(self.page_state.setdefault(self.page_state_key, self.default_value))
@@ -163,13 +170,14 @@ class ZTextEdit(QTextEdit):
         self.setTabChangesFocus(True)
         self.textChanged.connect(self._handle_text_changed)
 
-        self.editingFinished.connect(self.update_state)
+        self.editingFinished.connect(self.handle_editingFinished)
 
         self.restore_state()
 
-    def update_state(self):
+    def handle_editingFinished(self):
         #self.page_state[self.page_state_key] = self.text()
         self.page_state[self.page_state_key] = self.document().toPlainText()
+        self.parent().update()
 
     def restore_state(self):
         self.setText(self.page_state.setdefault(self.page_state_key, ""))

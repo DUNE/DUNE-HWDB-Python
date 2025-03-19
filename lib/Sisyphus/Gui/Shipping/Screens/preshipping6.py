@@ -187,10 +187,15 @@ class PreShipping6(PageWidget):
                     [ {k: v} for k, v in ps_checklist.items() ]
         specs['DATA']['SubPIDs'] = sub_pids
 
+        if item_resp['Item']['manufacturer'] is not None:
+            manufacturer_node = {"id": item_resp['Item']['manufacturer']['id']}
+        else:
+            manufacturer_node = None
+
         update_data = {
             "part_id": part_id,
             "comments": item_resp['Item']['comments'],
-            "manufacturer": {"id": item_resp['Item']['manufacturer']['id']},
+            "manufacturer": manufacturer_node,
             "serial_number": item_resp['Item']['serial_number'],
             "specifications": specs
         }

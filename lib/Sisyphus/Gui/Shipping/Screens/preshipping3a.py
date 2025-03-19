@@ -1,5 +1,12 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2025 Regents of the University of Minnesota
+Author:
+    Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
+"""
 
+#{{{
 from Sisyphus.Configuration import config, USER_SETTINGS_DIR
 logger = config.getLogger(__name__)
 
@@ -42,6 +49,7 @@ from PyQt5.QtWidgets import (
 )
 
 import json
+#}}}
 
 class PreShipping3a(PageWidget):
     #{{{
@@ -75,13 +83,14 @@ class PreShipping3a(PageWidget):
         self.save()
     
     def restore(self):
+        super().restore()
+
         shipping_service_type = self.page_state.setdefault('shipping_service_type', 'Domestic')
 
         if shipping_service_type == 'International':
             self.radio_international.setChecked(True)
         else:
             self.radio_domestic.setChecked(True)
-        
 
 
     def _construct_page(self):

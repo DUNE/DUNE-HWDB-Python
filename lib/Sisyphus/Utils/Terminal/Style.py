@@ -242,8 +242,9 @@ class Style:
 #Style.italic = Style(italic=True)
 
 # Some globally useful styles scripts could use
-Style.debug = Style.fg(0x666666)
-Style.info = Style.fg(0x3b78ff).bold()
+Style.debug = Style.fg(0x999999)
+#Style.info = Style.fg(0x3b78ff).bold()
+Style.info = Style.fg(0x628dff).bold()
 Style.warning = Style.fg(0xffaa22)
 Style.error = Style.fg(0xe74856).bold()
 Style.critical = Style.fg(0xcccccc).bg(0xe74856)

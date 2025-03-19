@@ -1,4 +1,11 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2025 Regents of the University of Minnesota
+Author:
+    Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
+"""
+
 #{{{
 from Sisyphus.Configuration import config, USER_SETTINGS_DIR
 logger = config.getLogger(__name__)
@@ -67,7 +74,6 @@ class PreShipping5(PageWidget):
 
         self.damage_description = ZTextEdit(parent=self, key='damage_description')
 
-
         self._construct_page()
 
     def select_damage_status(self):
@@ -83,6 +89,8 @@ class PreShipping5(PageWidget):
         self.save()
 
     def restore(self):
+        super().restore()
+
         damage_status = self.page_state.setdefault('damage_status', 'no damage')
 
         if damage_status == 'damage':

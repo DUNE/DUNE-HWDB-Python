@@ -1,5 +1,12 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2025 Regents of the University of Minnesota
+Author:
+    Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
+"""
 
+#{{{
 from Sisyphus.Configuration import config, USER_SETTINGS_DIR
 logger = config.getLogger(__name__)
 
@@ -42,7 +49,7 @@ from PyQt5.QtWidgets import (
 )
 
 import json
-
+#}}}
 
 class PreShipping1(PageWidget):
     #{{{
@@ -170,15 +177,10 @@ class PreShipping1(PageWidget):
 
     def restore(self):
         setattr(self, "_loading", True)
-        super().restore()
 
+        super().restore()
         self.populate_subcomps()
 
-        #ch1 = self.page_state.setdefault('confirm_list', False)
-        #ch2 = self.page_state.setdefault('hwdb_updated', False)
-        #self.confirm_list_checkbox.setChecked(ch1)
-        #self.confirm_hwdb_updated_checkbox.setChecked(ch2)
-        
         delattr(self, "_loading")
 
     def save(self):
