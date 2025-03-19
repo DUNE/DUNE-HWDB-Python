@@ -11,7 +11,7 @@ import argparse
 import Sisyphus
 import Sisyphus.Configuration as Config
 from Sisyphus.Configuration import config
-logger = config.getLogger(f"Sisyphus.{__name__}")
+logger = config.getLogger(__name__)
 import Sisyphus.RestApiV1 as ra
 from Sisyphus.Utils.Terminal import Image
 from Sisyphus.Utils.Terminal.Style import Style

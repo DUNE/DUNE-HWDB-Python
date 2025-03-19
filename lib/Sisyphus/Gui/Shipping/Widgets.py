@@ -1,8 +1,15 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2025 Regents of the University of Minnesota
+Author:
+    Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
+"""
+
 from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
-from PyQt5.QtCore import QSize, Qt, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QSize, Qt, pyqtSignal, pyqtSlot, QDateTime
 from PyQt5.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -25,6 +32,7 @@ from PyQt5.QtWidgets import (
     QAction,
     QStackedWidget,
     QRadioButton,
+    QDateTimeEdit,
 )
 
 class PageWidget(QWidget):
@@ -32,6 +40,7 @@ class PageWidget(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.workflow = self.parent()
+        self.app_state = self.workflow.app_state
         self.tab_state = self.workflow.tab_state
         self.page_name = self.__class__.__name__.split('.')[-1]
         self.page_state = self.tab_state.setdefault(self.page_name, {})
@@ -43,7 +52,14 @@ class PageWidget(QWidget):
         logger.debug("PageWidget.restore()")
 
         if self.tab_state.get("part_id", None) is not None:
-            self.workflow.update_title(f"{self.tab_state['part_id']} - {self.page_name}")
+            #self.workflow.update_title(f"{self.tab_state['part_id']} - {self.page_name}")
+            self.workflow.update_title(f"{self.tab_state['part_id']}\n{self.page_name}")
+        else:
+            self.workflow.update_title(f"{self.page_name}")
+
+    def update(self):
+        logger.debug("PageWidget.update()")
+
 
     def on_navigate_next(self):
         logger.debug(f"{self.__class__.__name__}.on_navigate_next()")
@@ -75,11 +91,42 @@ class ZCheckBox(QCheckBox):
         status = self.page_state.setdefault(self.page_state_key, False)
         self.setChecked(status)
 
+class ZDateTimeEdit(QDateTimeEdit):
+    def __init__(self, *args, **kwargs):
+        self.page_state_key = kwargs.pop('key', 'unnamed')
+        super().__init__(*args, **kwargs)
+
+        self.setCalendarPopup(True)
+        if self.parent() is None:
+            return
+
+        self.tab_state = self.parent().tab_state
+        self.page_state = self.parent().page_state
+        self.dateTimeChanged.connect(self.update_state)
+
+        self.restore_state()
+    
+    def update_state(self):
+        self.page_state[self.page_state_key] = self.dateTime().toString()
+
+    def restore_state(self):
+        now = QDateTime.currentDateTime().toString()
+
+        datetime = self.page_state.setdefault(self.page_state_key, now)
+        print(datetime)
+
+
+        self.setDateTime(
+            QDateTime.fromString(datetime)
+        )
+
 
 
 class ZLineEdit(QLineEdit):
     def __init__(self, *args, **kwargs):
         self.page_state_key = kwargs.pop('key', 'unnamed')
+        self.default_value = kwargs.pop('default', '')
+
         super().__init__(*args, **kwargs)
 
         if self.parent() is None:
@@ -90,12 +137,13 @@ class ZLineEdit(QLineEdit):
         self.editingFinished.connect(self.update_state)
 
         self.restore_state()
-
+    
     def update_state(self):
         self.page_state[self.page_state_key] = self.text()
 
     def restore_state(self):
-        self.setText(self.page_state.setdefault(self.page_state_key, ""))
+        self.setText(self.page_state.setdefault(self.page_state_key, self.default_value))
+
 
 class ZTextEdit(QTextEdit):
     editingFinished = pyqtSignal()

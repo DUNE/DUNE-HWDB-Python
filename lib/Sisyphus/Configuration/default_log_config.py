@@ -64,6 +64,11 @@ contents = \
             "level": "WARNING",
             "propagate": False
         },
+        "__main__": {
+            "handlers": ["logfile"],
+            "level": "DEBUG",
+            "propagate": False
+        },
         "Sisyphus": {
             # set the level to DEBUG for "Sisyphus" and all descendants
             "handlers": ["logfile"],

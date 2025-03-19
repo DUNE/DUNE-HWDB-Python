@@ -1,5 +1,12 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2025 Regents of the University of Minnesota
+Author:
+    Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
+"""
 
+#{{{
 from Sisyphus.Configuration import config, USER_SETTINGS_DIR
 logger = config.getLogger(__name__)
 
@@ -7,8 +14,8 @@ import Sisyphus
 from Sisyphus import RestApiV1 as ra
 from Sisyphus.RestApiV1 import Utilities as ut
 
-from Sisyphus.Gui.Shipping.application import PageWidget
-from Sisyphus.Gui.Shipping.application import ZLineEdit, ZTextEdit, ZCheckBox
+from Sisyphus.Gui.Shipping.Widgets import PageWidget
+from Sisyphus.Gui.Shipping.Widgets import ZLineEdit, ZTextEdit, ZCheckBox
 
 from PyQt5.QtCore import QSize, Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
@@ -37,22 +44,23 @@ from PyQt5.QtWidgets import (
 
 import json
 import base64
+#}}}
 
 class SelectPID(PageWidget):
     #{{{
     def __init__(self, *args, **kwargs):
         #{{{
         super().__init__(*args, **kwargs)
+        
+        default_name = self.app_state.setdefault('default_name')
+        default_email =self.app_state.setdefault('default_email')
 
-        self.name_text_box = ZLineEdit(parent=self, key='user_name')
-        #self.name_text_box.editingFinished.connect(self.save)
-        self.email_text_box = ZLineEdit(parent=self, key='user_email')
-        #self.name_text_box.editingFinished.connect(self.save)
+        self.name_text_box = ZLineEdit(parent=self, key='user_name', default=default_name)
+        self.email_text_box = ZLineEdit(parent=self, key='user_email', default=default_email)
         
         self.pid_search_result_label = QLabel()
         
         self.pid_text_box = ZLineEdit(parent=self, key='part_id')
-        #self.pid_text_box.editingFinished.connect(self.save)
 
         self.find_button = QPushButton("find")
         self.find_button.clicked.connect(self.lookup_pid)
@@ -232,19 +240,22 @@ class SelectPID(PageWidget):
     def restore(self):
         #{{{
         print("RESTORE: SelectPID")
-        #self.pid_text_box.setText(self.tab_state.get('part_id', ""))
-        #self.name_text_box.setText(self.tab_state.get('user_name', ""))
-        #self.email_text_box.setText(self.tab_state.get('user_email', ""))
 
-        name = self.tab_state.get('user_name', "")
-        email = self.tab_state.get('user_email', "")
+        '''
+        # Get the user's name and email from tab_state
+        default_name = self.app_state.setdefault("user_name", "")
+        default_email = self.app_state.setdefault("user_email", "")
+        name = self.tab_state.setdefault('user_name', default_name)
+        email = self.tab_state.setdefault('user_email', default_email)
 
         if name == "":
             #name = self.parent().app_state._state.get("default_name")
-            name = self.parent().app_state.get("default_name", "")
+            #name = self.parent().app_state.get("default_name", "")
+            name = self.app_state.get("default_name", "")
         if email == "":
             #email = self.parent().app_state._state.get("default_email")
-            email = self.parent().app_state.get("default_email", "")
+            #email = self.parent().app_state.get("default_email", "")
+            email = self.app_state.get("default_email", "")
 
         if name != "":
             self.name_text_box.setText(name)
@@ -255,6 +266,8 @@ class SelectPID(PageWidget):
         self.parent().update_title("Select PID")
 
         #self.save()
+        '''
+
         #}}}
     #}}}
 

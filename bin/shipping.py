@@ -56,7 +56,7 @@ import json
 from copy import deepcopy
 
 
-from Sisyphus.Gui.Shipping.workflow import Workflow, NEW_TAB_STATE
+from Sisyphus.Gui.Shipping.Workflow import Workflow, NEW_TAB_STATE
 
 
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+#{{{
 from Sisyphus.Configuration import config, USER_SETTINGS_DIR
 logger = config.getLogger(__name__)
 
@@ -33,7 +34,11 @@ from PyQt5.QtGui import QIcon
 
 from Sisyphus.Gui.Shipping.select import SelectPID, SelectWorkflow
 from Sisyphus.Gui.Shipping.packing import Packing1, PackingComplete
-from Sisyphus.Gui.Shipping.preshipping import (
+#from Sisyphus.Gui.Shipping.Screens.preshipping import (
+#        PreShipping1, PreShipping2, PreShipping3a, PreShipping3b, PreShipping4,
+#        PreShipping5, PreShipping6, PreShippingComplete
+#)
+from Sisyphus.Gui.Shipping.Screens import (
         PreShipping1, PreShipping2, PreShipping3a, PreShipping3b, PreShipping4,
         PreShipping5, PreShipping6, PreShippingComplete
 )
@@ -51,6 +56,7 @@ NEW_TAB_STATE = {
     "current_page": "SelectPID",
     "part_id": None,
 }
+#}}}
 
 class Workflow(QWidget):
     #{{{

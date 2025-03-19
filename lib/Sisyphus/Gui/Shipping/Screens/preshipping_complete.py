@@ -1,6 +1,18 @@
 #!/usr/bin/env python
 
+from Sisyphus.Configuration import config, USER_SETTINGS_DIR
+logger = config.getLogger(__name__)
+
+import Sisyphus
+from Sisyphus import RestApiV1 as ra
+from Sisyphus.RestApiV1 import Utilities as ut
+
+from Sisyphus.Utils.Terminal.Style import Style
+
 from Sisyphus.Gui.Shipping.Widgets import PageWidget
+from Sisyphus.Gui.Shipping.Widgets import ZLineEdit, ZTextEdit, ZCheckBox
+
+from Sisyphus.Gui.Shipping.ShippingLabel import ShippingLabel
 
 from PyQt5.QtCore import QSize, Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
@@ -25,11 +37,12 @@ from PyQt5.QtWidgets import (
     QAction,
     QStackedWidget,
     QRadioButton,
+    QGroupBox,
+    QButtonGroup,
 )
-from PyQt5.QtGui import QPalette, QColor
-from PyQt5.QtGui import QIcon
+import json
 
-class Transit1(PageWidget):
+class PreShippingComplete(PageWidget):
     #{{{
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -37,7 +50,7 @@ class Transit1(PageWidget):
         screen_layout = QVBoxLayout()
         ########################################
 
-        page_title = QLabel("Transit Workflow (1)")
+        page_title = QLabel("Pre-Shipping Workflow Complete")
         page_title.setStyleSheet("""
                 font-size: 14pt;
                 font-weight: bold;
@@ -52,28 +65,3 @@ class Transit1(PageWidget):
 
         self.setLayout(screen_layout)
     #}}}
-
-class TransitComplete(PageWidget):
-    #{{{
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        screen_layout = QVBoxLayout()
-        ########################################
-
-        page_title = QLabel("Transit Workflow Complete")
-        page_title.setStyleSheet("""
-                font-size: 14pt;
-                font-weight: bold;
-            """)
-        page_title.setAlignment(Qt.AlignCenter)
-        screen_layout.addWidget(page_title)
-        ################
-        screen_layout.addStretch()
-
-        self.nav_bar = self.parent().NavBar(self.parent())
-        screen_layout.addWidget(self.nav_bar)
-
-        self.setLayout(screen_layout)
-    #}}}
-

@@ -65,7 +65,7 @@ class Config:
         self.log_config_file = (log_config_file or LOG_CONFIG_FILE)
         self.user_settings_dir = (user_settings_dir or USER_SETTINGS_DIR)
 
-        self.logger = self.getLogger("Config")
+        self.logger = self.getLogger(__name__)
         self.logger.info("[LOG INIT] logging initialized")
         self.logger.info(f"[LOG INIT] ver={Sisyphus.version}")
         self.logger.info(f"[LOG INIT] path={Sisyphus.project_root}")

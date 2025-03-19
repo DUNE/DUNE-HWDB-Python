@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from Sisyphus.Gui.Shipping.application import PageWidget
+from Sisyphus.Gui.Shipping.Widgets import PageWidget
 
 from PyQt5.QtCore import QSize, Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (

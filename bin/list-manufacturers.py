@@ -7,7 +7,7 @@ Author: Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
 """
 
 from Sisyphus.Configuration import config
-logger = config.getLogger()
+logger = config.getLogger(__name__)
 
 #from Sisyphus.RestApiV1 import get_institutions
 from Sisyphus.RestApiV1 import get_manufacturers

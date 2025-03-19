@@ -438,7 +438,7 @@ def _request(method, url, *args, return_type="json", **kwargs):
         with log_lock:
             logger.error(msg)
             logger.info('\n'.join(extra_info))
-
+        raise
 
     #extra_info.append(f"| request headers: {resp.request.headers}")
     extra_info.append(f"| status code: {resp.status_code}")
