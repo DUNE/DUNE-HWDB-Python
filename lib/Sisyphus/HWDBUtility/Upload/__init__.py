@@ -60,6 +60,11 @@ class Uploader():
         else:
             self._submit = False
 
+        if args:
+            self._labels = args.labels
+        else:
+            self._labels = False
+
         #
         # Load the docket
         #
@@ -99,6 +104,11 @@ class Uploader():
 
     def create_labels(self):
         #{{{
+
+        if not self._labels:
+            logger.info("Skipping creating labels")
+            return
+        logger.info("Creating labels")
 
         item_jobs = self.jobmanager.item_jobs
         part_id_list = []
@@ -505,6 +515,10 @@ class Uploader():
             (
                 ('--part-type-name',),
                 {}
+            ),
+            (
+                ('--labels',),
+                {'dest': 'labels', 'action': 'store_true'}
             ),
             (
                 ('--value',),
