@@ -22,6 +22,10 @@ def color(*args):
         (255, 51, 34)
         >>> color("5,6,8")
         (5, 6, 8)
+        >>> color(5, 6, 8)
+        (5, 6, 8)
+        >>> color((5, 6, 8))
+        (5, 6, 8)
         >>> color("#f32")
         (255, 51, 34)
         >>> color("0b_10001000_01100110_10101010")
@@ -34,10 +38,10 @@ def color(*args):
         Traceback (most recent call last):
             ...
         ValueError: '#f3g' is not a valid color
-        >>> color("meconiumbrown")
+        >>> color("meconiumgreen")
         Traceback (most recent call last):
             ...
-        ValueError: 'meconiumbrown' is not a valid color
+        ValueError: 'meconiumgreen' is not a valid color
     """
 
     if len(args) == 3:
@@ -50,6 +54,13 @@ def color(*args):
         raise ValueError("color() only allows 1 or 3 arguments")
 
     arg = args[0]
+
+    if type(arg) in (list, tuple):
+        assert(len(arg)==3)
+        for i in arg:
+            assert(type(i)==int)
+            assert(0 <= i <= 255)
+        return arg
 
     if type(arg) is int:
         return ( (arg & 0xff0000)>>16, (arg & 0xff00)>>8, arg & 0xff)

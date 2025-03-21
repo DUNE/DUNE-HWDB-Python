@@ -27,11 +27,7 @@ class Table:
     default_width = 10
     default_height = 1
   
-    #SINGLE, DOUBLE = 0, 1
-    #TOP, MIDDLE, BOTTOM = 0, 1, 2
-    #LEFT, CENTER, RIGHT = 0, 1, 2  
- 
-    #PLAIN_DOUBLE, PLAIN_HEAVY = 0, 1   
+    default_border_color = 0x777777
  
     def __init__(self, source=None, /, **kwargs):
         #{{{
@@ -48,6 +44,7 @@ class Table:
 
         self._linestyle = kwargs.pop("linestyle", STRONG_MEANS_DOUBLE)
         self._auto_height = kwargs.pop("auto_height", True)
+        self.border_color = kwargs.pop("border_color", self.default_border_color)
         #}}}
 
     # -----------------------------------------------------------------   
@@ -413,7 +410,7 @@ class Table:
                     for line_no in range(self._row_heights[row_index]):
                     
                         ch = VERT[col_border_emph_index]
-                        content_lines[line_no].append(Style.fg(0x777777)(ch))
+                        content_lines[line_no].append(Style.fg(self.border_color)(ch))
                         
                         if col_index < self._columns:
                             if self._source is not None:
@@ -444,7 +441,7 @@ class Table:
             
             #border_line.append("\n")
             #stdout.write(str.join("", border_line))
-            output.append(Style.fg(0x777777)(str.join("", border_line)))
+            output.append(Style.fg(self.border_color)(str.join("", border_line)))
             
             
             if row_index < self._rows:
@@ -473,6 +470,7 @@ def MessageBox(message, /, **kwargs):
         
     box = Table([[message]])
     box.set_outer_border(kwargs.pop("outer_border", BORDER_NORMAL))
+    box.border_color = kwargs.pop("border_color", box.default_border_color)
     box.set_column_width(0, kwargs.pop("width", default_width-2))
     box.set_row_height(0, message.count('\n') + 1)
     box.set_halign(kwargs.pop("halign", HALIGN_LEFT))

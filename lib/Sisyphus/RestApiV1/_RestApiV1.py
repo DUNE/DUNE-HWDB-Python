@@ -12,13 +12,14 @@ from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
 from Sisyphus.Utils.Terminal.Style import Style
+from Sisyphus.Utils.Terminal.BoxDraw import MessageBox
 import sys
 
 import Sisyphus.Configuration as Config # for keywords
 from .exceptions import *
 from .keywords import *
 
-from copy import deepcopy
+from copy import copy, deepcopy
 import json
 import requests
 import urllib.parse
@@ -133,38 +134,159 @@ def get_session(use_config=None):
 
 _refresh_required = True
 def refresh_token():
-    global thread_local
-    global bearer_header
-
+    #{{{
+    #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     def do_refresh():
+        #.....................................................................
+        def create_proc():
+            config_dir = Config.USER_SETTINGS_DIR
+            vault_token_file = Config.VAULT_TOKEN_FILE
+            bearer_token_file = Config.BEARER_TOKEN_FILE
+
+            tokens = [
+                'htgettoken',
+                '-q',
+                f'--configdir={config_dir}',
+                f'--vaulttokenfile={vault_token_file}',
+                f'--outfile={bearer_token_file}',
+                f'--vaultserver=htvaultprod.fnal.gov',
+                f'--issuer=fermilab'
+            ]
+
+            try:
+                proc = subprocess.Popen(
+                            tokens,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+            except FileNotFoundError:
+                msg = ("htgettoken not found. Have you installed it? "
+                                "(try 'pip install htgettoken')")
+                logger.error(msg)
+                Style.error.print(msg)
+                raise
+            return proc
+
+        #.....................................................................
+        class output_so_far:
+            def __init__(self, fp):
+                self.fp = fp
+
+                self.buffer = bytes()
+                self.closed = False
+                self.lock = threading.Lock()
+                self.read_thread = threading.Thread(target=self._worker_task, daemon=True)
+                self.read_thread.start()
+
+            def _worker_task(self):
+                while True:
+                    ch = self.fp.readline()
+                    if ch == b'':
+                        break
+                    with self.lock:
+                        self.buffer += ch
+                self.closed = True
+
+            def read(self):
+                with self.lock:
+                    return copy(self.buffer)
+
+            def read_all(self):
+                self.read_thread.join()
+                return copy(self.buffer)
+                failed = False
+                try:
+                    outs, errs = proc.communicate(timeout=120)
+                except subprocess.TimeoutExpired:
+                    outs, errs = proc.communicate()
+        #.....................................................................
+        def display_message(msg):
+            if threading.current_thread().name == "MainThread":
+                erase_msg = "".join([
+                        Style.cursor_abs_horizontal(1),
+                        Style.erase_line
+                    ])
+
+                sys.stdout.write(erase_msg)
+                sys.stdout.flush()
+
+            msg = ' \n '.join([Style.info(s) for s in msg.split('\n')])
+            inner = MessageBox(msg, width=66, outer_border='normal', border_color=Style.info._fg)
+
+            info = ' \n '.join([
+                '',
+                Style.warning('The call to htgettoken is taking longer than expected.'),
+                '',
+                'htgettoken may have attempted to open a browser window. Use this',
+                'window to complete your authentication.',
+                '',
+                'If a browser window has not opened (e.g., if you''re using ssh to',
+                'access a server remotely), the following information outputted from',
+                'htgettoken may contain a URL that can be used to complete the',
+                'authentication.',
+                '',
+            ])
+
+            msg2 = '\n'.join([info, inner])
+
+            outer = MessageBox(msg2, width=72, outer_border='strong', border_color=Style.warning._fg)
+            print(outer)
+        #.....................................................................
+        
+        #
+        # do_refresh()
+        #
+
         logger.warning("Refreshing tokens")
         global _refresh_required
+        
+        proc = create_proc()
 
-        config_dir = Config.USER_SETTINGS_DIR
-        vault_token_file = Config.VAULT_TOKEN_FILE
-        bearer_token_file = Config.BEARER_TOKEN_FILE
+        osf = output_so_far(proc.stdout)
 
-        tokens = [
-            'htgettoken',
-            '-q',
-            f'--configdir={config_dir}',
-            f'--vaulttokenfile={vault_token_file}',
-            f'--outfile={bearer_token_file}',
-            f'--vaultserver=htvaultprod.fnal.gov',
-            f'--issuer=fermilab'
-        ]
+        finished = False
+        displayed_response = False
+        interval = 2
+        total_time = 0
+        max_time = 120
 
-        refresh_subprocess = subprocess.Popen(
-                                tokens,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
-        refresh_subprocess.wait(timeout=120)        
+        while True:
+            timed_out = False
+            try:
+                proc.wait(interval)
+                finished = True
+            except subprocess.TimeoutExpired as err:
+                timed_out = True
 
+            if not timed_out:
+                break
 
-        if refresh_subprocess.returncode != 0:
-            raise RuntimeError("Unable to refresh authentication token. "
-                            "(Have you installed htgettoken?)")
+            total_time += interval
+
+            if not displayed_response:
+                outb = osf.read()
+                if len(outb) > 0:
+                    outs = outb.decode('utf-8')
+                    display_message(outs)
+                    displayed_response = True
+
+            if total_time >= max_time:
+                break
+
+        if proc.returncode is None:
+            raise RuntimeError("The call to htgettoken timed out.")
+        elif proc.returncode != 0:
+            raise RuntimeError("The call to htgettoken failed.")
+
         _refresh_required = False
+
+    #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    
+    #
+    # refresh_token()
+    #
+
+    global thread_local
+    global bearer_header
 
     logger.debug("Attempting to refresh token")
     with authentication_lock:
@@ -176,7 +298,7 @@ def refresh_token():
             logger.debug("Finished refreshing token")
         else:
             logger.debug("Token already refreshed by another thread (?)")
-            
+    #}}}    
 
 #-----------------------------------------------------------------------------
 
