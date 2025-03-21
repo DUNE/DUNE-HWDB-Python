@@ -245,7 +245,7 @@ def refresh_token():
 
         finished = False
         displayed_response = False
-        interval = 2
+        interval = 5
         total_time = 0
         max_time = 120
 
