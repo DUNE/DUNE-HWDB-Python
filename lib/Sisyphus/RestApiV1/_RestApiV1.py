@@ -144,20 +144,26 @@ def refresh_token():
             bearer_token_file = Config.BEARER_TOKEN_FILE
 
             tokens = [
-                'htgettoken',
+                #'python',
+                #'-u',
+                'hwdb-htgettoken',
                 '-q',
                 f'--configdir={config_dir}',
                 f'--vaulttokenfile={vault_token_file}',
                 f'--outfile={bearer_token_file}',
-                f'--vaultserver=htvaultprod.fnal.gov',
-                f'--issuer=fermilab'
+                '--vaultserver=htvaultprod.fnal.gov',
+                '--issuer=fermilab',
+                #'--web-open-command=',
             ]
+
+            #tokens = " ".join(tokens)
 
             try:
                 proc = subprocess.Popen(
                             tokens,
                             stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+                            stderr=subprocess.PIPE,
+                            )
             except FileNotFoundError:
                 msg = ("htgettoken not found. Have you installed it? "
                                 "(try 'pip install htgettoken')")
@@ -199,7 +205,10 @@ def refresh_token():
                 except subprocess.TimeoutExpired:
                     outs, errs = proc.communicate()
         #.....................................................................
-        def display_message(msg):
+        def display_message(msg, time_elapsed):
+            outer_width = 80
+            inner_width = 78
+
             if threading.current_thread().name == "MainThread":
                 erase_msg = "".join([
                         Style.cursor_abs_horizontal(1),
@@ -210,11 +219,17 @@ def refresh_token():
                 sys.stdout.flush()
 
             msg = ' \n '.join([Style.info(s) for s in msg.split('\n')])
-            inner = MessageBox(msg, width=66, outer_border='normal', border_color=Style.info._fg)
+            inner = MessageBox(
+                        msg, 
+                        width=inner_width, 
+                        outer_border='normal', 
+                        border_color=Style.info._fg)
 
             info = ' \n '.join([
                 '',
-                Style.warning('The call to htgettoken is taking longer than expected.'),
+                Style.warning(
+                #f'The call to htgettoken is taking longer than expected. ({time_elapsed})'),
+                f'The call to htgettoken is taking longer than expected.'),
                 '',
                 'htgettoken may have attempted to open a browser window. Use this',
                 'window to complete your authentication.',
@@ -228,7 +243,11 @@ def refresh_token():
 
             msg2 = '\n'.join([info, inner])
 
-            outer = MessageBox(msg2, width=72, outer_border='strong', border_color=Style.warning._fg)
+            outer = MessageBox(
+                        msg2, 
+                        width=outer_width, 
+                        outer_border='strong', 
+                        border_color=Style.warning._fg)
             print(outer)
         #.....................................................................
         
@@ -241,19 +260,23 @@ def refresh_token():
         
         proc = create_proc()
 
-        osf = output_so_far(proc.stdout)
+        osf_stdout = output_so_far(proc.stdout)
+        osf_stderr = output_so_far(proc.stderr)
 
-        finished = False
-        displayed_response = False
-        interval = 5
+        timed_out = None
+        #displayed_response = False
+        interval = 10
         total_time = 0
         max_time = 120
+
+        last_stdout = ""
+        last_stderr = ""
 
         while True:
             timed_out = False
             try:
                 proc.wait(interval)
-                finished = True
+                timed_out = False
             except subprocess.TimeoutExpired as err:
                 timed_out = True
 
@@ -261,21 +284,57 @@ def refresh_token():
                 break
 
             total_time += interval
-
-            if not displayed_response:
-                outb = osf.read()
-                if len(outb) > 0:
-                    outs = outb.decode('utf-8')
-                    display_message(outs)
-                    displayed_response = True
-
             if total_time >= max_time:
                 break
 
+            current_stdout = osf_stdout.read().decode('utf-8')
+            current_stderr = osf_stderr.read().decode('utf-8')
+
+            if current_stdout != last_stdout:
+                display_message(current_stdout, total_time)
+                last_stdout = current_stdout
+            if current_stderr != last_stderr:
+                display_message(current_stderr, total_time)
+                last_stderr = current_stderr
+
+
+        if timed_out:
+            proc.kill()
+        current_stdout = osf_stdout.read_all().decode('utf-8')
+        current_stderr = osf_stderr.read_all().decode('utf-8')
+        
+        #if current_stdout != last_stdout:
+        #    display_message(current_stdout)
+        #    last_stdout = current_stdout
+        #if current_stderr != last_stderr:
+        #    display_message(current_stderr)
+        #    last_stderr = current_stderr
+
         if proc.returncode is None:
-            raise RuntimeError("The call to htgettoken timed out.")
+            err = "The call to htgettoken timed out."
+            msg = "".join(
+                        [
+                            err, '\n',
+                            f"stdout: {current_stdout} ",
+                            f"stderr: {current_stderr} ",
+                        ])
+            logger.error(msg)
+            raise RuntimeError(err)
         elif proc.returncode != 0:
-            raise RuntimeError("The call to htgettoken failed.")
+            err = "The call to htgettoken failed."
+            msg = "".join(
+                        [
+                            err, '\n',
+                            f"stdout: {current_stdout} ",
+                            f"stderr: {current_stderr} ",
+                        ])
+            logger.error(msg)
+            raise RuntimeError(err)
+
+        msg = ("The call to htgettoken succeeded. "
+                f"stdout: {current_stdout} "
+                f"stderr: {current_stderr} ")
+        logger.info(msg)
 
         _refresh_required = False
 
