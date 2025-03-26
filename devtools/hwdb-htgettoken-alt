@@ -13,8 +13,8 @@ do_htgettoken() {
         --vaulttokenfile=${vault} \
         --outfile=${bearer} \
         --vaultserver=htvaultprod.fnal.gov \
-        --issuer=fermilab \
-        --web-open-command=
+        --issuer=fermilab 
+        #--web-open-command=
     #echo FINISHED
 }
 
