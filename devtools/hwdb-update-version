@@ -54,7 +54,7 @@ def main(argv=None):
 
     # Get the (proposed) new version
     now = datetime.now()
-    new_version = ['v1', '2', '3', 'dev', 
+    new_version = ['v1', '2', '4', 'rel', 
             f"{now.year}", f"{now.month:02d}", f"{now.day:02d}", 'a']
     
     # If the old version is the same day as today, change the 
