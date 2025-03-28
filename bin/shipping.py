@@ -234,9 +234,7 @@ class WorkflowTabWidget(QTabWidget):
     #}}}
 
 if __name__ == '__main__':
-    print("The program is starting up. This may take a moment...")
-    
-    print("creating QApplication object")
+    Style.info.print("The program is starting up. This may take a moment...")
     
     app = ShippingApplication(sys.argv)
 
@@ -248,7 +246,7 @@ if __name__ == '__main__':
     app.exec()
     logger.info("Exiting event loop")
 
-    print("Exiting program")
+    Style.info.print("Exiting program")
 
 
 

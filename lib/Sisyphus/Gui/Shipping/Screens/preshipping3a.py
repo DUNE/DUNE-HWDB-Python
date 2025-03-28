@@ -16,8 +16,8 @@ from Sisyphus.RestApiV1 import Utilities as ut
 
 from Sisyphus.Utils.Terminal.Style import Style
 
-from Sisyphus.Gui.Shipping.Widgets import PageWidget
-from Sisyphus.Gui.Shipping.Widgets import ZLineEdit, ZTextEdit, ZCheckBox
+from Sisyphus.Gui.Shipping.Widgets import PageWidget, NavBar
+from Sisyphus.Gui.Shipping.Widgets import ZLineEdit, ZTextEdit, ZCheckBox, ZRadioButtonGroup
 
 from Sisyphus.Gui.Shipping.ShippingLabel import ShippingLabel
 
@@ -54,44 +54,23 @@ import json
 class PreShipping3a(PageWidget):
     #{{{
     def __init__(self, *args, **kwargs):
+        #{{{
         super().__init__(*args, **kwargs)
 
-        self.radio_domestic = QRadioButton("Domestic")
-        self.radio_international = QRadioButton("International")
+        self.destination_type = ZRadioButtonGroup(
+                owner=self, key='shipping_service_type', default='Domestic')
+        self.destination_type.create_button("Domestic", "Domestic")
+        self.destination_type.create_button("International", "International")
 
-        self.radio_domestic.toggled.connect(self.select_shipping_service_type)
-        self.radio_international.toggled.connect(self.select_shipping_service_type)
-
-        self.hts_code = ZLineEdit(parent=self, key='hts_code')
         
-        self.shipment_origin = ZLineEdit(parent=self, key='shipment_origin')
-        self.dimension = ZLineEdit(parent=self, key='dimension')
-        self.weight = ZLineEdit(parent=self, key='weight')
+        self.hts_code = ZLineEdit(owner=self, key='hts_code')
+        
+        self.shipment_origin = ZLineEdit(owner=self, key='shipment_origin')
+        self.dimension = ZLineEdit(owner=self, key='dimension')
+        self.weight = ZLineEdit(owner=self, key='weight')
 
         self._construct_page()
-
-    def select_shipping_service_type(self):
-        rb = self.sender()
-        if not rb.isChecked():
-            return
-
-        if rb is self.radio_domestic:
-            self.page_state['shipping_service_type'] = 'Domestic'
-        elif rb is self.radio_international:
-            self.page_state['shipping_service_type'] = 'International'
-
-        self.save()
-    
-    def restore(self):
-        super().restore()
-
-        shipping_service_type = self.page_state.setdefault('shipping_service_type', 'Domestic')
-
-        if shipping_service_type == 'International':
-            self.radio_international.setChecked(True)
-        else:
-            self.radio_domestic.setChecked(True)
-
+        #}}}
 
     def _construct_page(self):
         #{{{
@@ -116,10 +95,13 @@ class PreShipping3a(PageWidget):
         )
 
 
-
+        '''
         group_box_1_layout.addWidget(self.radio_domestic)
         group_box_1_layout.addWidget(self.radio_international)
-       
+        '''
+        group_box_1_layout.addWidget(self.destination_type.button('Domestic'))       
+        group_box_1_layout.addWidget(self.destination_type.button('International'))       
+
         group_box_2 = QGroupBox()
         group_box_2_layout = QVBoxLayout() 
         intl_label_1 = QLabel("For international shipment:")
@@ -185,9 +167,29 @@ class PreShipping3a(PageWidget):
 
         screen_layout.addStretch()
 
-        self.nav_bar = self.parent().NavBar(self.parent())
         screen_layout.addWidget(self.nav_bar)
 
         self.setLayout(screen_layout)
         #}}}
+
+    def update(self):
+        super().update()
+
+        if self.page_state.get('shipping_service_type', None) == 'International':
+            self.hts_code.setEnabled(True)
+            if len(self.hts_code.text()) > 0:
+                self.nav_bar.continue_button.setEnabled(False)
+                return
+        else:
+            self.hts_code.setEnabled(False)
+
+        if (
+                len(self.shipment_origin.text()) > 0
+                and len(self.dimension.text()) > 0
+                and len(self.weight.text()) > 0 ):
+            self.nav_bar.continue_button.setEnabled(True)
+        else:
+            self.nav_bar.continue_button.setEnabled(False)
+    
+
     #}}}

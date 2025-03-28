@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from Sisyphus.Gui.Shipping.Widgets import PageWidget
+from Sisyphus.Gui.Shipping.Widgets import PageWidget, NavBar
 
 from PyQt5.QtCore import QSize, Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
@@ -46,7 +46,6 @@ class Packing1(PageWidget):
 
         screen_layout.addStretch()
 
-        self.nav_bar = self.parent().NavBar(self.parent())
         screen_layout.addWidget(self.nav_bar)
         self.setLayout(screen_layout)
     #}}}
@@ -70,7 +69,6 @@ class PackingComplete(PageWidget):
 
         screen_layout.addStretch()
 
-        self.nav_bar = self.parent().NavBar(self.parent())
         screen_layout.addWidget(self.nav_bar)
         self.setLayout(screen_layout)
     #}}}

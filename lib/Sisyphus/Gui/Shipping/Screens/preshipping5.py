@@ -16,8 +16,9 @@ from Sisyphus.RestApiV1 import Utilities as ut
 
 from Sisyphus.Utils.Terminal.Style import Style
 
-from Sisyphus.Gui.Shipping.Widgets import PageWidget
-from Sisyphus.Gui.Shipping.Widgets import ZLineEdit, ZTextEdit, ZCheckBox, ZDateTimeEdit
+from Sisyphus.Gui.Shipping.Widgets import PageWidget, NavBar
+from Sisyphus.Gui.Shipping.Widgets import (
+            ZLineEdit, ZTextEdit, ZCheckBox, ZDateTimeEdit, ZRadioButtonGroup)
 
 from Sisyphus.Gui.Shipping.ShippingLabel import ShippingLabel
 
@@ -59,47 +60,23 @@ class PreShipping5(PageWidget):
         super().__init__(*args, **kwargs)
 
         self.received_acknowledgement = ZCheckBox("Yes, I have received an acknowledgement",
-                    parent=self, key='received_acknowledgement')
+                    owner=self, key='received_acknowledgement')
 
-        self.acknowledged_by = ZLineEdit(parent=self, key='acknowledged_by')
+        self.acknowledged_by = ZLineEdit(owner=self, key='acknowledged_by')
 
-        #self.acknowledged_time = QCalendarWidget()
-        self.acknowledged_time = ZDateTimeEdit(parent=self, key='acknowledged_time')
-        #self.acknowledged_time.setCalendarPopup(True)
+        self.acknowledged_time = ZDateTimeEdit(owner=self, key='acknowledged_time')
 
-        self.radio_no_damage = QRadioButton("No obvious damage to report")
-        self.radio_damage = QRadioButton("There is some damage")
-        self.radio_no_damage.toggled.connect(self.select_damage_status)
-        self.radio_damage.toggled.connect(self.select_damage_status)
+        self.damage_status = ZRadioButtonGroup(owner=self, key='damage_status', default='no damage')
+        self.damage_status.create_button('no damage', 'no damage')
+        self.damage_status.create_button('damage', 'damage')
 
-        self.damage_description = ZTextEdit(parent=self, key='damage_description')
+        self.damage_description = ZTextEdit(owner=self, key='damage_description')
 
         self._construct_page()
 
-    def select_damage_status(self):
-        rb = self.sender()
-        if not rb.isChecked():
-            return
-
-        if rb is self.radio_no_damage:
-            self.page_state['damage_status'] = 'no damage'
-        elif rb is self.radio_damage:
-            self.page_state['damage'] = 'damage'
-
-        self.save()
-
-    def restore(self):
-        super().restore()
-
-        damage_status = self.page_state.setdefault('damage_status', 'no damage')
-
-        if damage_status == 'damage':
-            self.radio_damage.setChecked(True)
-        else:
-            self.radio_no_damage.setChecked(True)
-
 
     def _construct_page(self):
+        #{{{
         screen_layout = QVBoxLayout()
         ########################################
 
@@ -141,8 +118,8 @@ class PreShipping5(PageWidget):
             QLabel("Is there any visually obvious damage on the shipment?")
         )
 
-        screen_layout.addWidget(self.radio_no_damage)
-        screen_layout.addWidget(self.radio_damage)
+        screen_layout.addWidget(self.damage_status.button('no damage'))
+        screen_layout.addWidget(self.damage_status.button('damage'))
 
         screen_layout.addSpacing(5)
         screen_layout.addWidget(QLabel("If there is damage, describe the damage"))
@@ -156,8 +133,34 @@ class PreShipping5(PageWidget):
 
         screen_layout.addStretch()
 
-        self.nav_bar = self.parent().NavBar(self.parent())
         screen_layout.addWidget(self.nav_bar)
 
         self.setLayout(screen_layout)
+        #}}}
+
+    def update(self):
+        super().update()
+
+        if self.page_state.get('damage_status', None) == 'no damage':
+            self.damage_description.setEnabled(False)
+        else:
+            self.damage_description.setEnabled(True)
+
+
+        if not self.received_acknowledgement.isChecked():
+            self.nav_bar.continue_button.setEnabled(False)
+            return
+
+        if len(self.acknowledged_by.text()) == 0:
+            self.nav_bar.continue_button.setEnabled(False)
+            return
+
+        if (self.page_state.get('damage_status', None) == 'damage' 
+                and len(self.page_state.get('damage_description', '')) == 0):
+            self.nav_bar.continue_button.setEnabled(False)
+            
+        self.nav_bar.continue_button.setEnabled(True)
+    
+
+
     #}}}

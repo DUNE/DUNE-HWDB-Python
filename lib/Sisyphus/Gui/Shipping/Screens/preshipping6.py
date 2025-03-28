@@ -10,7 +10,7 @@ from Sisyphus.RestApiV1 import Utilities as ut
 
 from Sisyphus.Utils.Terminal.Style import Style
 
-from Sisyphus.Gui.Shipping.Widgets import PageWidget
+from Sisyphus.Gui.Shipping.Widgets import PageWidget, NavBar
 from Sisyphus.Gui.Shipping.Widgets import ZLineEdit, ZTextEdit, ZCheckBox
 
 from Sisyphus.Gui.Shipping.ShippingLabel import ShippingLabel
@@ -93,7 +93,6 @@ class PreShipping6(PageWidget):
         ################
         screen_layout.addStretch()
 
-        self.nav_bar = self.parent().NavBar(self.parent())
         screen_layout.addWidget(self.nav_bar)
 
         self.setLayout(screen_layout)
@@ -105,9 +104,12 @@ class PreShipping6(PageWidget):
         self.generate_shipping_sheet()
 
     def generate_shipping_sheet(self):
+        working_directory = self.tab_state.setdefault(
+                                        "working_directory", 
+                                        os.path.realpath(os.path.curdir))
 
-        self.pdf_filename = f"{self.tab_state['part_id']}-shipping-label.pdf"
-        self.pdf_full_filename = os.path.realpath(self.pdf_filename)
+        self.pdf_filename = f"{self.tab_state['part_info']['part_id']}-shipping-label.pdf"
+        self.pdf_full_filename = os.path.join(working_directory, self.pdf_filename)
 
         ShippingLabel(self.pdf_filename, self.tab_state, show_logo=False, debug=False)
 

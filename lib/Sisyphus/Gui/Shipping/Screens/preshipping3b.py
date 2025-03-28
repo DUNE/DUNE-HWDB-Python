@@ -16,7 +16,7 @@ from Sisyphus.RestApiV1 import Utilities as ut
 
 from Sisyphus.Utils.Terminal.Style import Style
 
-from Sisyphus.Gui.Shipping.Widgets import PageWidget
+from Sisyphus.Gui.Shipping.Widgets import PageWidget, NavBar
 from Sisyphus.Gui.Shipping.Widgets import ZLineEdit, ZTextEdit, ZCheckBox, ZDateTimeEdit
 
 from Sisyphus.Gui.Shipping.ShippingLabel import ShippingLabel
@@ -56,10 +56,10 @@ class PreShipping3b(PageWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.freight_forwarder = ZLineEdit(parent=self, key='freight_forwarder')
-        self.mode_of_transportation = ZLineEdit(parent=self, key='mode_of_transportation')
-        #self.expected_arrival_time = ZLineEdit(parent=self, key='expected_arrival_time')
-        self.expected_arrival_time = ZDateTimeEdit(parent=self, key='expected_arrival_time')
+        self.freight_forwarder = ZLineEdit(owner=self, key='freight_forwarder')
+        self.mode_of_transportation = ZLineEdit(owner=self, key='mode_of_transportation')
+        #self.expected_arrival_time = ZLineEdit(owner=self, key='expected_arrival_time')
+        self.expected_arrival_time = ZDateTimeEdit(owner=self, key='expected_arrival_time')
         
 
         self._construct_page()
@@ -122,9 +122,20 @@ class PreShipping3b(PageWidget):
 
         screen_layout.addStretch()
 
-        self.nav_bar = self.parent().NavBar(self.parent())
         screen_layout.addWidget(self.nav_bar)
 
         self.setLayout(screen_layout)
         #}}}
+
+    def update(self):
+        super().update()
+        
+        if (
+                len(self.freight_forwarder.text()) > 0
+                and len(self.mode_of_transportation.text()) > 0):
+            self.nav_bar.continue_button.setEnabled(True)
+        else:
+            self.nav_bar.continue_button.setEnabled(False)
+
+
     #}}}

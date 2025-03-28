@@ -16,7 +16,7 @@ from Sisyphus.RestApiV1 import Utilities as ut
 
 from Sisyphus.Utils.Terminal.Style import Style
 
-from Sisyphus.Gui.Shipping.Widgets import PageWidget
+from Sisyphus.Gui.Shipping.Widgets import PageWidget, NavBar
 from Sisyphus.Gui.Shipping.Widgets import ZLineEdit, ZTextEdit, ZCheckBox
 
 from Sisyphus.Gui.Shipping.ShippingLabel import ShippingLabel
@@ -58,10 +58,10 @@ class PreShipping4(PageWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.email_contents = ZTextEdit(parent=self, key='email_contents')
+        self.email_contents = ZTextEdit(owner=self, key='email_contents')
         
         self.confirm_email_contents = ZCheckBox('I have sent the email',
-                        parent=self, key='confirm_email_contents')
+                        owner=self, key='confirm_email_contents')
         self.instructions = QLabel('Paste the following into an email message and '
                     'send it to the FD Logistics team:')
         self.instructions.setWordWrap(True)
@@ -115,27 +115,13 @@ class PreShipping4(PageWidget):
         ################
         screen_layout.addStretch()
 
-        self.nav_bar = self.parent().NavBar(self.parent())
         screen_layout.addWidget(self.nav_bar)
 
         self.setLayout(screen_layout)
         #}}}
 
     def on_navigate_next(self):
-        '''
-        sender = 'alexcwagner@gmail.com'
-        receivers = 'alexcwagner@gmail.com'
-        message = 'This is a test email message.'
-
-        try:
-            smtp_obj = smtplib.SMTP('localhost')
-            smtp_obj.sendmail(sender, receivers, message)
-            print("Successfully sent email")
-        except smtplib.SMTPException:
-            Style.error.print("SMTPException: unable to send email")
-        except Exception as exc:
-            Style.error.print(f"Error sending email: {exc}")
-        '''
+        # if I can ever get it to send email, put it here
         return
 
     def restore(self):
@@ -144,6 +130,7 @@ class PreShipping4(PageWidget):
         self.generate_email()
 
     def generate_email(self):
+        #{{{
         tab_state = self.tab_state
 
         if self.csv_filename is None:
@@ -193,14 +180,17 @@ class PreShipping4(PageWidget):
         
         #self.email_contents.setText(email_msg)
         self.email_contents.setHtml(email_msg)
-
+        #}}}
 
     def generate_csv(self):
         #{{{
         print("Creating CSV...")
         
-        self.csv_filename = f"{self.tab_state['part_id']}-preshipping.csv"
-        self.csv_full_filename = os.path.realpath(self.csv_filename)
+        working_directory = self.tab_state.setdefault(
+                                        "working_directory", 
+                                        os.path.realpath(os.path.curdir))
+        self.csv_filename = f"{self.tab_state['part_info']['part_id']}-preshipping.csv"
+        self.csv_full_filename = os.path.join(working_directory, self.csv_filename)
 
         with open(self.csv_filename, 'w') as csvfile:
             csvwriter = csv.writer(csvfile, delimiter=',')
@@ -253,7 +243,7 @@ class PreShipping4(PageWidget):
             ])
             csvwriter.writerow([
                 "DUNE PID",
-                self.tab_state['part_id']
+                self.tab_state['part_info']['part_id']
             ])
             csvwriter.writerow([])
             csvwriter.writerow([
@@ -262,5 +252,14 @@ class PreShipping4(PageWidget):
                 "Func. Pos. Name"
             ])
         #}}}
+
+    def update(self):
+        super().update()
+
+        if self.confirm_email_contents.isChecked():
+            self.nav_bar.continue_button.setEnabled(True)
+        else:
+            self.nav_bar.continue_button.setEnabled(False)
+
     #}}}
         

@@ -16,7 +16,7 @@ from Sisyphus.RestApiV1 import Utilities as ut
 
 from Sisyphus.Utils.Terminal.Style import Style
 
-from Sisyphus.Gui.Shipping.Widgets import PageWidget
+from Sisyphus.Gui.Shipping.Widgets import PageWidget, NavBar
 from Sisyphus.Gui.Shipping.Widgets import ZLineEdit, ZTextEdit, ZCheckBox
 
 from Sisyphus.Gui.Shipping.ShippingLabel import ShippingLabel
@@ -56,9 +56,9 @@ class PreShipping2(PageWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.approver_name = ZLineEdit(parent=self, key='approver_name')
-        self.approver_email = ZLineEdit(parent=self, key='approver_email')
-        self.test_info = ZTextEdit(parent=self, key='test_info')
+        self.approver_name = ZLineEdit(owner=self, key='approver_name')
+        self.approver_email = ZLineEdit(owner=self, key='approver_email')
+        self.test_info = ZTextEdit(owner=self, key='test_info')
 
         self._construct_page()
 
@@ -133,9 +133,20 @@ class PreShipping2(PageWidget):
         ################
         screen_layout.addStretch()
 
-        self.nav_bar = self.parent().NavBar(self.parent())
         screen_layout.addWidget(self.nav_bar)
 
         self.setLayout(screen_layout)
         #}}}
+
+    def update(self):
+        super().update()
+
+        if ( len(self.approver_name.text()) > 0 
+                and len(self.approver_email.text()) > 0
+                and len(self.test_info.toPlainText()) > 0 ):
+            self.nav_bar.continue_button.setEnabled(True)
+        else:
+            self.nav_bar.continue_button.setEnabled(False)
+
+
     #}}}

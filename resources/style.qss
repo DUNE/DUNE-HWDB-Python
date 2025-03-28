@@ -9,13 +9,21 @@ QLabel {
     font-size: 12pt;
 }
 
-QLineEdit {
+QLineEdit, QTextEdit {
     background-color: #eef;
 }
 
+/*
 QTextEdit {
     background-color: #eef;
 }
+*/
+
+QLineEdit::disabled, QTextEdit::disabled {
+    color: #333;
+    background-color: #ccc;
+}
+
 
 QDateTimeEdit {
     background-color: #eef;
@@ -37,7 +45,7 @@ QTableWidgetItem {
 /******************************
  QCheckBox
 ******************************/
-/*
+/* {{{
 QCheckBox {
     spacing: 5px;
 }
@@ -85,7 +93,7 @@ QCheckBox::indicator:indeterminate:hover {
 QCheckBox::indicator:indeterminate:pressed {
     image: url(:/images/checkbox_indeterminate_pressed.png);
 }
-*/
+}}} */
 
 /******************************
  QRadioButton

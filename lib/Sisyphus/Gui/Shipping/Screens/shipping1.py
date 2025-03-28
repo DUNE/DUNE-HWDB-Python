@@ -7,19 +7,8 @@ Author:
 """
 
 #{{{
-from Sisyphus.Configuration import config, USER_SETTINGS_DIR
-logger = config.getLogger(__name__)
-
-import Sisyphus
-from Sisyphus import RestApiV1 as ra
-from Sisyphus.RestApiV1 import Utilities as ut
-
-from Sisyphus.Utils.Terminal.Style import Style
-
 from Sisyphus.Gui.Shipping.Widgets import PageWidget, NavBar
 from Sisyphus.Gui.Shipping.Widgets import ZLineEdit, ZTextEdit, ZCheckBox
-
-from Sisyphus.Gui.Shipping.ShippingLabel import ShippingLabel
 
 from PyQt5.QtCore import QSize, Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import (
@@ -44,19 +33,13 @@ from PyQt5.QtWidgets import (
     QAction,
     QStackedWidget,
     QRadioButton,
-    QGroupBox,
-    QButtonGroup,
 )
-
-import json
 #}}}
 
-class PreShipping1(PageWidget):
+class Shipping1(PageWidget):
     #{{{
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        # Create the interactive widgets on this page
 
         self.subcomp_caption = QLabel("Contents")
 
@@ -65,38 +48,26 @@ class PreShipping1(PageWidget):
 
         msg = "The list of components for this shipment is correct"
         self.confirm_list_checkbox = ZCheckBox(owner=self, text=msg, key="confirm_list")
-        #self.confirm_list_checkbox.toggled.connect(self.toggle_confirm_list)
-        
 
         msg = "All necessary QA/QC information for these components " \
                     "has been stored in the HWDB"
         self.confirm_hwdb_updated_checkbox = ZCheckBox(owner=self, text=msg, key="hwdb_updated")
-        #self.confirm_hwdb_updated_checkbox.toggled.connect(self.toggle_hwdb_updated)
-        
-        # Create the actual layout and place the interactive widgets in it
+
         self._construct_page()
 
-    def _construct_page(self):
-        #{{{
-        # This should create the visual appearance of the page. Any widgets
-        # that are interactive should be created elsewhere, and then placed
-        # inside the layout here. The reason for doing it this way is so
-        # that the code creating and controlling dynamic elements won't be
-        # cluttered by all the layout code here.
 
+    def _construct_page(self):
         screen_layout = QVBoxLayout()
 
-        ########################################
-
-        page_title = QLabel("Pre-Shipping Workflow (1)")
+        #############################
+        page_title = QLabel("Shipping Workflow (1)")
         page_title.setStyleSheet("""
                 font-size: 14pt;
                 font-weight: bold;
             """)
         page_title.setAlignment(Qt.AlignCenter)
         screen_layout.addWidget(page_title)
-        
-        ########################################
+        #############################
 
         subcomp_list_layout = QVBoxLayout()
         subcomp_list_layout.addWidget( self.subcomp_caption )
@@ -112,9 +83,6 @@ class PreShipping1(PageWidget):
         subcomp_list_widget.setLayout(subcomp_list_layout)
         screen_layout.addWidget(subcomp_list_widget)
         screen_layout.addSpacing(10)
-
-        ########################################
-
 
         screen_layout.addWidget(QLabel("Please affirm the following:"))
 
@@ -138,7 +106,11 @@ class PreShipping1(PageWidget):
         screen_layout.addWidget(self.nav_bar)
 
         self.setLayout(screen_layout)
-        #}}}
+
+        screen_layout.addStretch()
+
+        screen_layout.addWidget(self.nav_bar)
+        self.setLayout(screen_layout)
 
     def restore(self):
         super().restore()
@@ -157,15 +129,22 @@ class PreShipping1(PageWidget):
             self.table.setItem(idx, 0, QTableWidgetItem(subcomp['Sub-component PID']))
             self.table.setItem(idx, 1, QTableWidgetItem(subcomp['Component Type Name']))
             self.table.setItem(idx, 2, QTableWidgetItem(subcomp['Functional Position Name']))
-    
+
     def update(self):
         super().update()
 
-        if (self.page_state.get('confirm_list', False) 
+        if (self.page_state.get('confirm_list', False)
                     and self.page_state.get('hwdb_updated', False)):
             self.nav_bar.continue_button.setEnabled(True)
         else:
             self.nav_bar.continue_button.setEnabled(False)
 
-    #}}}
 
+
+
+
+
+
+
+
+    #}}}
