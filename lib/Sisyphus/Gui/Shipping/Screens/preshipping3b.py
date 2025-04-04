@@ -55,6 +55,7 @@ class PreShipping3b(PageWidget):
     #{{{
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.page_name = "Pre-Shipping (3b)"
 
         self.freight_forwarder = ZLineEdit(owner=self, key='freight_forwarder')
         self.mode_of_transportation = ZLineEdit(owner=self, key='mode_of_transportation')

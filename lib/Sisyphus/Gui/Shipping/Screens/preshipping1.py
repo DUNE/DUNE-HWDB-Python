@@ -55,6 +55,7 @@ class PreShipping1(PageWidget):
     #{{{
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.page_name = "Pre-Shipping (1)"
 
         # Create the interactive widgets on this page
 

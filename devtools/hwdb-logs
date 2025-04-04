@@ -73,6 +73,49 @@ re_requestmethod = re.compile(r"""
 """, re.VERBOSE)
 
 
+re_color = re.compile(r'''
+    ^
+    (?P<before>.*)
+    (?P<token>\[
+        (
+            (fg|bg)=\#[0-9a-fA-F]{6}
+        )
+        (
+            ,\s*
+            (fg|bg)=\#[0-9a-fA-F]{6}
+        )*
+    \])
+    (?P<after>.*)
+    $
+''', re.VERBOSE)
+
+def colorizer(text):
+    colorstr = re_color.fullmatch(text)
+    fg, bg, remainder = None, None, text
+    if colorstr is not None:
+        tokens = colorstr['token'][1:-1].split(',')
+        remainder = ''.join([colorstr['before'], colorstr['after']])
+        for token in tokens:
+            if token.strip()[:2] == 'fg':
+                fg = token.strip()[3:]
+            elif token.strip()[:2] == 'bg':
+                bg = token.strip()[3:]
+
+    def inner(style):
+        if fg is None:
+            if bg is None:
+                return style
+            else:
+                return style.bg(bg)
+        else:
+            if bg is None:
+                return style.fg(fg)
+            else:
+                return style.bg(bg).fg(fg)
+    
+    return inner, remainder
+
+
 clear_to_end = "\x1b[K"
 
 def main(argv):
@@ -116,12 +159,19 @@ def main(argv):
 
                 style = loglevel_styles.get(match['loglevel'], unknown_style)
 
-                match2 = re_teststatus.fullmatch(match['remainder'])
-                match3 = re_loginit.fullmatch(match['remainder'])
-                match4 = re_requestmethod.match(match['remainder'])
+                remainder = match['remainder']
 
+                match2 = re_teststatus.fullmatch(remainder)
+                match3 = re_loginit.fullmatch(remainder)
+                match4 = re_requestmethod.match(remainder)
+                
                 if match3:
                     style = loginit_style
+
+                modify_style, remainder = colorizer(remainder)
+
+                style = modify_style(style)
+
 
                 style.print(f"{fmttime} ",
                             f"[{match['loglevel']}] ",
@@ -144,7 +194,7 @@ def main(argv):
                     methodstyle.print(f"[{match4['method']}]", end='')
                     style.print(f"{match4['after']}")
                 else:
-                    style.print(f"{match['remainder']}", clear_to_end, sep='')
+                    style.print(f"{remainder}", clear_to_end, sep='')
             else:
                 style.print(line, clear_to_end, sep='')
         except Exception as err:

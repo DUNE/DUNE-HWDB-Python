@@ -56,6 +56,7 @@ class PreShipping3a(PageWidget):
     def __init__(self, *args, **kwargs):
         #{{{
         super().__init__(*args, **kwargs)
+        self.page_name = "Pre-Shipping (3a)"
 
         self.destination_type = ZRadioButtonGroup(
                 owner=self, key='shipping_service_type', default='Domestic')

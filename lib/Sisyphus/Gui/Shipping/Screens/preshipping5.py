@@ -58,6 +58,7 @@ class PreShipping5(PageWidget):
     #{{{
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.page_name = "Pre-Shipping (5)"
 
         self.received_acknowledgement = ZCheckBox("Yes, I have received an acknowledgement",
                     owner=self, key='received_acknowledgement')

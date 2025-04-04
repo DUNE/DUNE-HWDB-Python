@@ -63,6 +63,7 @@ class PreShipping6(PageWidget):
     #{{{
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.page_name = "Pre-Shipping (6)"
 
         self.pdf_filename = None        
         self.pdf_full_filename = None        

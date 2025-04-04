@@ -50,6 +50,8 @@ class SelectWorkflow(PageWidget):
     #{{{
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        
+        self.page_name = "Select Workflow"
 
         self.workflow_type = ZRadioButtonGroup(owner=self, key='workflow_type', default='preshipping')
 

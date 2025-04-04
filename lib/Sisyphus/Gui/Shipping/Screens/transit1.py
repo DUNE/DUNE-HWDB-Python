@@ -26,50 +26,29 @@ from PyQt5.QtWidgets import (
     QStackedWidget,
     QRadioButton,
 )
+from PyQt5.QtGui import QPalette, QColor
+from PyQt5.QtGui import QIcon
 
-
-class Packing1(PageWidget):
+class Transit1(PageWidget):
     #{{{
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        screen_layout = QVBoxLayout()
 
-        #############################
-        page_title = QLabel("Packing Workflow (1)")
+        screen_layout = QVBoxLayout()
+        ########################################
+
+        page_title = QLabel("Transit Workflow (1)")
         page_title.setStyleSheet("""
                 font-size: 14pt;
                 font-weight: bold;
             """)
         page_title.setAlignment(Qt.AlignCenter)
         screen_layout.addWidget(page_title)
-        #############################
-
+        ################
         screen_layout.addStretch()
 
         screen_layout.addWidget(self.nav_bar)
-        self.setLayout(screen_layout)
-    #}}}
 
-class PackingComplete(PageWidget):
-    #{{{
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        screen_layout = QVBoxLayout()
-                                                                                                    
-        #############################
-        page_title = QLabel("Packing Workflow Complete")
-        page_title.setStyleSheet("""
-                font-size: 14pt;
-                font-weight: bold;
-            """)
-        page_title.setAlignment(Qt.AlignCenter)
-        screen_layout.addWidget(page_title)
-        #############################
-
-        screen_layout.addStretch()
-
-        screen_layout.addWidget(self.nav_bar)
         self.setLayout(screen_layout)
     #}}}
 

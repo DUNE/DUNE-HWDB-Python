@@ -1,5 +1,12 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2025 Regents of the University of Minnesota
+Author:
+    Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
+"""
 
+#{{{
 from Sisyphus.Gui.Shipping.Widgets import PageWidget, NavBar
 
 from PyQt5.QtCore import QSize, Qt, pyqtSignal, pyqtSlot
@@ -26,52 +33,28 @@ from PyQt5.QtWidgets import (
     QStackedWidget,
     QRadioButton,
 )
-from PyQt5.QtGui import QPalette, QColor
-from PyQt5.QtGui import QIcon
+#}}}
 
-class Transit1(PageWidget):
+class Shipping6(PageWidget):
     #{{{
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         screen_layout = QVBoxLayout()
-        ########################################
 
-        page_title = QLabel("Transit Workflow (1)")
+        #############################
+        page_title = QLabel("Shipping (6)")
         page_title.setStyleSheet("""
                 font-size: 14pt;
                 font-weight: bold;
             """)
         page_title.setAlignment(Qt.AlignCenter)
         screen_layout.addWidget(page_title)
-        ################
+        #############################
+
         screen_layout.addStretch()
 
         screen_layout.addWidget(self.nav_bar)
-
-        self.setLayout(screen_layout)
-    #}}}
-
-class TransitComplete(PageWidget):
-    #{{{
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        screen_layout = QVBoxLayout()
-        ########################################
-
-        page_title = QLabel("Transit Workflow Complete")
-        page_title.setStyleSheet("""
-                font-size: 14pt;
-                font-weight: bold;
-            """)
-        page_title.setAlignment(Qt.AlignCenter)
-        screen_layout.addWidget(page_title)
-        ################
-        screen_layout.addStretch()
-
-        screen_layout.addWidget(self.nav_bar)
-
         self.setLayout(screen_layout)
     #}}}
 

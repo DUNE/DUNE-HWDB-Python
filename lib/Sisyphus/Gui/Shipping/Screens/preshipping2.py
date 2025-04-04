@@ -55,6 +55,7 @@ class PreShipping2(PageWidget):
     #{{{
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.page_name = "Pre-Shipping (2)"
 
         self.approver_name = ZLineEdit(owner=self, key='approver_name')
         self.approver_email = ZLineEdit(owner=self, key='approver_email')

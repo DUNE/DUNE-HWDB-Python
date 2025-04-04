@@ -57,6 +57,7 @@ class PreShipping4(PageWidget):
     #{{{
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.page_name = "Pre-Shipping (4)"
 
         self.email_contents = ZTextEdit(owner=self, key='email_contents')
         
@@ -174,7 +175,7 @@ class PreShipping4(PageWidget):
             f"{tab_state['SelectPID']['user_email']}<br/>\n"
             f"Attachment: {self.csv_filename}\n"
 
-            f"""</td"""            
+            f"""</td>"""            
             f"""</table>"""
         )
         
@@ -251,6 +252,12 @@ class PreShipping4(PageWidget):
                 "Component Type Name",
                 "Func. Pos. Name"
             ])
+            for sc in self.tab_state['part_info'].get('subcomponents', {}):
+                csvwriter.writerow([
+                    sc['Sub-component PID'],
+                    sc['Component Type Name'],
+                    sc['Functional Position Name'],
+                ])
         #}}}
 
     def update(self):

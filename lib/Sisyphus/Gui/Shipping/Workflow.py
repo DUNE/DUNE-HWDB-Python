@@ -38,20 +38,14 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QPalette, QColor
 from PyQt5.QtGui import QIcon
 
-#from Sisyphus.Gui.Shipping.select import SelectPID, SelectWorkflow
-from Sisyphus.Gui.Shipping.packing import Packing1, PackingComplete
-#from Sisyphus.Gui.Shipping.Screens.preshipping import (
-#        PreShipping1, PreShipping2, PreShipping3a, PreShipping3b, PreShipping4,
-#        PreShipping5, PreShipping6, PreShippingComplete
-#)
 from Sisyphus.Gui.Shipping.Screens import (
         SelectPID, SelectWorkflow,
+        Packing1, PackingComplete,
         PreShipping1, PreShipping2, PreShipping3a, PreShipping3b, PreShipping4,
-        PreShipping5, PreShipping6, PreShippingComplete,
-        Shipping1, Shipping2, Shipping3, Shipping4, ShippingComplete
-)
-from Sisyphus.Gui.Shipping.transit import Transit1, TransitComplete
-from Sisyphus.Gui.Shipping.receiving import (
+            PreShipping5, PreShipping6, PreShippingComplete,
+        Shipping1, Shipping2, Shipping3, Shipping4, Shipping5, 
+            Shipping6, ShippingComplete,
+        Transit1, TransitComplete,
         Receiving1, Receiving2, Receiving3, ReceivingComplete
 )
 
@@ -82,7 +76,7 @@ class Workflow(QWidget):
         state = self.tab_state
 
         # self.title = state['title']
-        self.set_page(state['current_page'])
+        self.set_page(state.get('current_page', 'SelectPID'))
 
 
     def update_title(self, title):
@@ -115,6 +109,8 @@ class Workflow(QWidget):
             "Shipping2": Shipping2(self),
             "Shipping3": Shipping3(self),
             "Shipping4": Shipping4(self),
+            "Shipping5": Shipping5(self),
+            "Shipping6": Shipping6(self),
             "ShippingComplete": ShippingComplete(self),
 
             "Transit1": Transit1(self),
@@ -127,7 +123,7 @@ class Workflow(QWidget):
         }
         logger.info("...finished creating pages")
 
-        for page_name, page in self.page_lookup.items():
+        for page_id, page in self.page_lookup.items():
             self.page_stack.addWidget(page)
 
         self.next_page = {
@@ -149,7 +145,9 @@ class Workflow(QWidget):
             "Shipping1": "Shipping2",
             "Shipping2": "Shipping3",
             "Shipping3": "Shipping4",
-            "Shipping4": "ShippingComplete",
+            "Shipping3": "Shipping4",
+            "Shipping4": "Shipping5",
+            "Shipping5": "Shipping6",
             "ShippingComplete": None,
 
             "Transit1": "TransitComplete",
@@ -175,14 +173,17 @@ class Workflow(QWidget):
             "PreShipping4": "PreShipping3b",
             "PreShipping5": "PreShipping4",
             "PreShipping6": "PreShipping5",
-            #"PreShippingComplete": None,
-            "PreShippingComplete": "PreShipping6",
+            "PreShippingComplete": None,
+            #"PreShippingComplete": "PreShipping6",
 
             "Shipping1": "SelectWorkflow",
             "Shipping2": "Shipping1",
             "Shipping3": "Shipping2",
             "Shipping4": "Shipping3",
-            "ShippingComplete": None,
+            "Shipping5": "Shipping4",
+            "Shipping6": "Shipping5",
+            #"ShippingComplete": None,
+            "ShippingComplete": "Shipping6",
 
             "Transit1": "SelectWorkflow",
             "TransitComplete": None,
@@ -196,15 +197,15 @@ class Workflow(QWidget):
         self.setLayout(self.page_stack)
         #}}}
 
-    def set_page(self, page_name, state=None):
+    def set_page(self, page_id, state=None):
         state = state or {}
 
-        self.current_page = page_name
-        self.tab_state['current_page'] = page_name
+        self.current_page = page_id
+        self.tab_state['current_page'] = page_id
 
-        self.page_stack.setCurrentWidget(self.page_lookup[page_name])
+        self.page_stack.setCurrentWidget(self.page_lookup[page_id])
 
-        self.page_lookup[page_name].restore()
+        self.page_lookup[page_id].restore()
         logger.debug(f"current page set to: {self.current_page}")
 
     def navigate_next(self):
@@ -218,7 +219,7 @@ class Workflow(QWidget):
 
         logger.debug("special handling code")
         if self.current_page == 'SelectWorkflow':
-            page_state = self.tab_state['SelectWorkflow']
+            page_state = self.tab_state.setdefault('SelectWorkflow', {})
             if page_state['workflow_type'] == "packing":
                 next_page = "Packing1"
             elif page_state['workflow_type'] == "preshipping":
