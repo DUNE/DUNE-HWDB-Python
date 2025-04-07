@@ -53,10 +53,12 @@ import json
 
 class PreShipping3a(PageWidget):
     #{{{
+    page_name = "Pre-Shipping Workflow (3a)"
+    page_short_name = "Pre-Shipping (3a)"
+
     def __init__(self, *args, **kwargs):
         #{{{
         super().__init__(*args, **kwargs)
-        self.page_name = "Pre-Shipping (3a)"
 
         self.destination_type = ZRadioButtonGroup(
                 owner=self, key='shipping_service_type', default='Domestic')
@@ -70,10 +72,10 @@ class PreShipping3a(PageWidget):
         self.dimension = ZLineEdit(owner=self, key='dimension')
         self.weight = ZLineEdit(owner=self, key='weight')
 
-        self._construct_page()
+        self._setup_UI()
         #}}}
 
-    def _construct_page(self):
+    def _setup_UI(self):
         #{{{
         screen_layout = QVBoxLayout()
         ########################################

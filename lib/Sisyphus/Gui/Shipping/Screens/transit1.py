@@ -30,6 +30,8 @@ from PyQt5.QtGui import QPalette, QColor
 from PyQt5.QtGui import QIcon
 
 class Transit1(PageWidget):
+    page_name = "Transit Workflow (1)"
+    page_short_name = "Transit Workflow (1)"
     #{{{
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -37,6 +37,9 @@ from PyQt5.QtWidgets import (
 
 class ShippingComplete(PageWidget):
     #{{{
+    page_name = "Shipping Workflow Complete"
+    page_short_name = "Shipping Complete"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

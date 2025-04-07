@@ -46,15 +46,17 @@ import json
 
 class PreShippingComplete(PageWidget):
     #{{{
+    page_name = "Pre-Shipping Workflow Complete"
+    page_short_name = "Pre-Shipping Complete"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.page_name = "Pre-Shipping Complete"
 
-        self._construct_page()
+        self._setup_UI()
         self.update()
         
 
-    def _construct_page(self):
+    def _setup_UI(self):
         screen_layout = QVBoxLayout()
         ########################################
 

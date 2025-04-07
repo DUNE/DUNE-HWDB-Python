@@ -13,18 +13,16 @@ from Sisyphus.Utils.Terminal.Style import Style
 from Sisyphus.Gui.Shipping import Widgets as zw
 from Sisyphus.Gui.Shipping import Model as mdl
 
-from PyQt5 import QtWidgets as qw
-import json
-import base64
+from PyQt5 import QtWidgets as qtw
 
 
 class SelectPID(zw.PageWidget):
-    #{{{
+    page_name = "Select PID"
+    page_short_name = "Select PID"
+
     def __init__(self, *args, **kwargs):
         #{{{
         super().__init__(*args, **kwargs)
-
-        self.page_name = "Select PID"
         
         default_name = self.app_state.setdefault('default_name')
         default_email = self.app_state.setdefault('default_email')
@@ -42,51 +40,52 @@ class SelectPID(zw.PageWidget):
         #self.pid_text_box.setCompleter(self.completer)
 
 
-        self.find_button = qw.QPushButton("find")
+        self.find_button = qtw.QPushButton("find")
         self.find_button.clicked.connect(self.lookup_pid)
         
-        self._construct_page()
+        self._setup_UI()
 
         #}}}
 
-    def _construct_page(self):
+    def _setup_UI(self):
         #{{{
 
-        main_layout = qw.QVBoxLayout()
+        main_layout = qtw.QVBoxLayout()
+        main_layout.addWidget(self.title_bar)
 
         ############
-        frame = qw.QFrame()
-        frame.setFrameStyle(qw.QFrame.Box | qw.QFrame.Sunken)
+        frame = qtw.QFrame()
+        frame.setFrameStyle(qtw.QFrame.Box | qtw.QFrame.Sunken)
         frame.setLineWidth(2)
 
-        frame_layout = qw.QVBoxLayout()
+        frame_layout = qtw.QVBoxLayout()
         frame_layout.setContentsMargins(5, 5, 5, 5)
 
-        #main_layout.addWidget(qw.QLabel("Your name:"))
+        #main_layout.addWidget(qtw.QLabel("Your name:"))
         #main_layout.addWidget(self.name_text_box)
         #main_layout.addSpacing(10)
-        frame_layout.addWidget(qw.QLabel("Your name:"))
+        frame_layout.addWidget(qtw.QLabel("Your name:"))
         frame_layout.addWidget(self.name_text_box)
         frame.setLayout(frame_layout)
         main_layout.addWidget(frame)
 
         ############
-        main_layout.addWidget(qw.QLabel("Your email:"))
+        main_layout.addWidget(qtw.QLabel("Your email:"))
         main_layout.addWidget(self.email_text_box)
         main_layout.addSpacing(10)
 
         ##########
-        get_pid_layout = qw.QVBoxLayout()
+        get_pid_layout = qtw.QVBoxLayout()
         get_pid_layout.setContentsMargins(0, 0, 0, 0)
-        get_pid_layout.addWidget(qw.QLabel("Please enter a PID:"))
+        get_pid_layout.addWidget(qtw.QLabel("Please enter a PID:"))
 
-        search_layout = qw.QHBoxLayout()
+        search_layout = qtw.QHBoxLayout()
         search_layout.setContentsMargins(0, 0, 0, 0)
 
 
         search_layout.addWidget(self.pid_text_box)
         search_layout.addWidget(self.find_button)
-        #search_widget = qw.QWidget()
+        #search_widget = qtw.QWidget()
         #search_widget.setLayout(search_layout)
 
         #get_pid_layout.addWidget(search_widget)
@@ -104,25 +103,15 @@ class SelectPID(zw.PageWidget):
         main_layout.addWidget(self.nav_bar)
         self.setLayout(main_layout)
 
-        self.found_pid = None
-
-        #self.restore()
         #}}}
 
     def lookup_pid(self):
         #{{{
         part_id = self.page_state['search_part_id']
 
-        #Style.info.print(json.dumps(self.tab_state, indent=4))
-
-        #self.tab_state.update({})
-        #self.update()
-
-        tab_state = mdl.download_part_info(part_id)
+        tab_state = mdl.download_part_info(part_id,
+                            status_callback=self.application.update_status)
         
-        #Style.warning.print(json.dumps(self.tab_state, indent=4))
-
-
         if tab_state is None:
             msg = f'''<div style="color: #990000">{part_id} not found!</div>'''
         else:
@@ -156,12 +145,10 @@ class SelectPID(zw.PageWidget):
         self.tab_state['user_email'] = self.email_text_box.text().strip()
 
         if self.tab_state['user_name'] != "":
-            #self.parent().app_state.app_state['default_name'] = self.tab_state['user_name']
-            self.parent().app.app_state['default_name'] = self.tab_state['user_name']
+            self.app_state['default_name'] = self.tab_state['user_name']
 
         if self.tab_state['user_email'] != "":
-            #self.parent().app_state.app_state['default_email'] = self.tab_state['user_email']
-            self.parent().app.app_state['default_email'] = self.tab_state['user_email']
+            self.app_state['default_email'] = self.tab_state['user_email']
 
         self.parent().save()
 
@@ -172,17 +159,25 @@ class SelectPID(zw.PageWidget):
         super().restore()
 
     def update(self):
+        #{{{
+        logger.debug(f"{self.__class__.__name__}.update()")
         super().update()
         
         self.nav_bar.back_button.setEnabled(False)
         self.nav_bar.back_button.setVisible(False)
 
-        #logger.warning(self.tab_state.get('part_info', None))
+        #if self.tab_state.get('part_info', None) is not None:
+        #    self.nav_bar.continue_button.setEnabled(True)
+        #else:
+        #    self.nav_bar.continue_button.setEnabled(False)
 
-        if self.tab_state.get('part_info', None) is not None:
+        if self.part_id:
             self.nav_bar.continue_button.setEnabled(True)
         else:
             self.nav_bar.continue_button.setEnabled(False)
 
         #}}}
-    #}}}
+
+
+
+

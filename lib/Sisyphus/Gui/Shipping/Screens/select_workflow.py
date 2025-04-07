@@ -6,54 +6,30 @@ Author:
     Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
 """
 
-#{{{
-from Sisyphus.Configuration import config, USER_SETTINGS_DIR
+from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
-import Sisyphus
-from Sisyphus import RestApiV1 as ra
-from Sisyphus.RestApiV1 import Utilities as ut
+HLD = highlight = "[bg=#999999,fg=#ffffff]"
+HLI = highlight = "[bg=#009900,fg=#ffffff]"
+HLW = highlight = "[bg=#999900,fg=#ffffff]"
+HLE = highlight = "[bg=#990000,fg=#ffffff]"
 
-from Sisyphus.Gui.Shipping.Widgets import PageWidget, NavBar
-from Sisyphus.Gui.Shipping.Widgets import ZLineEdit, ZTextEdit, ZCheckBox, ZRadioButtonGroup
-
-from PyQt5.QtCore import QSize, Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QWidget,
-    QPushButton,
-    QVBoxLayout,
-    QHBoxLayout,
-    QStackedLayout,
-    QLabel,
-    QTextEdit,
-    QPlainTextEdit,
-    QLineEdit,
-    QGridLayout,
-    QTableWidget,
-    QTableWidgetItem,
-    QCheckBox,
-    QTabWidget,
-    QMenu,
-    QMenuBar,
-    QAction,
-    QStackedWidget,
-    QRadioButton,
-)
+from Sisyphus.Gui.Shipping import Widgets as zw
+from PyQt5 import QtCore as qtc
+from PyQt5 import QtWidgets as qtw
 
 import json
-import base64
-#}}}
 
-class SelectWorkflow(PageWidget):
-    #{{{
+class SelectWorkflow(zw.PageWidget):
+    page_name = "Select Workflow"
+    page_short_name = "Select Workflow"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        self.page_name = "Select Workflow"
 
-        self.workflow_type = ZRadioButtonGroup(owner=self, key='workflow_type', default='preshipping')
+        self.workflow_type = zw.ZRadioButtonGroup(
+                        owner=self, key='workflow_type', default='preshipping')
 
         self.workflow_type.create_button("packing", "Packing")
         self.workflow_type.create_button("preshipping", "Pre-Shipping")
@@ -61,36 +37,37 @@ class SelectWorkflow(PageWidget):
         self.workflow_type.create_button("transit", "Transit")
         self.workflow_type.create_button("receiving", "Receiving")
 
-        self._construct_page()
+        self._setup_UI()
 
-    def _construct_page(self):
+    def _setup_UI(self):
         #{{{
-        screen_layout = QVBoxLayout()
+        main_layout = qtw.QVBoxLayout()
 
-        page_title = QLabel("Select Shipping Workflow")
-        page_title.setStyleSheet("""
-                font-size: 14pt;
-                font-weight: bold;
-            """)
-        page_title.setAlignment(Qt.AlignCenter)
-        screen_layout.addWidget(page_title)
+        #page_title = QLabel("Select Shipping Workflow")
+        #page_title.setStyleSheet("""
+        #        font-size: 14pt;
+        #        font-weight: bold;
+        #    """)
+        #page_title.setAlignment(Qt.AlignCenter)
+        #main_layout.addWidget(page_title)
+        main_layout.addWidget(self.title_bar)
 
 
-        screen_layout.addSpacing(20)
+        main_layout.addSpacing(20)
 
-        screen_layout.addWidget(self.workflow_type.button("packing"))
-        screen_layout.addWidget(self.workflow_type.button("preshipping"))
-        screen_layout.addWidget(self.workflow_type.button("shipping"))
-        screen_layout.addWidget(self.workflow_type.button("transit"))
-        screen_layout.addWidget(self.workflow_type.button("receiving"))
+        main_layout.addWidget(self.workflow_type.button("packing"))
+        main_layout.addWidget(self.workflow_type.button("preshipping"))
+        main_layout.addWidget(self.workflow_type.button("shipping"))
+        main_layout.addWidget(self.workflow_type.button("transit"))
+        main_layout.addWidget(self.workflow_type.button("receiving"))
         
-        screen_layout.addStretch()
+        main_layout.addStretch()
 
         #self.nav_bar = self.parent().NavBar(self.parent())
 
-        screen_layout.addWidget(self.nav_bar)
+        main_layout.addWidget(self.nav_bar)
 
-        self.setLayout(screen_layout)
+        self.setLayout(main_layout)
         #}}}
 
     def save(self):
@@ -107,5 +84,4 @@ class SelectWorkflow(PageWidget):
     def restore(self):
         super().restore()
 
-    #}}}
 

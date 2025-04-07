@@ -17,4 +17,5 @@ from .widgets import (
     ZRadioButton,
     ZRadioButtonGroup,
     ZFileSelectWidget,
+    ZInstitutionWidget,
 )

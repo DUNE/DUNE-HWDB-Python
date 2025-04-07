@@ -6,7 +6,6 @@ Author:
     Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
 """
 
-#{{{
 from Sisyphus.Configuration import config, USER_SETTINGS_DIR
 logger = config.getLogger(__name__)
 
@@ -51,13 +50,14 @@ import csv
 import json
 import smtplib
 import os
-#}}}
 
 class PreShipping4(PageWidget):
     #{{{
+    page_name = "Pre-Shipping Workflow (4)"
+    page_short_name = "Pre-Shipping (4)"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.page_name = "Pre-Shipping (4)"
 
         self.email_contents = ZTextEdit(owner=self, key='email_contents')
         
@@ -70,9 +70,9 @@ class PreShipping4(PageWidget):
         self.csv_filename = None
         self.csv_full_filename = None
 
-        self._construct_page()
+        self._setup_UI()
 
-    def _construct_page(self):
+    def _setup_UI(self):
         #{{{
 
         screen_layout = QVBoxLayout()
@@ -123,7 +123,7 @@ class PreShipping4(PageWidget):
 
     def on_navigate_next(self):
         # if I can ever get it to send email, put it here
-        return
+        super().on_navigate_next()
 
     def restore(self):
         super().restore()
@@ -186,14 +186,12 @@ class PreShipping4(PageWidget):
     def generate_csv(self):
         #{{{
         print("Creating CSV...")
-        
-        working_directory = self.tab_state.setdefault(
-                                        "working_directory", 
-                                        os.path.realpath(os.path.curdir))
-        self.csv_filename = f"{self.tab_state['part_info']['part_id']}-preshipping.csv"
-        self.csv_full_filename = os.path.join(working_directory, self.csv_filename)
 
-        with open(self.csv_filename, 'w') as csvfile:
+        self.csv_filename = f"{self.tab_state['part_info']['part_id']}-preshipping.csv"
+        self.csv_full_filename = os.path.join(
+                self.working_directory, self.csv_filename)
+
+        with open(self.csv_full_filename, 'w') as csvfile:
             csvwriter = csv.writer(csvfile, delimiter=',')
 
             csvwriter.writerow([
@@ -252,7 +250,7 @@ class PreShipping4(PageWidget):
                 "Component Type Name",
                 "Func. Pos. Name"
             ])
-            for sc in self.tab_state['part_info'].get('subcomponents', {}):
+            for sc in self.tab_state['part_info'].get('subcomponents', {}).values():
                 csvwriter.writerow([
                     sc['Sub-component PID'],
                     sc['Component Type Name'],

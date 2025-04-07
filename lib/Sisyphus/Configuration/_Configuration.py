@@ -95,7 +95,7 @@ class Config:
         #}}}
 
     def load_additional_config(self, filename, recopy_if_missing=True, recopy_on_error=False):
-        filepath = os.path.join(USER_SETTINGS_DIR, filename)
+        filepath = os.path.join(self.user_settings_dir, filename)
 
         def load_config():
             with open(filepath, 'r') as fp:

@@ -24,4 +24,5 @@ export PATH=$PROJECT_ROOT/bin:$PATH
 # Run the script
 #
 
-python $PROJECT_ROOT/bin/shipping.py "$@"
+python -m Sisyphus.Gui.Shipping "$@"
+#python $PROJECT_ROOT/bin/shipping.py "$@"

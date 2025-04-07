@@ -38,6 +38,9 @@ from PyQt5.QtWidgets import (
 
 class Shipping1(PageWidget):
     #{{{
+    page_name = "Shipping Workflow (1)"
+    page_short_name = "Shipping (1)"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -53,10 +56,10 @@ class Shipping1(PageWidget):
                     "has been stored in the HWDB"
         self.confirm_hwdb_updated_checkbox = ZCheckBox(owner=self, text=msg, key="hwdb_updated")
 
-        self._construct_page()
+        self._setup_UI()
 
 
-    def _construct_page(self):
+    def _setup_UI(self):
         screen_layout = QVBoxLayout()
 
         #############################

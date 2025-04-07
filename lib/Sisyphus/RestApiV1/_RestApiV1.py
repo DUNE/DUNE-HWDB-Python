@@ -390,6 +390,13 @@ class retry:
         def wrapped_function(*args, **kwargs):
             global _refresh_required
 
+            status_callback = kwargs.pop("status_callback", 
+                                    session_kwargs.get("status_callback", None))
+            if status_callback is not None:
+                update_status = lambda msg: status_callback(msg)
+            else:
+                update_status = lambda msg: None
+
             timeouts = kwargs.pop("timeouts", None)
             retries = kwargs.pop("retries", None)
             timeout = kwargs.pop("timeout", None)
@@ -423,6 +430,11 @@ class retry:
                     else:
                         kwargs.pop('timeout', None)
 
+                    # Display a message in the terminal, but only if we're on 
+                    # the main thread. This message will be erased when the 
+                    # call is finished. It has to be on the main thread because
+                    # the result could be unpredictable if we allow multiple
+                    # threads to write and erase messages
                     if threading.current_thread().name == "MainThread":
                         s = ("[connecting]" if try_num == 0 
                                         else f"[connection failed. retrying: {try_num}]")
@@ -431,11 +443,21 @@ class retry:
                                 Style.debug(f'{s}'),
                                 Style.erase_right
                             ])
-
                         sys.stdout.write(msg)
                         sys.stdout.flush()
 
+                    # Newer messaging scheme for GUI applications: send an
+                    # update to a callback function. 
+                    # TODO: Implement a callback that writes to the terminal
+                    # and eliminate the previous section of code
+                    s = ("[sending data]" if try_num == 0
+                            else f"[sending data (attempt #{try_num+1})]")
+                    update_status(s)
+
                     resp = function(*args, **kwargs)
+
+                    update_status("[finished]")
+
 
                     break
                 except ConnectionFailed as err:
@@ -460,6 +482,7 @@ class retry:
 
 
                 finally:
+                    # Clean up the message that was displayed in the terminal
                     if threading.current_thread().name == "MainThread":
                         msg = "".join([
                                 Style.cursor_abs_horizontal(1),
@@ -570,9 +593,13 @@ def _request(method, url, *args, return_type="json", **kwargs):
     ]
     
     log_headers = augmented_kwargs.pop("log_headers", False)
-    
+
+    # Pop this, but don't do anything with it. "retry" handles it.
+    status_callback = augmented_kwargs.pop("status_callback", None)    
+
     try:
         if log_headers:
+            # TODO: This is no longer working! Maybe I'll fix it some day?
             verify = augmented_kwargs.pop('verify', True)
             timeout = augmented_kwargs.pop('timeout', True)
             req = requests.Request(method, url, *args, **augmented_kwargs)

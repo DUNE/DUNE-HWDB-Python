@@ -124,6 +124,8 @@ class HWDBObject:
     def __init__(self, **kwargs): 
         #{{{
         logger.debug(f"{HLD}{self.__class__.__name__}.__init__({kwargs})")
+        
+        self.fwd_kwargs = {k: v for k, v in kwargs.items() if k == 'status_callback'}
 
         with self.__class__._class_lock:
             if not getattr(self, "_instance_lock", None):
@@ -180,6 +182,22 @@ class HWDBObject:
             return self._data.get(future_name)
     #}}}
 
+class Institutions(HWDBObject):
+    _constructor_args = [] # No args. Just get the whole list.
+    
+    def _start_queries(self, constructor_kwargs):
+        self._futures = {
+            "institutions": _executor.submit(
+                                ra.get_institutions,
+                                **constructor_kwargs,
+                                **self.fwd_kwargs),
+        }
+
+    @property
+    def data(self):
+        return self._get_results('institutions')['data']
+
+
 @HWDBObject.caching
 class System(HWDBObject):
     #{{{
@@ -189,7 +207,8 @@ class System(HWDBObject):
         self._futures = {
             "system": _executor.submit(
                                 ra.get_system,
-                                **constructor_kwargs),
+                                **constructor_kwargs,
+                                **self.fwd_kwargs),
         }
 
     @property
@@ -218,7 +237,8 @@ class Subsystem(HWDBObject):
         self._futures = {
             "subsystem": _executor.submit(
                                 ra.get_subsystem,
-                                **constructor_kwargs),
+                                **constructor_kwargs,
+                                **self.fwd_kwargs),
         }
 
     @property
@@ -260,7 +280,8 @@ class ComponentType(HWDBObject):
         self._futures = {
             "component": _executor.submit(
                                 ra.get_component_type, 
-                                part_type_id=part_type_id_decomp['part_type_id']),
+                                part_type_id=part_type_id_decomp['part_type_id'],
+                                **self.fwd_kwargs),
         }
         #}}}            
 
@@ -281,7 +302,7 @@ class HWItem(HWDBObject):
 
         if part_id_decomp is None:
             # The part_id was not a valid format!
-            msg = f"Invalid part_id: {part_id}"
+            msg = f"Invalid part_id: {constructor_kwargs['part_id']}"
             logger.error(f"{HLE}{msg}")
             self.__class__._statistics['failed'] += 1
             raise ValueError(msg)
@@ -292,28 +313,35 @@ class HWItem(HWDBObject):
         self._futures = {
             "hwitem": _executor.submit(
                                 ra.get_hwitem, 
-                                part_id=part_id_decomp['part_id']),
+                                part_id=part_id_decomp['part_id'],
+                                **self.fwd_kwargs),
             "subcomp": _executor.submit(
                                 ra.get_subcomponents, 
-                                part_id=part_id_decomp['part_id']),
+                                part_id=part_id_decomp['part_id'],
+                                **self.fwd_kwargs),
             "locations": _executor.submit(
                                 ra.get_hwitem_locations,
-                                part_id=part_id_decomp['part_id']),
+                                part_id=part_id_decomp['part_id'],
+                                **self.fwd_kwargs),
             "qr_code": _executor.submit(
                                 ra.get_hwitem_qrcode,
-                                part_id=part_id_decomp['part_id']),
+                                part_id=part_id_decomp['part_id'],
+                                **self.fwd_kwargs),
             "component_obj": _executor.submit(
                                 ComponentType, 
-                                part_type_id=part_id_decomp["part_type_id"]),
+                                part_type_id=part_id_decomp["part_type_id"],
+                                **self.fwd_kwargs),
             "system_obj": _executor.submit(
                                 System, 
                                 project_id=part_id_decomp["project_id"],
-                                system_id=part_id_decomp["system_id"]),
+                                system_id=part_id_decomp["system_id"],
+                                **self.fwd_kwargs),
             "subsystem_obj": _executor.submit(
                                 Subsystem, 
                                 project_id=part_id_decomp["project_id"],
                                 system_id=part_id_decomp["system_id"],
-                                subsystem_id=part_id_decomp["subsystem_id"]),
+                                subsystem_id=part_id_decomp["subsystem_id"],
+                                **self.fwd_kwargs),
         }
         #}}}            
 
@@ -370,7 +398,11 @@ def main():
 
     print(part_ids)
 
-    hwitems_future = [ _executor.submit(HWItem, part_id=part_id) for part_id in part_ids ]
+    status_callback = lambda msg: Style.info.print(msg, flush=True)
+    fwd_kwargs = {"status_callback": status_callback}
+
+    hwitems_future = [ _executor.submit(HWItem, part_id=part_id, **fwd_kwargs) 
+                        for part_id in part_ids ]
 
 
     for future in hwitems_future:

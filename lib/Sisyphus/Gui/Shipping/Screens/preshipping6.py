@@ -1,102 +1,73 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2025 Regents of the University of Minnesota
+Author:
+    Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
+"""
 
-#{{{
-from Sisyphus.Configuration import config, USER_SETTINGS_DIR
+from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
-import Sisyphus
+HLD = highlight = "[bg=#999999,fg=#ffffff]"
+HLI = highlight = "[bg=#009900,fg=#ffffff]"
+HLW = highlight = "[bg=#999900,fg=#ffffff]"
+HLE = highlight = "[bg=#990000,fg=#ffffff]"
+
+from Sisyphus.Utils.Terminal.Style import Style
+from Sisyphus.Gui.Shipping import Widgets as zw
+from Sisyphus.Gui.Shipping import Model as mdl
+from Sisyphus.Gui.Shipping.ShippingLabel import ShippingLabel
+
 from Sisyphus import RestApiV1 as ra
 from Sisyphus.RestApiV1 import Utilities as ut
 
-from Sisyphus.Utils.Terminal.Style import Style
+from PyQt5 import QtWidgets as qtw
+from PyQt5 import QtCore as qtc
+#from PyQt5 import QtWebEngineWidgets as qtweb
 
-from Sisyphus.Gui.Shipping.Widgets import PageWidget, NavBar
-from Sisyphus.Gui.Shipping.Widgets import ZLineEdit, ZTextEdit, ZCheckBox
-
-from Sisyphus.Gui.Shipping.ShippingLabel import ShippingLabel
-
-from PyQt5.QtCore import QSize, Qt, pyqtSignal, pyqtSlot, QUrl
-from PyQt5.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QWidget,
-    QPushButton,
-    QVBoxLayout,
-    QHBoxLayout,
-    QStackedLayout,
-    QLabel,
-    QTextEdit,
-    QPlainTextEdit,
-    QLineEdit,
-    QGridLayout,
-    QTableWidget,
-    QTableWidgetItem,
-    QCheckBox,
-    QTabWidget,
-    QMenu,
-    QMenuBar,
-    QAction,
-    QStackedWidget,
-    QRadioButton,
-    QGroupBox,
-    QButtonGroup,
-)
-from PyQt5.QtWebEngineWidgets import QWebEngineView
-
-try:
-    from reportlab.pdfgen import canvas
-    from reportlab.lib import units
-    _reportlab_available = True
-
-except ModuleNotFoundError:
-    _reportlab_available = False
-import PIL.Image
-import io
-import smtplib, csv
-import tempfile
-import json
 import os
-import base64
-#}}}
+import json
 
-class PreShipping6(PageWidget):
-    #{{{
+
+class PreShipping6(zw.PageWidget):
+    page_name = "Pre-Shipping Workflow (6)"
+    page_short_name = "Pre-Shipping (6)"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.page_name = "Pre-Shipping (6)"
 
         self.pdf_filename = None        
         self.pdf_full_filename = None        
 
-        self.page_message = QLabel('<empty>')
+        self.page_message = qtw.QLabel('<empty>')
         self.page_message.setWordWrap(True)
-        self.pdf_view = QWebEngineView()
+        #self.pdf_view = qtweb.QWebEngineView()
 
-        self._construct_page()
+        self._setup_UI()
 
-    def _construct_page(self):
-        screen_layout = QVBoxLayout()
+    def _setup_UI(self):
+        main_layout = qtw.QVBoxLayout()
         ########################################
 
-        page_title = QLabel("Pre-Shipping Workflow (6)")
-        page_title.setStyleSheet("""
-                font-size: 14pt;
-                font-weight: bold;
-            """)
-        page_title.setAlignment(Qt.AlignCenter)
-        screen_layout.addWidget(page_title)
+        #page_title = qtw.QLabel("Pre-Shipping Workflow (6)")
+        #page_title.setStyleSheet("""
+        #        font-size: 14pt;
+        #        font-weight: bold;
+        #    """)
+        #page_title.setAlignment(qtc.Qt.AlignCenter)
+        #main_layout.addWidget(page_title)
+        main_layout.addWidget(self.title_bar)
         ################
 
-        #screen_layout.addWidget(QLabel("(show shipping sheet)"))
-        #screen_layout.addWidget(self.pdf_view)
-        screen_layout.addWidget(self.page_message)
+        main_layout.addWidget(self.page_message)
 
         ################
-        screen_layout.addStretch()
+        main_layout.addStretch()
 
-        screen_layout.addWidget(self.nav_bar)
+        main_layout.addWidget(self.nav_bar)
 
-        self.setLayout(screen_layout)
+        self.setLayout(main_layout)
 
         #self.generate_shipping_sheet()
 
@@ -105,14 +76,10 @@ class PreShipping6(PageWidget):
         self.generate_shipping_sheet()
 
     def generate_shipping_sheet(self):
-        working_directory = self.tab_state.setdefault(
-                                        "working_directory", 
-                                        os.path.realpath(os.path.curdir))
-
         self.pdf_filename = f"{self.tab_state['part_info']['part_id']}-shipping-label.pdf"
-        self.pdf_full_filename = os.path.join(working_directory, self.pdf_filename)
+        self.pdf_full_filename = os.path.join(self.working_directory, self.pdf_filename)
 
-        ShippingLabel(self.pdf_filename, self.tab_state, show_logo=False, debug=False)
+        ShippingLabel(self.pdf_full_filename, self.tab_state, show_logo=False, debug=False)
 
 
         text = (
@@ -121,10 +88,6 @@ class PreShipping6(PageWidget):
         )
 
         self.page_message.setText(text)
-
-        #self.pdf_view.load(QUrl.fromLocalFile(filename))
-        #self.pdf_view.load(QUrl("https://google.com"))
-        #self.pdf_view.show()
 
 
     def update_hwdb(self):
@@ -186,7 +149,12 @@ class PreShipping6(PageWidget):
         logger.info(json.dumps(item_resp, indent=4))
         specs = item_resp['Item']['specifications'][-1]
 
-        specs.setdefault('DATA', {})['Pre-Shipping Checklist'] = \
+        # Sometimes this bastard 'DATA' is a list instead of a dict!
+        # So wipe it out and make it a dict.
+        if not isinstance(specs.get('DATA'), dict):
+            specs['DATA'] = {}
+
+        specs['DATA']['Pre-Shipping Checklist'] = \
                     [ {k: v} for k, v in ps_checklist.items() ]
         specs['DATA']['SubPIDs'] = sub_pids
 
@@ -215,4 +183,3 @@ class PreShipping6(PageWidget):
 
         self.update_hwdb()        
 
-    #}}}

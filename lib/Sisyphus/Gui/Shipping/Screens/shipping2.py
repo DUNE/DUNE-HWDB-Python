@@ -6,39 +6,19 @@ Author:
     Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
 """
 
-#{{{
-from Sisyphus.Gui.Shipping.Widgets import PageWidget, NavBar
-from Sisyphus.Gui.Shipping.Widgets import ZLineEdit, ZFileSelectWidget
+from Sisyphus.Configuration import config, USER_SETTINGS_DIR
+logger = config.getLogger(__name__)  
 
-from PyQt5.QtCore import QSize, Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QWidget,
-    QPushButton,
-    QVBoxLayout,
-    QHBoxLayout,
-    QStackedLayout,
-    QLabel,
-    QTextEdit,
-    QPlainTextEdit,
-    QLineEdit,
-    QGridLayout,
-    QTableWidget,
-    QTableWidgetItem,
-    QCheckBox,
-    QTabWidget,
-    QMenu,
-    QMenuBar,
-    QAction,
-    QStackedWidget,
-    QRadioButton,
-    QFileDialog,
-)
-#}}}
+from Sisyphus.Gui.Shipping import Widgets as zw
 
-class Shipping2(PageWidget):
-    #{{{
+from PyQt5 import QtCore as qtc
+from PyQt5 import QtWidgets as qtw
+
+
+class Shipping2(zw.PageWidget):
+    page_name = "Shipping Workflow (2)"
+    page_short_name = "Shipping (2)"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -46,57 +26,50 @@ class Shipping2(PageWidget):
         #self.select_bol_button = QPushButton("Select BoL file")
         #self.select_bol_button.clicked.connect(self.select_bol_dialog)
 
-        self.bol_file = ZFileSelectWidget(owner=self, key='bol_filename')
+        self.bol_file = zw.ZFileSelectWidget(owner=self, key='bol_filename')
 
-        self.proforma_container = QWidget()
-        self.proforma_file = ZFileSelectWidget(owner=self, key='proforma_filename')
+        self.proforma_container = qtw.QWidget()
+        self.proforma_file = zw.ZFileSelectWidget(owner=self, key='proforma_filename')
 
-        self._construct_page()
-        self.update()
+        self._setup_UI()
+        #self.update()
 
-    def _construct_page(self):
+    def _setup_UI(self):
         #{{{
-        screen_layout = QVBoxLayout()
+        main_layout = qtw.QVBoxLayout()
 
-        #############################
-        page_title = QLabel("Shipping Workflow (2)")
-        page_title.setStyleSheet("""
-                font-size: 14pt;
-                font-weight: bold;
-            """)
-        page_title.setAlignment(Qt.AlignCenter)
-        screen_layout.addWidget(page_title)
+        main_layout.addWidget(self.title_bar)
         #############################
 
 
-        screen_layout.addWidget(
-                QLabel("Select Bill of Lading image file:"))
-        screen_layout.addWidget(self.bol_file)
+        main_layout.addWidget(
+                qtw.QLabel("Select Bill of Lading image file:"))
+        main_layout.addWidget(self.bol_file)
        
-        screen_layout.addSpacing(20)
+        main_layout.addSpacing(20)
  
 
-        proforma_layout = QVBoxLayout()
+        proforma_layout = qtw.QVBoxLayout()
         proforma_layout.setContentsMargins(0, 0, 0, 0)
         self.proforma_container.setLayout(proforma_layout)
-        screen_layout.addWidget(self.proforma_container)
+        main_layout.addWidget(self.proforma_container)
 
-        #screen_layout.addWidget(
+        #main_layout.addWidget(
         #        QLabel("Select Proforma image file:"))
-        #screen_layout.addWidget(self.proforma_file)
+        #main_layout.addWidget(self.proforma_file)
         proforma_layout.addWidget(
-                QLabel("Select Proforma image file:"))
+                qtw.QLabel("Select Proforma image file:"))
         proforma_layout.addWidget(self.proforma_file)
 
 
         #############################
-        screen_layout.addStretch()
-        screen_layout.addWidget(self.nav_bar)
-        self.setLayout(screen_layout)
+        main_layout.addStretch()
+        main_layout.addWidget(self.nav_bar)
+        self.setLayout(main_layout)
         #}}}
 
     def select_bol_dialog(self):
-        file_dialog = QFileDialog(self)
+        file_dialog = qtw.QFileDialog(self)
         file_dialog.setWindowTitle("Select Bill of Lading Image File")
 
         if file_dialog.exec():
@@ -105,8 +78,12 @@ class Shipping2(PageWidget):
     def update(self):
         super().update()
 
+        import json
+        logger.warning(json.dumps(self.tab_state, indent=4))
+
         shipping_service_type = self.tab_state.get('PreShipping3a', {}) \
                     .get('shipping_service_type', 'Domestic')
+
         if shipping_service_type != "International":
             self.proforma_container.setEnabled(False)
             self.page_state['proforma_filename'] = ''

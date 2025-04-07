@@ -8,60 +8,65 @@ Author:
 
 from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
+#logger.setLevel("INFO")
+
+HLD = highlight = "[bg=#999999,fg=#ffffff]"
+HLI = highlight = "[bg=#009900,fg=#ffffff]"
+HLW = highlight = "[bg=#999900,fg=#ffffff]"
+HLE = highlight = "[bg=#990000,fg=#ffffff]"
 
 from Sisyphus.Utils.Terminal.Style import Style
 import json
+import os
 
 from PyQt5 import QtCore as qtc
 from PyQt5 import QtWidgets as qtw
 
-#from PyQt5.QtCore import QSize, Qt, pyqtSignal, pyqtSlot, QDateTime
-
-'''
-from PyQt5.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QWidget,
-    QPushButton,
-    QVBoxLayout,
-    QHBoxLayout,
-    QStackedLayout,
-    QLabel,
-    QTextEdit,
-    QPlainTextEdit,
-    QLineEdit,
-    QGridLayout,
-    QTableWidget,
-    QTableWidgetItem,
-    QCheckBox,
-    QTabWidget,
-    QMenu,
-    QMenuBar,
-    QAction,
-    QStackedWidget,
-    QRadioButton,
-    QButtonGroup,
-    QDateTimeEdit,
-    QFileDialog,
-)
-'''
-
 class PageWidget(qtw.QWidget):
     #{{{
     def __init__(self, *args, **kwargs):
-        logger.debug(f"{self.__class__.__name__}.__init__()")
+        logger.debug(f"[{self.__class__.__name__}].__init__()")
+
+        self.owner = kwargs.pop("owner", None)
+        if self.owner is None:
+            raise ValueError("required paramter: owner")
+
+        self.workflow = self.owner
+        self.application = self.workflow.application
+
         super().__init__(*args, **kwargs)
-        self.workflow = self.parent()
         self._app_state = self.workflow.app_state
         self._tab_state = self.workflow.tab_state
         self.page_id = self.__class__.__name__.split('.')[-1]
 
-        # Use page_id as the default name, but should be 
-        # overridden if you want a nicer human-readable name
-        self.page_name = self.page_id
+        self.title_bar = TitleBar(owner = self)
+        self.nav_bar = NavBar(owner = self)
 
-        self.nav_bar = NavBar(workflow = self.workflow)
+    @property
+    def page_name(self):
+        try:
+            return self._page_name
+        except AttributeError:
+            logger.warning(f"{self.__class__.__name__} page_name not set!")
+            self._page_name = self.page_id
+            return self._page_name
 
+    @page_name.setter
+    def page_name(self, value):
+        self._page_name = value
+
+    @property
+    def page_short_name(self):
+        try:
+            return self._page_short_name
+        except AttributeError:
+            logger.warning("page_short_name not set!")
+            self._page_short_name = self.page_name
+            return self._page_short_name
+
+    @property
+    def part_id(self):
+        return self.tab_state.get("part_info", {}).get("part_id", None)
 
     @property
     def app_state(self):
@@ -69,7 +74,9 @@ class PageWidget(qtw.QWidget):
 
     @property
     def tab_state(self):
-        return self.workflow.tab_state
+        tab_state = self.workflow.tab_state
+        return tab_state
+
     @tab_state.setter
     def tab_state(self, value):
         self.workflow.tab_state = value
@@ -81,55 +88,101 @@ class PageWidget(qtw.QWidget):
 
     def save(self):
         logger.debug(f"{self.__class__.__name__}.save()")
+        self.workflow.save()
+
+    @property
+    def tab_title(self):
+        if self.part_id is not None:
+            tab_title = f"{self.part_id}\n{self.page_short_name}"
+        else:
+            tab_title = f"{self.page_short_name}"
+        return tab_title
+
+    def activate(self):
+        # call when switching to this page
+        logger.info(f"{HLD}{self.__class__.__name__}.activate()")
+        logger.info(f"(workflow init: {self.workflow._finished_init})")
+        self.restore()
+        self.update()
+        self.application.update_status(self.page_name)
 
     def restore(self):
-        logger.debug(f"{self.__class__.__name__}.restore()")
-
-        part_id = self.tab_state.get("part_info", {}).get("part_id", None)
-        if part_id is not None:
-            self.workflow.update_title(f"{part_id}\n{self.page_name}")
-        else:
-            self.workflow.update_title(f"{self.page_name}")
-
         for linked_widget in self.findChildren(LinkedWidget):
             linked_widget.restore()
-
-
-        self.update()
 
     def update(self):
         # overload this method to add an action when the content of the page
         # has changed, e.g., to enable/disable nav buttons
-        logger.debug(f"{self.__class__.__name__}.update()")
-
+        logger.info(f"{HLI}{self.__class__.__name__}.update()")
+        self.title_bar.page_subtitle.restore()
 
     def on_navigate_next(self):
-        logger.debug(f"{self.__class__.__name__}.on_navigate_next()")
-        ...
+        logger.debug(f"{HLD}{self.__class__.__name__}.on_navigate_next()")
+        self.save()
 
     def on_navigate_prev(self):
-        logger.debug(f"{self.__class__.__name__}.on_navigate_prev()")
-        ...
+        logger.debug(f"{HLD}{self.__class__.__name__}.on_navigate_prev()")
+        self.save()
+
+    @property
+    def working_directory(self):
+        if self.part_id is None:
+            retval = self.application.working_directory
+        else:
+            retval = os.path.normpath(
+                            os.path.join(self.application.working_directory, self.part_id))
+        os.makedirs(retval, exist_ok=True)
+        return retval
+    #}}}
+
+class TitleBar(qtw.QWidget):
+    #{{{
+    def __init__(self, *args, **kwargs):
+        #logger.debug(f"{self.__class__.__name__}.__init__()")
+
+        self.owner = kwargs.pop('owner', None)        
+        if self.owner is None:
+            raise ValueError("required parameter: owner")
+
+        super().__init__(*args, **kwargs)
+        
+        main_layout = qtw.QVBoxLayout()
+        main_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.page_title = qtw.QLabel(self.owner.page_name)
+        self.page_title.setStyleSheet("""
+                font-size: 14pt;
+                font-weight: bold;
+            """)
+        self.page_title.setAlignment(qtc.Qt.AlignCenter)
+
+        main_layout.addWidget(self.page_title)
+
+        self.page_subtitle = ZLabel(owner=self.owner, key='attr:part_id', default='[no part_id yet]')
+        self.page_subtitle.setAlignment(qtc.Qt.AlignCenter)
+        
+        main_layout.addWidget(self.page_subtitle)
+
+        self.setLayout(main_layout)
     #}}}
 
 class NavBar(qtw.QWidget):
     #{{{
     def __init__(self, *args, **kwargs):
-        logger.debug(f"{self.__class__.__name__}.__init__()")
 
-        self.workflow = kwargs.pop('workflow', None)
-        if self.workflow is None:
-            raise ValueError("required parameter: workflow")
+        self.owner = kwargs.pop('owner', None)
+        if self.owner is None:
+            raise ValueError("required parameter: owner")
 
         super().__init__(*args, **kwargs)
 
         nav_layout = qtw.QHBoxLayout()
 
         self.back_button = qtw.QPushButton("Back")
-        self.back_button.clicked.connect(self.workflow.navigate_prev)
+        self.back_button.clicked.connect(self.owner.workflow.navigate_prev)
 
         self.continue_button = qtw.QPushButton("Continue")
-        self.continue_button.clicked.connect(self.workflow.navigate_next)
+        self.continue_button.clicked.connect(self.owner.workflow.navigate_next)
 
         nav_layout.addWidget(self.back_button)
         nav_layout.addStretch()
@@ -141,8 +194,8 @@ class NavBar(qtw.QWidget):
 class LinkedWidget:
     #{{{
     def __init__(self, *args, **kwargs):
-        logger.debug(f"LinkedWidget.__init__(args={args}, kwargs={kwargs})")
-        
+        #logger.debug(f"{self.__class__.__name__}.__init__()")
+ 
         # owner = the page that this widget belongs to, which is not 
         #           necessarily the parent. (The parent could be a 
         #           different container widget that we don't care
@@ -170,6 +223,7 @@ class LinkedWidget:
         # This should call the 'other' inherited class' __init__, 
         # whatever it happens to be
         super().__init__(*args, **kwargs)
+        self.setObjectName(__class__.__name__)       
 
     @property
     def page_state(self):
@@ -195,26 +249,11 @@ class LinkedWidget:
 class ZCheckBox(qtw.QCheckBox, LinkedWidget):
     #{{{
     def __init__(self, *args, **kwargs):
-        logger.debug(f"{self.__class__.__name__}.__init__()")
         super().__init__(*args, **kwargs)
-        #self.owner = kwargs.pop('owner', None)
-        #self.page_state_key = kwargs.pop('key', 'unnamed')
-
-        #if self.owner is None:
-        #    raise ValueError("required parameter: owner")
-
-        #super().__init__(*args, **kwargs)
-        
-        #self.tab_state = self.owner.tab_state
-        #self.page_state = self.owner.page_state
-
         self.toggled.connect(self.handle_changed)
-
-        #self.restore()
 
     def handle_changed(self, status):
         self.page_state[self.page_state_key] = status
-        #logger.debug(f"{self.__class__.__name__}.handle_changed")
         self.owner.update()
 
     def restore_state(self):
@@ -226,23 +265,11 @@ class ZCheckBox(qtw.QCheckBox, LinkedWidget):
 class ZDateTimeEdit(qtw.QDateTimeEdit, LinkedWidget):
     #{{{
     def __init__(self, *args, **kwargs):
-        logger.debug(f"{self.__class__.__name__}.__init__()")
-        #self.owner = kwargs.pop('owner', None)
-        #self.page_state_key = kwargs.pop('key', 'unnamed')
-
-        #if self.owner is None:
-        #    raise ValueError("required parameter: owner")
-
         super().__init__(*args, **kwargs)
-
-        #self.tab_state = self.owner.tab_state
-        #self.page_state = self.owner.page_state
         
         self.setCalendarPopup(True)
         self.dateTimeChanged.connect(self.handle_changed)
 
-        #self.restore()
-    
     def handle_changed(self):
         self.page_state[self.page_state_key] = self.dateTime().toString()
         self.owner.update()
@@ -261,28 +288,24 @@ class ZDateTimeEdit(qtw.QDateTimeEdit, LinkedWidget):
 class ZLabel(qtw.QLabel, LinkedWidget):
     #{{{
     def __init__(self, *args, **kwargs):
-        logger.debug(f"{self.__class__.__name__}.__init__()")
-        #self.owner = kwargs.pop('owner', None)
-        #self.page_state_key = kwargs.pop('key', 'unnamed')
-        #self.default_value = kwargs.pop('default', '')
-        # 
-        #if self.owner is None:
-        #    raise ValueError("required parameter: owner")
-
         super().__init__(*args, **kwargs)
-
-        
-        #self.page_state = self.owner.page_state
-        #self.restore()
 
     def setText(self, txt):
         self.page_state[self.page_state_key] = txt
         super().setText(txt)
-        self.owner.update()
+        #self.owner.update()
 
     def restore_state(self):
         super().restore_state()
-        txt = self.page_state.get(self.page_state_key, self.default_value)
+
+        if self.page_state_key.startswith('attr:'):
+            attr_key = self.page_state_key[5:]
+            if hasattr(self.owner, attr_key):
+                txt = getattr(self.owner, attr_key) or self.default_value
+            else:
+                txt = self.default_value
+        else:
+            txt = self.page_state.get(self.page_state_key, self.default_value)
         super().setText(txt)
 
     #}}}
@@ -290,23 +313,8 @@ class ZLabel(qtw.QLabel, LinkedWidget):
 class ZLineEdit(qtw.QLineEdit, LinkedWidget):
     #{{{
     def __init__(self, *args, **kwargs):
-        logger.debug(f"{self.__class__.__name__}.__init__()")
-        #self.owner = kwargs.pop('owner', None)
-        #self.page_state_key = kwargs.pop('key', 'unnamed')
-        #self.default_value = kwargs.pop('default', '')
-
-        #if self.owner is None:
-        #    raise ValueError("required parameter: owner")
-
         super().__init__(*args, **kwargs)
-
-        #self.tab_state = self.owner.tab_state
-        #self.page_state = self.owner.page_state
-        #self.textChanged.connect(self.owner.update)
-        #self.editingFinished.connect(self.handle_changed)
         self.textChanged.connect(self.handle_changed)
-
-        #self.restore()
     
     def handle_changed(self):
         self.page_state[self.page_state_key] = self.text()
@@ -323,30 +331,15 @@ class ZTextEdit(qtw.QTextEdit, LinkedWidget):
     receivedFocus = qtc.pyqtSignal()
 
     def __init__(self, *args, **kwargs):
-        logger.debug(f"{self.__class__.__name__}.__init__()")
-        #self.owner = kwargs.pop('owner', None)
-        #self.page_state_key = kwargs.pop('key', 'unnamed')
-        
-        #if self.owner is None:
-        #    raise ValueError("required parameter: owner")
-
         super().__init__(*args, **kwargs)
-
-        #self.tab_state = self.owner.tab_state
-        #self.page_state = self.owner.page_state
 
         self._changed = False
         self.setTabChangesFocus(True)
         self.textChanged.connect(self._handle_text_changed)
 
-        #self.editingFinished.connect(self.handle_editingFinished)
-        #self.textChanged.connect(self.owner.update)
         self.textChanged.connect(self.handle_editingFinished)
 
-        #self.restore()
-
     def handle_editingFinished(self):
-        #self.page_state[self.page_state_key] = self.text()
         self.page_state[self.page_state_key] = self.document().toPlainText()
         self.owner.update()
 
@@ -373,26 +366,8 @@ class ZTextEdit(qtw.QTextEdit, LinkedWidget):
 class ZRadioButton(qtw.QRadioButton, LinkedWidget):
     #{{{
     def __init__(self, *args, **kwargs):
-        logger.debug(f"{self.__class__.__name__}.__init__()")
-        #self.owner = kwargs.pop('owner', None)
-        #self.page_state_key = kwargs.pop('key', None)
-        #self.page_state_value = kwargs.pop('value', None)
-        
-        #if self.owner is None:
-        #    raise ValueError("required parameter: owner")
-        #if self.page_state_key is None:
-        #    raise ValueError("required parameter: key")
-        #if self.page_state_value is None:
-        #    raise ValueError("required parameter: value")
-        
         super().__init__(*args, **kwargs)
-
-        #self.tab_state = self.owner.tab_state
-        #self.page_state = self.owner.page_state
-
         self.toggled.connect(self.handle_selected)
-
-        #self.restore()
 
     def handle_selected(self):
         if self.isChecked():
@@ -412,22 +387,7 @@ class ZRadioButton(qtw.QRadioButton, LinkedWidget):
 class ZRadioButtonGroup(qtw.QButtonGroup, LinkedWidget):
     #{{{
     def __init__(self, *args, **kwargs):
-        logger.debug(f"{self.__class__.__name__}.__init__()")
-        #self.owner = kwargs.pop('owner', None)
-        #self.page_state_key = kwargs.pop('key', None)
-        #self.page_state_value = kwargs.pop('value', None)
-        #self.default_value = kwargs.pop('default', None)
-        
-        #if self.owner is None:
-        #    raise ValueError("required parameter: owner")
-        #if self.page_state_key is None:
-        #    raise ValueError("required parameter: key")
-
         super().__init__(*args, **kwargs)
-
-        #self.tab_state = self.owner.tab_state
-        #self.page_state = self.owner.page_state
-
         self.buttons = {}
 
     def button(self, value):
@@ -444,8 +404,6 @@ class ZRadioButtonGroup(qtw.QButtonGroup, LinkedWidget):
         if caption is not None:
             new_button.setText(caption)
 
-        #new_button.toggled.connect(self.handle_changed)
-
         self.buttons[value] = new_button
         self.addButton(new_button)
 
@@ -453,32 +411,18 @@ class ZRadioButtonGroup(qtw.QButtonGroup, LinkedWidget):
 
     def handle_changed(self):
         pass # The buttons themselves handle this now
-        #rb = self.sender()
-        #
-        #if not rb.isChecked():
-        #    return
 
-    def restore_state(self):
-        super().restore_state()
-        #logger.debug(f"{self.page_state_key}/{self.page_state_value}: restoring state")
-        pass
     #}}}
 
 class ZFileSelectWidget(qtw.QWidget, LinkedWidget):
     #{{{
     def __init__(self, *args, **kwargs):
-        #self.owner = kwargs.pop('owner', None)
+        # We have to 'pop' these first, or __init__ on the underlying
+        # QWidget will choke on them!
         self.button_text = kwargs.pop('button_text', 'select file')
         self.dialog_title = kwargs.pop('dialog_title', 'Select File')
-        #self.page_state_key = kwargs.pop('key', 'unnamed')
-
-        #if self.owner is None:
-        #    raise ValueError("required parameter: owner")
 
         super().__init__(*args, **kwargs)
-
-        #self.tab_state = self.owner.tab_state
-        #self.page_state = self.owner.page_state
 
         self.button = qtw.QPushButton(self.button_text)
         self.button.setStyleSheet('''
@@ -516,3 +460,23 @@ class ZFileSelectWidget(qtw.QWidget, LinkedWidget):
         super().restore_state()
         self.filename_lineedit.setText(self.page_state.get(self.page_state_key, ''))
     #}}}
+
+class ZInstitutionWidget(qtw.QWidget, LinkedWidget):
+    #{{{
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        layout = qtw.QHBoxLayout()
+        self.setLayout(layout)
+
+        self.country_list_widget = qtw.QComboBox()
+        self.institution_list_widget = qtw.QComboBox()
+
+        layout.addWidget(self.country_list_widget)
+        layout.addWidget(self.institution_list_widget)
+
+    #}}}
+
+
+
+

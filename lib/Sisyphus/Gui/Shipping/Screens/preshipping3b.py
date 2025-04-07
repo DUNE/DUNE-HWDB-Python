@@ -52,10 +52,11 @@ import json
 #}}}
 
 class PreShipping3b(PageWidget):
+    page_name = "Pre-Shipping Workflow (3b)"
+    page_short_name = "Pre-Shipping (3b)"
     #{{{
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.page_name = "Pre-Shipping (3b)"
 
         self.freight_forwarder = ZLineEdit(owner=self, key='freight_forwarder')
         self.mode_of_transportation = ZLineEdit(owner=self, key='mode_of_transportation')
@@ -63,9 +64,9 @@ class PreShipping3b(PageWidget):
         self.expected_arrival_time = ZDateTimeEdit(owner=self, key='expected_arrival_time')
         
 
-        self._construct_page()
+        self._setup_UI()
 
-    def _construct_page(self):
+    def _setup_UI(self):
         #{{{
         screen_layout = QVBoxLayout()
         ########################################

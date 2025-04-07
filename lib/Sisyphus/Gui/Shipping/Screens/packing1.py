@@ -29,6 +29,8 @@ from PyQt5.QtWidgets import (
 
 
 class Packing1(PageWidget):
+    page_name = "Packing Workflow (1)"
+    page_short_name = "Packing (1)"
     #{{{
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

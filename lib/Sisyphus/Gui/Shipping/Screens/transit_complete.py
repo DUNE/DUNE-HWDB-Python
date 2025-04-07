@@ -31,6 +31,8 @@ from PyQt5.QtGui import QIcon
 
 class TransitComplete(PageWidget):
     #{{{
+    page_name = "Transit Workflow Complete"
+    page_short_name = "Transit Complete"
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

@@ -6,78 +6,41 @@ Author:
     Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
 """
 
-#{{{
 from Sisyphus.Configuration import config, USER_SETTINGS_DIR
 logger = config.getLogger(__name__)
 
-import Sisyphus
-from Sisyphus import RestApiV1 as ra
-from Sisyphus.RestApiV1 import Utilities as ut
-
 from Sisyphus.Utils.Terminal.Style import Style
-
-from Sisyphus.Gui.Shipping.Widgets import PageWidget, NavBar
-from Sisyphus.Gui.Shipping.Widgets import ZLineEdit, ZTextEdit, ZCheckBox
-
+from Sisyphus.Gui.Shipping import Widgets as zw
 from Sisyphus.Gui.Shipping.ShippingLabel import ShippingLabel
 
-from PyQt5.QtCore import QSize, Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QWidget,
-    QPushButton,
-    QVBoxLayout,
-    QHBoxLayout,
-    QStackedLayout,
-    QLabel,
-    QTextEdit,
-    QPlainTextEdit,
-    QLineEdit,
-    QGridLayout,
-    QTableWidget,
-    QTableWidgetItem,
-    QCheckBox,
-    QTabWidget,
-    QMenu,
-    QMenuBar,
-    QAction,
-    QStackedWidget,
-    QRadioButton,
-    QGroupBox,
-    QButtonGroup,
-)
+from PyQt5 import QtWidgets as qtw
 
-import json
-#}}}
+class PreShipping1(zw.PageWidget):
+    page_name = "Pre-Shipping Workflow (1)"
+    page_short_name = "Pre-Shipping (1)"
 
-class PreShipping1(PageWidget):
-    #{{{
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.page_name = "Pre-Shipping (1)"
 
         # Create the interactive widgets on this page
 
-        self.subcomp_caption = QLabel("Contents")
+        self.subcomp_caption = qtw.QLabel("Contents")
 
-        self.table = QTableWidget(0, 3)
+        self.table = qtw.QTableWidget(0, 3)
         self.table.verticalHeader().setVisible(False)
 
         msg = "The list of components for this shipment is correct"
-        self.confirm_list_checkbox = ZCheckBox(owner=self, text=msg, key="confirm_list")
-        #self.confirm_list_checkbox.toggled.connect(self.toggle_confirm_list)
+        self.confirm_list_checkbox = zw.ZCheckBox(owner=self, text=msg, key="confirm_list")
         
 
         msg = "All necessary QA/QC information for these components " \
                     "has been stored in the HWDB"
-        self.confirm_hwdb_updated_checkbox = ZCheckBox(owner=self, text=msg, key="hwdb_updated")
-        #self.confirm_hwdb_updated_checkbox.toggled.connect(self.toggle_hwdb_updated)
+        self.confirm_hwdb_updated_checkbox = zw.ZCheckBox(owner=self, text=msg, key="hwdb_updated")
         
         # Create the actual layout and place the interactive widgets in it
-        self._construct_page()
+        self._setup_UI()
 
-    def _construct_page(self):
+    def _setup_UI(self):
         #{{{
         # This should create the visual appearance of the page. Any widgets
         # that are interactive should be created elsewhere, and then placed
@@ -85,21 +48,11 @@ class PreShipping1(PageWidget):
         # that the code creating and controlling dynamic elements won't be
         # cluttered by all the layout code here.
 
-        screen_layout = QVBoxLayout()
-
+        main_layout = qtw.QVBoxLayout()
+        main_layout.addWidget(self.title_bar)
         ########################################
 
-        page_title = QLabel("Pre-Shipping Workflow (1)")
-        page_title.setStyleSheet("""
-                font-size: 14pt;
-                font-weight: bold;
-            """)
-        page_title.setAlignment(Qt.AlignCenter)
-        screen_layout.addWidget(page_title)
-        
-        ########################################
-
-        subcomp_list_layout = QVBoxLayout()
+        subcomp_list_layout = qtw.QVBoxLayout()
         subcomp_list_layout.addWidget( self.subcomp_caption )
         subcomp_list_layout.addSpacing(5)
         horizontal_header = self.table.horizontalHeader()
@@ -109,36 +62,36 @@ class PreShipping1(PageWidget):
         self.table.setHorizontalHeaderLabels(['Sub-component PID',
                             'Component Type Name', 'Functional Position Name'])
         subcomp_list_layout.addWidget(self.table)
-        subcomp_list_widget = QWidget()
+        subcomp_list_widget = qtw.QWidget()
         subcomp_list_widget.setLayout(subcomp_list_layout)
-        screen_layout.addWidget(subcomp_list_widget)
-        screen_layout.addSpacing(10)
+        main_layout.addWidget(subcomp_list_widget)
+        main_layout.addSpacing(10)
 
         ########################################
 
 
-        screen_layout.addWidget(QLabel("Please affirm the following:"))
+        main_layout.addWidget(qtw.QLabel("Please affirm the following:"))
 
-        affirm_layout = QHBoxLayout()
+        affirm_layout = qtw.QHBoxLayout()
         affirm_layout.addSpacing(10)
 
-        indented_layout = QVBoxLayout()
+        indented_layout = qtw.QVBoxLayout()
         indented_layout.addWidget(self.confirm_list_checkbox)
         indented_layout.addWidget(self.confirm_hwdb_updated_checkbox)
-        indented_widget = QWidget()
+        indented_widget = qtw.QWidget()
         indented_widget.setLayout(indented_layout)
         affirm_layout.addWidget(indented_widget)
-        affirm_widget = QWidget()
+        affirm_widget = qtw.QWidget()
         affirm_widget.setLayout(affirm_layout)
-        screen_layout.addWidget(affirm_widget)
+        main_layout.addWidget(affirm_widget)
 
         ########################################
 
-        screen_layout.addStretch()
+        main_layout.addStretch()
 
-        screen_layout.addWidget(self.nav_bar)
+        main_layout.addWidget(self.nav_bar)
 
-        self.setLayout(screen_layout)
+        self.setLayout(main_layout)
         #}}}
 
     def restore(self):
@@ -155,9 +108,9 @@ class PreShipping1(PageWidget):
 
         self.table.setRowCount(len(subcomps))
         for idx, subcomp in enumerate(subcomps.values()):
-            self.table.setItem(idx, 0, QTableWidgetItem(subcomp['Sub-component PID']))
-            self.table.setItem(idx, 1, QTableWidgetItem(subcomp['Component Type Name']))
-            self.table.setItem(idx, 2, QTableWidgetItem(subcomp['Functional Position Name']))
+            self.table.setItem(idx, 0, qtw.QTableWidgetItem(subcomp['Sub-component PID']))
+            self.table.setItem(idx, 1, qtw.QTableWidgetItem(subcomp['Component Type Name']))
+            self.table.setItem(idx, 2, qtw.QTableWidgetItem(subcomp['Functional Position Name']))
     
     def update(self):
         super().update()
@@ -167,6 +120,4 @@ class PreShipping1(PageWidget):
             self.nav_bar.continue_button.setEnabled(True)
         else:
             self.nav_bar.continue_button.setEnabled(False)
-
-    #}}}
 

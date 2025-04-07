@@ -6,55 +6,57 @@ Author:
     Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
 """
 
-#{{{
-from Sisyphus.Gui.Shipping.Widgets import PageWidget, NavBar
+from Sisyphus.Configuration import config
+logger = config.getLogger(__name__)
 
-from PyQt5.QtCore import QSize, Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QWidget,
-    QPushButton,
-    QVBoxLayout,
-    QHBoxLayout,
-    QStackedLayout,
-    QLabel,
-    QTextEdit,
-    QPlainTextEdit,
-    QLineEdit,
-    QGridLayout,
-    QTableWidget,
-    QTableWidgetItem,
-    QCheckBox,
-    QTabWidget,
-    QMenu,
-    QMenuBar,
-    QAction,
-    QStackedWidget,
-    QRadioButton,
-)
-#}}}
+from Sisyphus.Gui.Shipping import Widgets as zw
+from PyQt5 import QtCore as qtc
+from PyQt5 import QtWidgets as qtw
 
-class Shipping5(PageWidget):
-    #{{{
+HLD = highlight = "[bg=#999999,fg=#ffffff]"
+HLI = highlight = "[bg=#009900,fg=#ffffff]"
+HLW = highlight = "[bg=#999900,fg=#ffffff]"
+HLE = highlight = "[bg=#990000,fg=#ffffff]"
+
+class Shipping5(zw.PageWidget):
+    page_name = "Shipping Workflow (5)"
+    page_short_name = "Shipping (5)"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        screen_layout = QVBoxLayout()
+        self.select_location = zw.ZInstitutionWidget(owner=self, key='location')        
+        #self.select_location = zw.ZLineEdit(owner=self, key='location')        
 
-        #############################
-        page_title = QLabel("Shipping (5)")
-        page_title.setStyleSheet("""
-                font-size: 14pt;
-                font-weight: bold;
-            """)
-        page_title.setAlignment(Qt.AlignCenter)
-        screen_layout.addWidget(page_title)
-        #############################
+        self._setup_UI()
 
-        screen_layout.addStretch()
+    def _setup_UI(self):
+        #{{{
+        main_layout = qtw.QVBoxLayout()
+        main_layout.addWidget(self.title_bar)        
 
-        screen_layout.addWidget(self.nav_bar)
-        self.setLayout(screen_layout)
-    #}}}
+        ########################################
+
+        main_layout.addWidget(self.select_location)
+
+ 
+        ################
+
+        main_layout.addStretch()
+        main_layout.addWidget(self.nav_bar)
+        self.setLayout(main_layout)
+        #}}}
+
+
+
+
+
+
+
+
+
+
+
+
+
 

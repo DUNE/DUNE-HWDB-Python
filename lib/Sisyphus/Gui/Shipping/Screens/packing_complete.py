@@ -28,6 +28,8 @@ from PyQt5.QtWidgets import (
 )
 
 class PackingComplete(PageWidget):
+    page_name = "Packing Workflow Complete"
+    page_short_name = "Packing Complete"
     #{{{
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

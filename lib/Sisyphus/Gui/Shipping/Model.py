@@ -34,12 +34,14 @@ HLE = highlight = "[bg=#990000,fg=#ffffff]"
 
 #{{{
 
-def download_part_info(part_id):
+def download_part_info(part_id, status_callback=None):
+
+    fwd_kwargs = {'status_callback': status_callback} if status_callback is not None else {}
 
     tab_state = {}
 
     try:
-        hwitem = dm.HWItem(part_id=part_id)
+        hwitem = dm.HWItem(part_id=part_id, **fwd_kwargs)
         #print(hwitem)
 
         #item_resp = ut.fetch_hwitems(part_id=part_id)[part_id]
@@ -61,8 +63,8 @@ def download_part_info(part_id):
         #resp_qr = ra.get_hwitem_qrcode(part_id=part_id).content
         #part_qr = base64.b85encode(resp_qr).decode('utf-8')
 
-    except ra.DatabaseError as exc:
-        logger.error(f"{HL}exc")
+    except (ra.DatabaseError, ValueError) as exc:
+        logger.error(f"{HLE}exc")
         return None
     
         msg = f'''<div style="color: #990000">{part_id} not found!</div>'''

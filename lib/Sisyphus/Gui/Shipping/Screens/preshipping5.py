@@ -56,9 +56,11 @@ import json
 
 class PreShipping5(PageWidget):
     #{{{
+    page_name = "Pre-Shipping Workflow (5)"
+    page_short_name = "Pre-Shipping (5)"
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.page_name = "Pre-Shipping (5)"
 
         self.received_acknowledgement = ZCheckBox("Yes, I have received an acknowledgement",
                     owner=self, key='received_acknowledgement')
@@ -73,10 +75,10 @@ class PreShipping5(PageWidget):
 
         self.damage_description = ZTextEdit(owner=self, key='damage_description')
 
-        self._construct_page()
+        self._setup_UI()
 
 
-    def _construct_page(self):
+    def _setup_UI(self):
         #{{{
         screen_layout = QVBoxLayout()
         ########################################

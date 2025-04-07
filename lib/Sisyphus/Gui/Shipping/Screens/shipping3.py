@@ -36,11 +36,12 @@ from PyQt5.QtWidgets import (
 )
 #}}}
 class Shipping3(PageWidget):
+    page_name = "Shipping Workflow (3)"
+    page_short_name = "Shipping (3)"
+
     #{{{
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        self.page_name = "Shipping (3)"
 
         self.email_contents = ZTextEdit(owner=self, key='email_contents')
 
@@ -50,9 +51,9 @@ class Shipping3(PageWidget):
                     'send it to the FD Logistics team:')
         self.instructions.setWordWrap(True)
 
-        self._construct_page()
+        self._setup_UI()
 
-    def _construct_page(self):
+    def _setup_UI(self):
         #{{{
         screen_layout = QVBoxLayout()
 
