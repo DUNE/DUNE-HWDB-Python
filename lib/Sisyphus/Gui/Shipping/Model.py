@@ -275,4 +275,24 @@ def update_location(part_id, location, arrived, comments):
 
     resp = ra.post_hwitem_location(part_id, data)
     return True
+
+def update_locations_and_detach(part_id, location, arrived, comments):
+    #{{{
+
+    update_location(part_id, location, arrived, comments)
+
+    hwitem = dm.HWItem(part_id=part_id)
+    
+
+    for subcomponent in hwitem.subcomponents:
+        update_location(subcomponent['part_id'], location, arrived, comments)
+
+    payload = {
+        "component": {"part_id": part_id},
+        "subcomponents": {s['functional_position']: None for s in hwitem.subcomponents},
+    }
+    
+    resp = ra.patch_subcomponents(part_id, payload)
+
+    return True
     #}}}
