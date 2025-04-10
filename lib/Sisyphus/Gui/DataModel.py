@@ -5,14 +5,13 @@ Copyright (c) 2025 Regents of the University of Minnesota
 Author:
     Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
 """
-from Sisyphus.Configuration import config, USER_SETTINGS_DIR
+
+from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
 import Sisyphus
 from Sisyphus import RestApiV1 as ra
 from Sisyphus.RestApiV1 import Utilities as ut
-
-from Sisyphus.Utils.Terminal.Style import Style
 
 import json
 import base64, PIL.Image, io
@@ -67,7 +66,8 @@ class HWDBObject:
     #{{{
     @classmethod
     def caching(cls, dec_cls):
-        setattr(dec_cls, '_cache', {'from_decorator': None, dec_cls.__name__: None})
+        #setattr(dec_cls, '_cache', {'from_decorator': None, dec_cls.__name__: None})
+        setattr(dec_cls, '_cache', {})
         setattr(dec_cls, '_class_lock', threading.RLock())
         setattr(dec_cls, '_statistics', {
                 "requested": 0,
@@ -88,7 +88,10 @@ class HWDBObject:
         cls._statistics['requested'] += 1
 
         constructor_kwargs = {arg: kwargs.get(arg) for arg in cls._constructor_args}
-        if len(constructor_kwargs) == 1:
+
+        if len(constructor_kwargs) == 0:
+            constructor_key = None
+        elif len(constructor_kwargs) == 1:
             constructor_key = constructor_kwargs[cls._constructor_args[0]]
         else:
             constructor_key = tuple(constructor_kwargs.values())
@@ -182,7 +185,28 @@ class HWDBObject:
             return self._data.get(future_name)
     #}}}
 
+
+@HWDBObject.caching
+class WhoAmI(HWDBObject):
+    #{{{
+    _constructor_args = [] # No args. Just get the whole list.
+    
+    def _start_queries(self, constructor_kwargs):
+        self._futures = {
+            "whoami": _executor.submit(
+                                ra.whoami,
+                                **constructor_kwargs,
+                                **self.fwd_kwargs),
+        }
+
+    @property
+    def data(self):
+        return self._get_results('whoami')['data']
+    #}}}
+
+@HWDBObject.caching
 class Institutions(HWDBObject):
+    #{{{
     _constructor_args = [] # No args. Just get the whole list.
     
     def _start_queries(self, constructor_kwargs):
@@ -196,7 +220,7 @@ class Institutions(HWDBObject):
     @property
     def data(self):
         return self._get_results('institutions')['data']
-
+    #}}}
 
 @HWDBObject.caching
 class System(HWDBObject):
@@ -392,69 +416,131 @@ class HWItem(HWDBObject):
 
 
 def main():
+    from Sisyphus.Utils.Terminal.Style import Style
+    from Sisyphus.Utils.Terminal.Image import image2text
+    
+    title_style = Style.info.underline()
+    debug_title_style = Style.debug.underline()
+
+    # USE THIS if you want to receive messages from the RestApiV1 library as queries
+    # are being processed.
+    #status_callback = lambda msg: Style.debug.print(f"callback: {msg}", flush=True)
+    #fwd_kwargs = {"status_callback": status_callback}
+    fwd_kwargs = {}
+
     part_id = ''
     if len(sys.argv) > 1:
         part_ids = sys.argv[1:]
 
-    print(part_ids)
+    ###############################
+    ##
+    ## OUTPUT PARTS LIST
+    ##
+    ###############################
+    print()
+    title_style.print("Parts List")
+    print('\n'.join(part_ids))
 
-    status_callback = lambda msg: Style.info.print(msg, flush=True)
-    fwd_kwargs = {"status_callback": status_callback}
-
-    hwitems_future = [ _executor.submit(HWItem, part_id=part_id, **fwd_kwargs) 
+    ################################################
+    ##
+    ## PERFORM A BUNCH OF SIMULTANEOUS QUERIES
+    ##
+    ################################################
+    whoami_future = _executor.submit(WhoAmI, **fwd_kwargs)
+    hwitems_future = [ (part_id, _executor.submit(HWItem, part_id=part_id, **fwd_kwargs))
                         for part_id in part_ids ]
 
+    ########################################
+    ##
+    ## OUTPUT 'WHO AM I?'
+    ## 
+    ########################################
 
-    for future in hwitems_future:
+    # Get the result of the whoami query, waiting for it to finish if necessary.
+    # Other 'futures' may still be in progress, but do not wait for them.
+    whoami = whoami_future.result()
+
+    print()
+    title_style.print("Who Am I?")    
+    Style.notice.print(json.dumps(whoami.data, indent=4))
+
+
+    ########################################
+    ##
+    ## OUTPUT HWITEMS
+    ## 
+    ########################################
+
+    # Get the results of the hwitem queries.
+    # I thought about doing some checking whether each one was finished and
+    # skipping past those that hadn't finished yet, but the way I wrote 
+    # the HWItem class, it should return right away. It's the results _inside_
+    # the class instance that may be waiting, and I didn't put anything in
+    # that would tell you what is or isn't ready.
+    hwitems = []
+    for (part_id, future) in hwitems_future:
         try:
             hwitem = future.result()
-            print(hwitem.data['part_id'], hwitem.component_type.data['full_name'])
+            hwitems.append( (part_id, hwitem))
         except Exception as exc:
-            print(f"failed: {exc}")
+            hwitems.append( (part_id, exc))
+
+    # Print the results for each part_id
+    for (part_id, result) in hwitems:
+        print()
+        title_style.print(part_id)
+        
+        if isinstance(result, Exception):
+            Style.error.print(f"Exception Type: {type(Exception)}")
+            continue
+        else:
+            hwitem = result
+
+        Style.info.print(f"System:    {hwitem.system.system}")
+        Style.info.print(f"Subsystem: {hwitem.subsystem.subsystem}")
+
+        Style.notice.print(json.dumps(hwitem.data, indent=4))
+
+        print()
+        title_style.print(f"{part_id} Component Type Info")
+        Style.notice.print(json.dumps(hwitem.component_type.data, indent=4))
+        
+        print()
+        title_style.print(f"{part_id} Subcomponents")
+        Style.notice.print(json.dumps(hwitem.subcomponents, indent=4))
+
+        print()
+        title_style.print(f"{part_id} Locations")
+        Style.notice.print(json.dumps(hwitem.locations, indent=4))
+
+        print()
+        title_style.print(f"{part_id} QR Code")
+        print()
+        print(image2text(
+                    base64.b85decode(hwitem.qr_code), 
+                    columns=37, 
+                    allow_halfline=True,
+                    background=0x000000))
 
 
-    hwitem = HWItem(part_id=sys.argv[1])
-    print(json.dumps(hwitem.data, indent=4))
-    print(json.dumps(hwitem.subcomponents, indent=4))
-    print(json.dumps(hwitem.subcomponents, indent=4))
-    print(json.dumps(hwitem.component_type.data, indent=4))
-    print(json.dumps(hwitem.locations, indent=4))
-    print(json.dumps(hwitem.qr_code, indent=4))
-    print(hwitem.system.system)
-    print(hwitem.subsystem.subsystem)
+    def object_statistics(obj_type):
+        obj_type_name = obj_type.__name__
+        print()
+        Style.debug.print(f"{obj_type_name} cache keys:")
+        Style.debug.print(list(obj_type._cache.keys()))
+        print()
+        Style.debug.print(f"{obj_type_name} statistics:")
+        Style.debug.print(json.dumps(obj_type._statistics, indent=4))
 
-    from Sisyphus.Utils.Terminal.Image import image2text
+    if False:
+        print()
+        debug_title_style.print(f"Execution Statistics")
 
-    print(image2text(base64.b85decode(hwitem.qr_code), columns=74))
-
-    #print(ComponentType._cache.get('src'),list(ComponentType._cache.keys()))
-    #print(HWItem._cache.get('src'), list(HWItem._cache.keys()))
-
-    print(hwitem)
-    print(hwitem.__class__.__name__)
-
-
-    hwitem2 = HWItem(part_id=sys.argv[1], refresh=True)
-    hwitem3 = HWItem(part_id=sys.argv[1], refresh=True)
-    hwitem4 = HWItem(part_id=sys.argv[1], refresh=True)
-
-    print(list(ComponentType._cache.keys()))
-    print(list(HWItem._cache.keys()))
-    
-    print("ComponentType statistics:")
-    print(json.dumps(ComponentType._statistics, indent=4))
-    print()
-    print("HWItem statistics:")
-    print(json.dumps(HWItem._statistics, indent=4))
-
-    system = System(project_id='D', system_id='005')
-    print(json.dumps(system.data, indent=4))
-    print(system.system)
-
-    subsystem = Subsystem(project_id='D', system_id='005', subsystem_id='998')
-    print(json.dumps(subsystem.data, indent=4))
-    print(subsystem.subsystem)
-
+        object_statistics(HWItem)
+        object_statistics(ComponentType)
+        object_statistics(System)
+        object_statistics(Subsystem)
+        object_statistics(WhoAmI)
 
 if __name__ == '__main__':
     sys.exit(main())

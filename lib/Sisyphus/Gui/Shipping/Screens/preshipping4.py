@@ -6,64 +6,36 @@ Author:
     Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
 """
 
-from Sisyphus.Configuration import config, USER_SETTINGS_DIR
+from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
-import Sisyphus
-from Sisyphus import RestApiV1 as ra
-from Sisyphus.RestApiV1 import Utilities as ut
-
-from Sisyphus.Utils.Terminal.Style import Style
-
-from Sisyphus.Gui.Shipping.Widgets import PageWidget, NavBar
-from Sisyphus.Gui.Shipping.Widgets import ZLineEdit, ZTextEdit, ZCheckBox
-
+from Sisyphus.Gui.Shipping import Widgets as zw
 from Sisyphus.Gui.Shipping.ShippingLabel import ShippingLabel
 
-from PyQt5.QtCore import QSize, Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QWidget,
-    QPushButton,
-    QVBoxLayout,
-    QHBoxLayout,
-    QStackedLayout,
-    QLabel,
-    QTextEdit,
-    QPlainTextEdit,
-    QLineEdit,
-    QGridLayout,
-    QTableWidget,
-    QTableWidgetItem,
-    QCheckBox,
-    QTabWidget,
-    QMenu,
-    QMenuBar,
-    QAction,
-    QStackedWidget,
-    QRadioButton,
-    QGroupBox,
-    QButtonGroup,
-)
+from PyQt5 import QtCore as qtc
+from PyQt5 import QtWidgets as qtw
+
+
 import csv
 import json
 import smtplib
 import os
 
-class PreShipping4(PageWidget):
-    #{{{
+###############################################################################
+
+class PreShipping4(zw.PageWidget):
+    
     page_name = "Pre-Shipping Workflow (4)"
     page_short_name = "Pre-Shipping (4)"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.email_contents = ZTextEdit(owner=self, key='email_contents')
+        self.email_contents = zw.ZTextEdit(owner=self, key='email_contents')
         
-        self.confirm_email_contents = ZCheckBox('I have sent the email',
+        self.confirm_email_contents = zw.ZCheckBox('I have sent the email',
                         owner=self, key='confirm_email_contents')
-        self.instructions = QLabel('Paste the following into an email message and '
+        self.instructions = qtw.QLabel('Paste the following into an email message and '
                     'send it to the FD Logistics team:')
         self.instructions.setWordWrap(True)
 
@@ -75,55 +47,49 @@ class PreShipping4(PageWidget):
     def _setup_UI(self):
         #{{{
 
-        screen_layout = QVBoxLayout()
-        ########################################
+        main_layout = qtw.QVBoxLayout()
+        main_layout.addWidget(self.title_bar)
 
-        page_title = QLabel("Pre-Shipping Workflow (4)")
-        page_title.setStyleSheet("""
-                font-size: 14pt;
-                font-weight: bold;
-            """)
-        page_title.setAlignment(Qt.AlignCenter)
-        screen_layout.addWidget(page_title)
         ################
-        screen_layout.addSpacing(10)
+        
+        main_layout.addSpacing(10)
 
-        screen_layout.addWidget(self.instructions)
+        main_layout.addWidget(self.instructions)
 
-        screen_layout.addWidget(self.email_contents)
+        main_layout.addWidget(self.email_contents)
         self.email_contents.setMinimumSize(600, 400)
 
         ################
 
-        screen_layout.addSpacing(15)
+        main_layout.addSpacing(15)
 
-        screen_layout.addWidget(
-            QLabel("Please affirm before continuing:")
+        main_layout.addWidget(
+            qtw.QLabel("Please affirm before continuing:")
         )
-        screen_layout.addWidget(
+        main_layout.addWidget(
             #QCheckBox("Yes, this looks correct")
             self.confirm_email_contents
         )
 
         ################
 
-        screen_layout.addSpacing(15)
+        main_layout.addSpacing(15)
 
-        #screen_layout.addWidget(
+        #main_layout.addWidget(
         #    QLabel("Clicking 'continue' will send this email to the FD Logistics Team")
         #)
 
         ################
-        screen_layout.addStretch()
+        main_layout.addStretch()
 
-        screen_layout.addWidget(self.nav_bar)
+        main_layout.addWidget(self.nav_bar)
 
-        self.setLayout(screen_layout)
+        self.setLayout(main_layout)
         #}}}
 
     def on_navigate_next(self):
         # if I can ever get it to send email, put it here
-        super().on_navigate_next()
+        return super().on_navigate_next()
 
     def restore(self):
         super().restore()
@@ -132,7 +98,7 @@ class PreShipping4(PageWidget):
 
     def generate_email(self):
         #{{{
-        tab_state = self.tab_state
+        workflow_state = self.workflow_state
 
         if self.csv_filename is None:
             self.generate_csv()
@@ -147,11 +113,11 @@ class PreShipping4(PageWidget):
 
 
 
-        poc_email = (f"{tab_state['PreShipping2']['approver_name']} "
-                    f"&lt;{tab_state['PreShipping2']['approver_email']}&gt;")
+        poc_email = (f"{workflow_state['PreShipping2']['approver_name']} "
+                    f"&lt;{workflow_state['PreShipping2']['approver_email']}&gt;")
 
-        email_from = (f"{tab_state['SelectPID']['user_name']} "
-                    f"&lt;{tab_state['SelectPID']['user_email']}&gt;")
+        email_from = (f"{workflow_state['SelectPID']['user_name']} "
+                    f"&lt;{workflow_state['SelectPID']['user_email']}&gt;")
         email_to = f"FD Logistics Team &lt;sdshipments@fnal.gov&gt;"
         email_subject = "Request an acknowledgement for a new shipment"
         
@@ -171,8 +137,8 @@ class PreShipping4(PageWidget):
             f"shipment, email to:\n"
             f"<ul><li>{poc_email}</li></ul>\n"
             f"Sincerely,<br/>\n<br/>\n"
-            f"{tab_state['SelectPID']['user_name']}<br/>\n"
-            f"{tab_state['SelectPID']['user_email']}<br/>\n"
+            f"{workflow_state['SelectPID']['user_name']}<br/>\n"
+            f"{workflow_state['SelectPID']['user_email']}<br/>\n"
             f"Attachment: {self.csv_filename}\n"
 
             f"""</td>"""            
@@ -187,45 +153,45 @@ class PreShipping4(PageWidget):
         #{{{
         print("Creating CSV...")
 
-        self.csv_filename = f"{self.tab_state['part_info']['part_id']}-preshipping.csv"
+        self.csv_filename = f"{self.workflow_state['part_info']['part_id']}-preshipping.csv"
         self.csv_full_filename = os.path.join(
-                self.working_directory, self.csv_filename)
+                self.workflow.working_directory, self.csv_filename)
 
         with open(self.csv_full_filename, 'w') as csvfile:
             csvwriter = csv.writer(csvfile, delimiter=',')
 
             csvwriter.writerow([
                 "Dimension",
-                self.tab_state['PreShipping3a']['dimension']
+                self.workflow_state['PreShipping3a']['dimension']
             ])
             csvwriter.writerow([
                 "Weight",
-                self.tab_state['PreShipping3a']['weight']
+                self.workflow_state['PreShipping3a']['weight']
             ])
             csvwriter.writerow([
                 "Freight Forwarder name",
-                self.tab_state['PreShipping3b']['freight_forwarder']
+                self.workflow_state['PreShipping3b']['freight_forwarder']
             ])
             csvwriter.writerow([
                 "Mode of Transportation",
-                self.tab_state['PreShipping3b']['mode_of_transportation']
+                self.workflow_state['PreShipping3b']['mode_of_transportation']
             ])
             csvwriter.writerow([
                 "Expected Arrival Date (CST)",
-                self.tab_state['PreShipping3b']['expected_arrival_time']
+                self.workflow_state['PreShipping3b']['expected_arrival_time']
             ])
             csvwriter.writerow([
                 "Shipment's origin",
-                self.tab_state['PreShipping3a']['shipment_origin']
+                self.workflow_state['PreShipping3a']['shipment_origin']
             ])
             csvwriter.writerow([
                 "HTS code",
-                self.tab_state['PreShipping3a']['hts_code']
+                self.workflow_state['PreShipping3a']['hts_code']
             ])
             csvwriter.writerow([])
             csvwriter.writerow([
                 "QA/QC related information for this shipment can be found here",
-                self.tab_state['PreShipping2']['test_info']
+                self.workflow_state['PreShipping2']['test_info']
             ])
             csvwriter.writerow([])
             csvwriter.writerow([
@@ -242,7 +208,7 @@ class PreShipping4(PageWidget):
             ])
             csvwriter.writerow([
                 "DUNE PID",
-                self.tab_state['part_info']['part_id']
+                self.workflow_state['part_info']['part_id']
             ])
             csvwriter.writerow([])
             csvwriter.writerow([
@@ -250,7 +216,7 @@ class PreShipping4(PageWidget):
                 "Component Type Name",
                 "Func. Pos. Name"
             ])
-            for sc in self.tab_state['part_info'].get('subcomponents', {}).values():
+            for sc in self.workflow_state['part_info'].get('subcomponents', {}).values():
                 csvwriter.writerow([
                     sc['Sub-component PID'],
                     sc['Component Type Name'],

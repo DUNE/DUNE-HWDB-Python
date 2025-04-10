@@ -6,7 +6,7 @@ Author:
     Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
 """
 
-from Sisyphus.Configuration import config, USER_SETTINGS_DIR
+from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
 from Sisyphus.Utils.Terminal.Style import Style
@@ -15,6 +15,7 @@ from Sisyphus.Gui.Shipping import Model as mdl
 
 from PyQt5 import QtWidgets as qtw
 
+###############################################################################
 
 class SelectPID(zw.PageWidget):
     page_name = "Select PID"
@@ -41,6 +42,7 @@ class SelectPID(zw.PageWidget):
 
 
         self.find_button = qtw.QPushButton("find")
+        self.find_button.setStyleSheet(zw.STYLE_SMALL_BUTTON)
         self.find_button.clicked.connect(self.lookup_pid)
         
         self._setup_UI()
@@ -109,13 +111,13 @@ class SelectPID(zw.PageWidget):
         #{{{
         part_id = self.page_state['search_part_id']
 
-        tab_state = mdl.download_part_info(part_id,
+        workflow_state = mdl.download_part_info(part_id,
                             status_callback=self.application.update_status)
         
-        if tab_state is None:
+        if workflow_state is None:
             msg = f'''<div style="color: #990000">{part_id} not found!</div>'''
         else:
-            part_info = tab_state['part_info']
+            part_info = workflow_state['part_info']
             subcomponent_info = part_info['subcomponents'].values()
             msg = ''.join([
                 "<table>",
@@ -132,7 +134,7 @@ class SelectPID(zw.PageWidget):
             ]) 
         self.pid_search_result_label.setText(msg)
         
-        self.tab_state.update(tab_state)
+        self.workflow_state.update(workflow_state)
         self.update() 
         #}}}
     
@@ -140,15 +142,15 @@ class SelectPID(zw.PageWidget):
         #{{{
         super().save()
         
-        self.tab_state['search_part_id'] = self.pid_text_box.text().strip()
-        self.tab_state['user_name'] = self.name_text_box.text().strip()
-        self.tab_state['user_email'] = self.email_text_box.text().strip()
+        self.workflow_state['search_part_id'] = self.pid_text_box.text().strip()
+        self.workflow_state['user_name'] = self.name_text_box.text().strip()
+        self.workflow_state['user_email'] = self.email_text_box.text().strip()
 
-        if self.tab_state['user_name'] != "":
-            self.app_state['default_name'] = self.tab_state['user_name']
+        if self.workflow_state['user_name'] != "":
+            self.app_state['default_name'] = self.workflow_state['user_name']
 
-        if self.tab_state['user_email'] != "":
-            self.app_state['default_email'] = self.tab_state['user_email']
+        if self.workflow_state['user_email'] != "":
+            self.app_state['default_email'] = self.workflow_state['user_email']
 
         self.parent().save()
 
@@ -166,7 +168,7 @@ class SelectPID(zw.PageWidget):
         self.nav_bar.back_button.setEnabled(False)
         self.nav_bar.back_button.setVisible(False)
 
-        #if self.tab_state.get('part_info', None) is not None:
+        #if self.workflow_state.get('part_info', None) is not None:
         #    self.nav_bar.continue_button.setEnabled(True)
         #else:
         #    self.nav_bar.continue_button.setEnabled(False)

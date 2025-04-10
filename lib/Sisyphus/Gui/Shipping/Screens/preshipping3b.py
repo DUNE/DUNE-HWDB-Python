@@ -6,127 +6,84 @@ Author:
     Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
 """
 
-#{{{
-from Sisyphus.Configuration import config, USER_SETTINGS_DIR
+from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
-import Sisyphus
-from Sisyphus import RestApiV1 as ra
-from Sisyphus.RestApiV1 import Utilities as ut
+from Sisyphus.Gui.Shipping import Widgets as zw
 
-from Sisyphus.Utils.Terminal.Style import Style
+from PyQt5 import QtCore as qtc
+from PyQt5 import QtWidgets as qtw
 
-from Sisyphus.Gui.Shipping.Widgets import PageWidget, NavBar
-from Sisyphus.Gui.Shipping.Widgets import ZLineEdit, ZTextEdit, ZCheckBox, ZDateTimeEdit
+###############################################################################
 
-from Sisyphus.Gui.Shipping.ShippingLabel import ShippingLabel
-
-from PyQt5.QtCore import QSize, Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QWidget,
-    QPushButton,
-    QVBoxLayout,
-    QHBoxLayout,
-    QStackedLayout,
-    QLabel,
-    QTextEdit,
-    QPlainTextEdit,
-    QLineEdit,
-    QGridLayout,
-    QTableWidget,
-    QTableWidgetItem,
-    QCheckBox,
-    QTabWidget,
-    QMenu,
-    QMenuBar,
-    QAction,
-    QStackedWidget,
-    QRadioButton,
-    QGroupBox,
-    QButtonGroup,
-)
-
-import json
-#}}}
-
-class PreShipping3b(PageWidget):
+class PreShipping3b(zw.PageWidget):
     page_name = "Pre-Shipping Workflow (3b)"
     page_short_name = "Pre-Shipping (3b)"
     #{{{
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.freight_forwarder = ZLineEdit(owner=self, key='freight_forwarder')
-        self.mode_of_transportation = ZLineEdit(owner=self, key='mode_of_transportation')
+        self.freight_forwarder = zw.ZLineEdit(owner=self, key='freight_forwarder')
+        self.mode_of_transportation = zw.ZLineEdit(owner=self, key='mode_of_transportation')
         #self.expected_arrival_time = ZLineEdit(owner=self, key='expected_arrival_time')
-        self.expected_arrival_time = ZDateTimeEdit(owner=self, key='expected_arrival_time')
+        self.expected_arrival_time = zw.ZDateTimeEdit(owner=self, key='expected_arrival_time')
         
 
         self._setup_UI()
 
     def _setup_UI(self):
         #{{{
-        screen_layout = QVBoxLayout()
+        main_layout = qtw.QVBoxLayout()
+        main_layout.addWidget(self.title_bar)
+
         ########################################
 
-        page_title = QLabel("Pre-Shipping Workflow (3b)")
-        page_title.setStyleSheet("""
-                font-size: 14pt;
-                font-weight: bold;
-            """)
-        page_title.setAlignment(Qt.AlignCenter)
-        screen_layout.addWidget(page_title)
-        ################
-        ################
-
-        ff_label = QLabel(
+        ff_label = qtw.QLabel(
                 "Provide name(s) of your Freight Forwarder (FF; such as FedEx or UPS. "
                 "USPS is not allowed) and mode(s) of transportation (truck, air, ship, "
                 "rail, etc.):"
         )
         ff_label.setWordWrap(True)
-        screen_layout.addWidget(ff_label)
+        main_layout.addWidget(ff_label)
 
-        ff_mode_layout = QVBoxLayout()
+        ff_mode_layout = qtw.QVBoxLayout()
 
-        ff_layout = QHBoxLayout()
-        ff_layout.addWidget( QLabel("Name of FF:") )
+        ff_layout = qtw.QHBoxLayout()
+        ff_layout.addWidget( qtw.QLabel("Name of FF:") )
         ff_layout.addWidget( self.freight_forwarder )
-        ff_widget = QWidget()
+        ff_widget = qtw.QWidget()
         ff_widget.setLayout(ff_layout)
 
-        mode_layout = QHBoxLayout()
-        mode_layout.addWidget( QLabel("Mode:") )
+        mode_layout = qtw.QHBoxLayout()
+        mode_layout.addWidget( qtw.QLabel("Mode:") )
         mode_layout.addWidget( self.mode_of_transportation )
-        mode_widget = QWidget()
+        mode_widget = qtw.QWidget()
         mode_widget.setLayout(mode_layout)
 
         ff_mode_layout.addWidget(ff_widget)
         ff_mode_layout.addWidget(mode_widget)
-        ff_mode_widget = QWidget()
+        ff_mode_widget = qtw.QWidget()
         ff_mode_widget.setLayout(ff_mode_layout)
 
-        screen_layout.addWidget(ff_mode_widget)
+        main_layout.addWidget(ff_mode_widget)
 
         ################
 
-        screen_layout.addSpacing(10)
+        main_layout.addSpacing(10)
 
 
 
-        screen_layout.addWidget(QLabel("Provide the expected arrival time (Central Time):"))
-        screen_layout.addWidget( self.expected_arrival_time)
+        main_layout.addWidget(qtw.QLabel("Provide the expected arrival time (Central Time):"))
+        main_layout.addWidget( self.expected_arrival_time)
 
 
         ################
 
-        screen_layout.addStretch()
+        main_layout.addStretch()
 
-        screen_layout.addWidget(self.nav_bar)
+        main_layout.addWidget(self.nav_bar)
 
-        self.setLayout(screen_layout)
+        self.setLayout(main_layout)
         #}}}
 
     def update(self):

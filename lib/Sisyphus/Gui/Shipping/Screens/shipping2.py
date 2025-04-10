@@ -6,14 +6,18 @@ Author:
     Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
 """
 
-from Sisyphus.Configuration import config, USER_SETTINGS_DIR
+from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)  
 
 from Sisyphus.Gui.Shipping import Widgets as zw
+from Sisyphus.Gui.Shipping import Model as mdl
 
 from PyQt5 import QtCore as qtc
 from PyQt5 import QtWidgets as qtw
 
+from datetime import datetime
+
+###############################################################################
 
 class Shipping2(zw.PageWidget):
     page_name = "Shipping Workflow (2)"
@@ -78,10 +82,7 @@ class Shipping2(zw.PageWidget):
     def update(self):
         super().update()
 
-        import json
-        logger.warning(json.dumps(self.tab_state, indent=4))
-
-        shipping_service_type = self.tab_state.get('PreShipping3a', {}) \
+        shipping_service_type = self.workflow_state.get('PreShipping3a', {}) \
                     .get('shipping_service_type', 'Domestic')
 
         if shipping_service_type != "International":
@@ -98,4 +99,47 @@ class Shipping2(zw.PageWidget):
         else:
             self.nav_bar.continue_button.setEnabled(True)
 
-    #}}}
+    def upload_files(self):
+        #{{{
+        import shutil, os
+        
+        def rename(filename, prefix):
+            username = self.application.whoami['username']
+            timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M")
+            file_ext = filename.split('.')[-1]
+            new_filename = f"{prefix}-{username}-{timestamp}.{file_ext}"
+            return new_filename
+
+        def upload_file(filename, file_prefix, node_name):
+            new_filename = rename(filename, file_prefix)
+            new_full_filename = os.path.join(self.workflow.working_directory, new_filename)
+            shutil.copy(filename, new_full_filename)
+
+            image_id, checksum = mdl.upload_image(self.part_id, new_full_filename)
+            self.page_state[node_name] = {
+                "filename": new_filename,
+                "image_id": image_id,
+                "checksum": checksum
+            }
+
+        upload_file(self.page_state['bol_filename'], "BoL", "bol_info")
+
+        if self.page_state['proforma_filename']:
+            upload_file(page_state['proforma_filename'], "ProformaInvoice", "proforma_info")
+
+        logger.warning(f"files uploaded (presumably!)")
+        return True       
+        #}}}
+
+    def on_navigate_next(self):
+        #{{{
+        ok = super().on_navigate_next()
+        if not ok:
+            return False
+
+        ok = self.upload_files()
+        if not ok:
+            return False
+
+        return True
+        #}}}

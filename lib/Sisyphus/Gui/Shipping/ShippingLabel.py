@@ -1,4 +1,13 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2025 Regents of the University of Minnesota
+Author:
+    Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
+"""
+
+from Sisyphus.Configuration import config
+logger = config.getLogger(__name__)
 
 import Sisyphus
 
@@ -14,6 +23,8 @@ import io
 import base64
 import tempfile
 
+###############################################################################
+
 def color(i):
     r = (i & 0xff0000) / 0xff0000
     g = (i & 0x00ff00) / 0x00ff00
@@ -21,9 +32,9 @@ def color(i):
     return (r, g, b)
 
 class ShippingLabel:
-    def __init__(self, filename, tab_state, show_logo=False, debug=False):
+    def __init__(self, filename, workflow_state, show_logo=False, debug=False):
         self.filename = filename
-        self.tab_state = tab_state
+        self.workflow_state = workflow_state
         self.show_logo = show_logo
         self.debug = debug
 
@@ -115,7 +126,7 @@ class ShippingLabel:
     def draw_qr(self, size=None): #{{{
         cvs = self.cvs
  
-        img_bytes = base64.b85decode(self.tab_state['part_info']['qr_code'].encode())
+        img_bytes = base64.b85decode(self.workflow_state['part_info']['qr_code'].encode())
         img_obj = PIL.Image.open(io.BytesIO(img_bytes))
         cropped_obj = img_obj.crop((40, 40, 410, 410))
         
@@ -257,7 +268,7 @@ class ShippingLabel:
 
 
         cvs = self.cvs = canvas.Canvas(self.filename)
-        cvs.setTitle(f"Shipping Label: {self.tab_state['part_info']['part_id']}")
+        cvs.setTitle(f"Shipping Label: {self.workflow_state['part_info']['part_id']}")
         cvs.setAuthor(f"HWDB Python Utility {Sisyphus.version}")
 
         cvs.setPageSize([ self.page_width, self.page_height ])
@@ -274,15 +285,15 @@ class ShippingLabel:
         self.draw_qr(size=2.5*units.inch)
         self.blank_space(0.125 * units.inch)
 
-        self.draw_label(self.tab_state['part_info']['part_type_name'], 16, height=22.5)
-        self.draw_label(self.tab_state['part_info']['part_id'], 16, height=22.5)
+        self.draw_label(self.workflow_state['part_info']['part_type_name'], 16, height=22.5)
+        self.draw_label(self.workflow_state['part_info']['part_id'], 16, height=22.5)
 
         self.blank_space(0.25 * units.inch)
 
 
         self.draw_label("Responsible Person's Name", 14)
         self.draw_label(
-                self.tab_state['PreShipping2']['approver_name'], 
+                self.workflow_state['PreShipping2']['approver_name'], 
                 font_size=14,
                 box=True)
         
@@ -290,7 +301,7 @@ class ShippingLabel:
         
         self.draw_label("Email Address(es)", 14)
         self.draw_label(
-                self.tab_state['PreShipping2']['approver_email'], 
+                self.workflow_state['PreShipping2']['approver_email'], 
                 font_size=14,
                 box=True)
 
@@ -305,10 +316,10 @@ class ShippingLabel:
                 width=column_widths)
 
         text = [ 
-            f"{self.tab_state['part_info']['system_name']} "
-                        f"({self.tab_state['part_info']['system_id']})",
-            f"{self.tab_state['part_info']['subsystem_name']} "
-                        f"({self.tab_state['part_info']['subsystem_id']})"]
+            f"{self.workflow_state['part_info']['system_name']} "
+                        f"({self.workflow_state['part_info']['system_id']})",
+            f"{self.workflow_state['part_info']['subsystem_name']} "
+                        f"({self.workflow_state['part_info']['subsystem_id']})"]
         self.draw_label(
                 text,
                 font_size=14, 
@@ -324,7 +335,7 @@ class ShippingLabel:
                 font_size=12, 
                 box=True, 
                 width=column_widths)
-        for subcomp in self.tab_state['part_info']['subcomponents'].values():
+        for subcomp in self.workflow_state['part_info']['subcomponents'].values():
             text = [
                 subcomp['Sub-component PID'], 
                 subcomp['Component Type Name'], 

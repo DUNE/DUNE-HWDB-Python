@@ -6,58 +6,44 @@ Author:
     Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
 """
 
-#{{{
-from Sisyphus.Gui.Shipping.Widgets import PageWidget, NavBar
+from Sisyphus.Configuration import config
+logger = config.getLogger(__name__)
 
-from PyQt5.QtCore import QSize, Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QWidget,
-    QPushButton,
-    QVBoxLayout,
-    QHBoxLayout,
-    QStackedLayout,
-    QLabel,
-    QTextEdit,
-    QPlainTextEdit,
-    QLineEdit,
-    QGridLayout,
-    QTableWidget,
-    QTableWidgetItem,
-    QCheckBox,
-    QTabWidget,
-    QMenu,
-    QMenuBar,
-    QAction,
-    QStackedWidget,
-    QRadioButton,
-)
-#}}}
+from Sisyphus.Gui.Shipping import Widgets as zw
 
-class Shipping6(PageWidget):
-    #{{{
+from PyQt5 import QtCore as qtc
+from PyQt5 import QtWidgets as qtw
+
+###############################################################################
+
+class Shipping6(zw.PageWidget):
     page_name = "Shipping Workflow (6)"
     page_short_name = "Shipping (6)"
 
     def __init__(self, *args, **kwargs):
+        #{{{
         super().__init__(*args, **kwargs)
 
-        screen_layout = QVBoxLayout()
+        self._setup_UI()
+        #}}}
+
+    def _setup_UI(self):
+        #{{{
+        main_layout = qtw.QVBoxLayout()
+        main_layout.addWidget(self.title_bar)
 
         #############################
-        page_title = QLabel("Shipping (6)")
-        page_title.setStyleSheet("""
-                font-size: 14pt;
-                font-weight: bold;
-            """)
-        page_title.setAlignment(Qt.AlignCenter)
-        screen_layout.addWidget(page_title)
-        #############################
 
-        screen_layout.addStretch()
+        main_layout.addWidget(
+            qtw.QLabel("(Optional)\n"
+                    "A CSV file [TBD] has been saved in your working directory.\n"
+                    "You may wish to email it and other documents to your collaborators."))
 
-        screen_layout.addWidget(self.nav_bar)
-        self.setLayout(screen_layout)
-    #}}}
+        main_layout.addStretch()
 
+        main_layout.addWidget(self.nav_bar)
+        self.setLayout(main_layout)
+        #}}}
+
+    def update(self):
+        self.nav_bar.continue_button.setText("Finish")

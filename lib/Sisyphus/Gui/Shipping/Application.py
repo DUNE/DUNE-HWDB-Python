@@ -6,7 +6,7 @@ Author:
     Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
 """
 
-from Sisyphus.Configuration import config, USER_SETTINGS_DIR
+from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
 HLD = highlight = "[bg=#999999,fg=#ffffff]"
@@ -18,6 +18,8 @@ import Sisyphus
 from Sisyphus.Utils.Terminal.Style import Style
 from Sisyphus.Gui.Shipping.WorkflowWidget import WorkflowWidget
 from Sisyphus.Gui.Shipping.MainWindow import MainWindow
+from Sisyphus.Gui.Configuration import ConfigDialog
+from Sisyphus.Gui import DataModel as dm
 
 from PyQt5 import QtWidgets as qtw
 
@@ -27,37 +29,63 @@ import json
 from datetime import datetime
 
 from uuid import uuid4
+
 import qdarkstyle
+from qdarkstyle.light.palette import LightPalette
+from qdarkstyle.dark.palette import DarkPalette
+
+###############################################################################
 
 class Application(qtw.QApplication):
-    #{{{
+    
     def __init__(self, argv=[]):
         super().__init__(argv)
 
         self._debug = ("--debug" in argv)
         self._force_reset = ("--reset" in argv)
 
-        if True:
-            try:
-                style_path = Sisyphus.get_path('resources/style.qss')
-                self.setStyleSheet(Path(style_path).read_text())
-            except FileNotFoundError as exc:
-                msg = "Stylesheet not found. Using default style."
-                Style.error.print(msg)
-                logger.error(msg)
-        else:
-            dark_stylesheet = qdarkstyle.load_stylesheet_pyqt5()
-            self.setStyleSheet(dark_stylesheet)
 
         self.application_state_path = os.path.normpath(
                     os.path.join(config.user_settings_dir, "shipping_conf.json"))
 
+        self._whoami = dm.WhoAmI()
         self.load_state()
+
+        if self.app_state.setdefault('style', 'light') == 'light':
+            self.setStyleSheet_light()
+        elif self.app_state['style'] == 'dark':
+            self.setStyleSheet_dark() 
+        else:
+            self.setStyleSheet_sisyphus()
 
         self.main_window = MainWindow(application=self)
         self.tab_widget = self.main_window.tab_widget
 
         self.restore_tabs()
+
+    @property
+    def whoami(self):
+        return self._whoami.data
+
+    def setStyleSheet_light(self):
+        light_stylesheet = qdarkstyle.load_stylesheet(palette=LightPalette)
+        self.setStyleSheet(light_stylesheet)
+        self.app_state['style'] = 'light'
+
+    def setStyleSheet_dark(self):
+        dark_stylesheet = qdarkstyle.load_stylesheet(palette=DarkPalette)
+        self.setStyleSheet(dark_stylesheet)
+        self.app_state['style'] = 'dark'
+
+    def setStyleSheet_sisyphus(self):
+        try:
+            style_path = Sisyphus.get_path('resources/style.qss')
+            self.setStyleSheet(Path(style_path).read_text())
+        except FileNotFoundError as exc:
+            msg = "Stylesheet not found."
+            Style.error.print(msg)
+            logger.error(msg)
+        self.app_state['style'] = 'sisyphus'
 
     def reset_state(self):
         logger.warn("Resetting shipping application state") 
@@ -143,8 +171,8 @@ class Application(qtw.QApplication):
         all_tabs_state = []
         for idx in range(self.tab_widget.count()):
             tab = self.tab_widget.widget(idx)
-            tab_state = tab.tab_state
-            all_tabs_state.append(tab_state)
+            workflow_state = tab.workflow_state
+            all_tabs_state.append(workflow_state)
 
         self.app_state['tabs'] = all_tabs_state
         self.app_state['current_tab'] = self.tab_widget.currentIndex()
@@ -180,7 +208,7 @@ class Application(qtw.QApplication):
             raise ValueError("required parameter: tab_index")
 
         workflow_uuid = self.app_state['tabs'][tab_index]
-        tab_state = self.app_state['workflows'][workflow_uuid]
+        workflow_state = self.app_state['workflows'][workflow_uuid]
 
         restored_workflow = WorkflowWidget(owner=self, uuid=workflow_uuid)
         logger.info(f"finished_init: {restored_workflow._finished_init}")
@@ -189,18 +217,18 @@ class Application(qtw.QApplication):
         restored_workflow.activate()
         #restored_workflow.current_page_widget.activate()
         
-    def create_new_tab(self, *, tab_state=None):
+    def create_new_tab(self, *, workflow_state=None):
         logger.info(f"{self.__class__.__name__}.create_new_tab()")
         new_uuid = uuid4().hex      
-        if tab_state is None:
-            tab_state = {
+        if workflow_state is None:
+            workflow_state = {
                 'uuid': new_uuid,
-                'current_page': "SelectPID",
+                'current_page_id': "SelectPID",
             }
-        elif tab_state.get('uuid') is None:
-            tab_state['uuid'] = new_uuid
+        elif workflow_state.get('uuid') is None:
+            workflow_state['uuid'] = new_uuid
 
-        self.app_state['workflows'][new_uuid] = tab_state
+        self.app_state['workflows'][new_uuid] = workflow_state
         self.app_state['tabs'].append(new_uuid)
 
         new_workflow = WorkflowWidget(owner=self, uuid=new_uuid)
@@ -234,11 +262,12 @@ class Application(qtw.QApplication):
 
     def update_status(self, message):
         #self.main_window.status_bar.showMessage(message, timeout=10)
-        #self.main_window.status_bar.showMessage(message)
-        Style.notice.print(f"status bar: {message}")
+        self.main_window.status_bar.showMessage(message)
+        #Style.notice.print(f"status bar: {message}")
 
     def configure(self):
-        Style.info.print("Configuration not implemented yet")
+        dialog = ConfigDialog(self)
+        dialog.exec()
 
     def debug_app_state(self):
         Style.info.print("APP_STATE")
@@ -295,8 +324,7 @@ class Application(qtw.QApplication):
             list_children(widget, indent_level=1)
         widget_info(widget)
 
-    def debug_test_function(self):
-        
+    def debug_test_function(self):        
         new_widget = qtw.QLabel("Test Widget")
         self.tab_widget.addTab(new_widget, "Test!")
 
@@ -304,4 +332,5 @@ class Application(qtw.QApplication):
         logger.warning(f"{HLW}{self.__class__.__name__}.exit(): quitting aplication")
         self.save_state()
         self.main_window.close()
-    #}}}
+
+

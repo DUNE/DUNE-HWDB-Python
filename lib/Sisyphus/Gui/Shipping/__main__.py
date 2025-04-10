@@ -8,10 +8,11 @@ Author:
 
 import sys, os
 
-from Sisyphus.Configuration import config, USER_SETTINGS_DIR
+from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
 from Sisyphus.Utils.Terminal.Style import Style
+from Sisyphus.Gui import DataModel as dm
 from Sisyphus.Gui.Shipping.Application import Application
 
 from PyQt5 import QtCore as qtc
@@ -28,6 +29,13 @@ def main(argv):
     logger.info("Starting Shipping Application")
     Style.info.print("The program is starting up. This may take a moment...")
     
+    # Preload data so there won't be a delay later
+    # (we don't need to hold the object; the data will
+    # be cached so the next time the object is created,
+    # it won't need to call the REST API again.)
+    _ = dm.Institutions()
+    _ = dm.WhoAmI()
+
     app = Application(sys.argv)
 
     print("entering event loop -- window should show in a few seconds")

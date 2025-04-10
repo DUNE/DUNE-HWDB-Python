@@ -18,4 +18,6 @@ from .widgets import (
     ZRadioButtonGroup,
     ZFileSelectWidget,
     ZInstitutionWidget,
+    STYLE_SMALL_BUTTON,
+    STYLE_LARGE_BUTTON,
 )

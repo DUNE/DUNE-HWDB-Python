@@ -1,6 +1,10 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""                                                                                                             Copyright (c) 2025 Regents of the University of Minnesota
+Author:                                                                                                             Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
+"""
 
-from Sisyphus.Configuration import config, USER_SETTINGS_DIR
+from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
 from PyQt5 import QtCore as qtc
@@ -16,7 +20,10 @@ class TabWidget(qtw.QTabWidget):
 
         super().__init__(*args, **kwargs)
 
-        #self.setStyleSheet("min-height: 40px; max-height: 40px")
+        self.tabBar().setStyleSheet("""
+                min-height: 40px; 
+                max-height: 40px;
+            """)
         self.setTabsClosable(True)
 
         self.tabCloseRequested.connect(self.application.close_tab)

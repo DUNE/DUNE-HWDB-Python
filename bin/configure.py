@@ -66,8 +66,11 @@ def check_server(config):
         config.logger.error(msg)
         config.logger.info(f"The exception was: {err}")
     else:
-        user = f"{(resp['data']['full_name'])} ({resp['data']['username']})"
-        msg = f"REST API 'whoami' returned {user}"
+        import json
+        data = resp['data']
+        user = f"{data['full_name']} ({data['username']})"
+        user_id = data['user_id']
+        msg = f"REST API 'whoami' returned {user}, user_id: {user_id}"
         config.logger.info(msg)
 
     return msg

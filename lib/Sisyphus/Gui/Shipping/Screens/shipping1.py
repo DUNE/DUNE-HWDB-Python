@@ -6,73 +6,45 @@ Author:
     Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
 """
 
-#{{{
-from Sisyphus.Gui.Shipping.Widgets import PageWidget, NavBar
-from Sisyphus.Gui.Shipping.Widgets import ZLineEdit, ZTextEdit, ZCheckBox
+from Sisyphus.Configuration import config
+logger = config.getLogger(__name__)
 
-from PyQt5.QtCore import QSize, Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QWidget,
-    QPushButton,
-    QVBoxLayout,
-    QHBoxLayout,
-    QStackedLayout,
-    QLabel,
-    QTextEdit,
-    QPlainTextEdit,
-    QLineEdit,
-    QGridLayout,
-    QTableWidget,
-    QTableWidgetItem,
-    QCheckBox,
-    QTabWidget,
-    QMenu,
-    QMenuBar,
-    QAction,
-    QStackedWidget,
-    QRadioButton,
-)
-#}}}
+from Sisyphus.Gui.Shipping import Widgets as zw
 
-class Shipping1(PageWidget):
-    #{{{
+from PyQt5 import QtCore as qtc
+from PyQt5 import QtWidgets as qtw
+
+###############################################################################
+
+class Shipping1(zw.PageWidget):
     page_name = "Shipping Workflow (1)"
     page_short_name = "Shipping (1)"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.subcomp_caption = QLabel("Contents")
+        self.subcomp_caption = qtw.QLabel("Contents")
 
-        self.table = QTableWidget(0, 3)
+        self.table = qtw.QTableWidget(0, 3)
         self.table.verticalHeader().setVisible(False)
 
         msg = "The list of components for this shipment is correct"
-        self.confirm_list_checkbox = ZCheckBox(owner=self, text=msg, key="confirm_list")
+        self.confirm_list_checkbox = zw.ZCheckBox(owner=self, text=msg, key="confirm_list")
 
         msg = "All necessary QA/QC information for these components " \
                     "has been stored in the HWDB"
-        self.confirm_hwdb_updated_checkbox = ZCheckBox(owner=self, text=msg, key="hwdb_updated")
+        self.confirm_hwdb_updated_checkbox = zw.ZCheckBox(owner=self, text=msg, key="hwdb_updated")
 
         self._setup_UI()
 
 
     def _setup_UI(self):
-        screen_layout = QVBoxLayout()
+        main_layout = qtw.QVBoxLayout()
+        main_layout.addWidget(self.title_bar)
 
         #############################
-        page_title = QLabel("Shipping Workflow (1)")
-        page_title.setStyleSheet("""
-                font-size: 14pt;
-                font-weight: bold;
-            """)
-        page_title.setAlignment(Qt.AlignCenter)
-        screen_layout.addWidget(page_title)
-        #############################
 
-        subcomp_list_layout = QVBoxLayout()
+        subcomp_list_layout = qtw.QVBoxLayout()
         subcomp_list_layout.addWidget( self.subcomp_caption )
         subcomp_list_layout.addSpacing(5)
         horizontal_header = self.table.horizontalHeader()
@@ -82,38 +54,38 @@ class Shipping1(PageWidget):
         self.table.setHorizontalHeaderLabels(['Sub-component PID',
                             'Component Type Name', 'Functional Position Name'])
         subcomp_list_layout.addWidget(self.table)
-        subcomp_list_widget = QWidget()
+        subcomp_list_widget = qtw.QWidget()
         subcomp_list_widget.setLayout(subcomp_list_layout)
-        screen_layout.addWidget(subcomp_list_widget)
-        screen_layout.addSpacing(10)
+        main_layout.addWidget(subcomp_list_widget)
+        main_layout.addSpacing(10)
 
-        screen_layout.addWidget(QLabel("Please affirm the following:"))
+        main_layout.addWidget(qtw.QLabel("Please affirm the following:"))
 
-        affirm_layout = QHBoxLayout()
+        affirm_layout = qtw.QHBoxLayout()
         affirm_layout.addSpacing(10)
 
-        indented_layout = QVBoxLayout()
+        indented_layout = qtw.QVBoxLayout()
         indented_layout.addWidget(self.confirm_list_checkbox)
         indented_layout.addWidget(self.confirm_hwdb_updated_checkbox)
-        indented_widget = QWidget()
+        indented_widget = qtw.QWidget()
         indented_widget.setLayout(indented_layout)
         affirm_layout.addWidget(indented_widget)
-        affirm_widget = QWidget()
+        affirm_widget = qtw.QWidget()
         affirm_widget.setLayout(affirm_layout)
-        screen_layout.addWidget(affirm_widget)
+        main_layout.addWidget(affirm_widget)
 
         ########################################
 
-        screen_layout.addStretch()
+        main_layout.addStretch()
 
-        screen_layout.addWidget(self.nav_bar)
+        main_layout.addWidget(self.nav_bar)
 
-        self.setLayout(screen_layout)
+        self.setLayout(main_layout)
 
-        screen_layout.addStretch()
+        main_layout.addStretch()
 
-        screen_layout.addWidget(self.nav_bar)
-        self.setLayout(screen_layout)
+        main_layout.addWidget(self.nav_bar)
+        self.setLayout(main_layout)
 
     def restore(self):
         super().restore()
@@ -121,17 +93,17 @@ class Shipping1(PageWidget):
 
     def populate_subcomps(self):
 
-        if self.tab_state.get('part_info', None) is None:
+        if self.workflow_state.get('part_info', None) is None:
             subcomps = {}
 
         else:
-            subcomps = self.tab_state['part_info'].setdefault('subcomponents', {})
+            subcomps = self.workflow_state['part_info'].setdefault('subcomponents', {})
 
         self.table.setRowCount(len(subcomps))
         for idx, subcomp in enumerate(subcomps.values()):
-            self.table.setItem(idx, 0, QTableWidgetItem(subcomp['Sub-component PID']))
-            self.table.setItem(idx, 1, QTableWidgetItem(subcomp['Component Type Name']))
-            self.table.setItem(idx, 2, QTableWidgetItem(subcomp['Functional Position Name']))
+            self.table.setItem(idx, 0, qtw.QTableWidgetItem(subcomp['Sub-component PID']))
+            self.table.setItem(idx, 1, qtw.QTableWidgetItem(subcomp['Component Type Name']))
+            self.table.setItem(idx, 2, qtw.QTableWidgetItem(subcomp['Functional Position Name']))
 
     def update(self):
         super().update()
@@ -142,12 +114,3 @@ class Shipping1(PageWidget):
         else:
             self.nav_bar.continue_button.setEnabled(False)
 
-
-
-
-
-
-
-
-
-    #}}}

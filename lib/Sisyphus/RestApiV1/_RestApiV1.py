@@ -473,7 +473,7 @@ class retry:
                     logger.warning(msg)
                     last_err = err
                 except Exception as exc:
-                    msg = (f"General exception '{exc}' while calling {function.__name__} "
+                    msg = (f"Exception: {type(exc)} ""{exc}"" while calling {function.__name__} "
                             f"in thread '{threading.current_thread().name}' "
                             f"(attempt #{try_num+1})")
                     logger.error(msg)
@@ -547,6 +547,10 @@ def _request(method, url, *args, return_type="json", **kwargs):
     '''
     global bearer_header
 
+
+    local_config = kwargs.pop('config', None) or config
+
+
     threadname = threading.current_thread().name
     msg = (f"<_request> [{method.upper()}] "
             f"url='{url}' method='{method.lower()}'")
@@ -561,8 +565,9 @@ def _request(method, url, *args, return_type="json", **kwargs):
         with log_lock:
             logger.debug(msg)
 
+    
 
-    session, authentication = get_session()
+    session, authentication = get_session(use_config=local_config)
 
     if authentication == 'token' and bearer_header is None:
         try:
@@ -672,7 +677,7 @@ def _request(method, url, *args, return_type="json", **kwargs):
     if resp.encoding == "utf-8":
         extra_info.append(f"| response: {resp.text}")
     else:
-        extra_info.append(f"| response: [binary]")
+        extra_info.append(f"| response: [binary] {resp.text}")
     #logger.debug('\n'.join(extra_info))
 
 
@@ -832,7 +837,13 @@ def get_hwitem_image_list(part_id, **kwargs):
 
 def post_hwitem_image(part_id, data, filename, **kwargs):
     #{{{
-    """Add an image for an Item"""
+    """Add an image for an Item
+
+    To add a comment, you need to put it in 'data', e.g.,
+    data = {
+        "comments": "this is my comment"
+    }
+    """
     
     logger.debug(f"<post_hwitem_image> part_id={part_id}, filename={filename}")
     path = f"api/v1/components/{sanitize(part_id)}/images"

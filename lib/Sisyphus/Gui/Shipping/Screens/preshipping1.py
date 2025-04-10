@@ -6,7 +6,7 @@ Author:
     Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
 """
 
-from Sisyphus.Configuration import config, USER_SETTINGS_DIR
+from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
 from Sisyphus.Utils.Terminal.Style import Style
@@ -100,11 +100,11 @@ class PreShipping1(zw.PageWidget):
 
     def populate_subcomps(self):
 
-        if self.tab_state.get('part_info', None) is None:
+        if self.workflow_state.get('part_info', None) is None:
             subcomps = {}
 
         else:
-            subcomps = self.tab_state['part_info'].setdefault('subcomponents', {})
+            subcomps = self.workflow_state['part_info'].setdefault('subcomponents', {})
 
         self.table.setRowCount(len(subcomps))
         for idx, subcomp in enumerate(subcomps.values()):

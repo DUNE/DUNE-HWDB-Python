@@ -15,12 +15,24 @@ HLI = highlight = "[bg=#009900,fg=#ffffff]"
 HLW = highlight = "[bg=#999900,fg=#ffffff]"
 HLE = highlight = "[bg=#990000,fg=#ffffff]"
 
+from Sisyphus.Gui import DataModel as dm
 from Sisyphus.Utils.Terminal.Style import Style
 import json
 import os
 
 from PyQt5 import QtCore as qtc
 from PyQt5 import QtWidgets as qtw
+
+###############################################################################
+
+STYLE_LARGE_BUTTON = """
+    font-size: 12pt;
+    padding: 5px 15px;
+"""
+
+STYLE_SMALL_BUTTON = """
+    padding: 5px 15px;
+"""
 
 class PageWidget(qtw.QWidget):
     #{{{
@@ -36,7 +48,7 @@ class PageWidget(qtw.QWidget):
 
         super().__init__(*args, **kwargs)
         self._app_state = self.workflow.app_state
-        self._tab_state = self.workflow.tab_state
+        self._workflow_state = self.workflow.workflow_state
         self.page_id = self.__class__.__name__.split('.')[-1]
 
         self.title_bar = TitleBar(owner = self)
@@ -66,25 +78,24 @@ class PageWidget(qtw.QWidget):
 
     @property
     def part_id(self):
-        return self.tab_state.get("part_info", {}).get("part_id", None)
+        return self.workflow_state.get("part_info", {}).get("part_id", None)
 
     @property
     def app_state(self):
         return self.workflow.app_state
 
     @property
-    def tab_state(self):
-        tab_state = self.workflow.tab_state
-        return tab_state
+    def workflow_state(self):
+        return self.workflow.workflow_state
 
-    @tab_state.setter
-    def tab_state(self, value):
-        self.workflow.tab_state = value
+    @workflow_state.setter
+    def workflow_state(self, value):
+        self.workflow.workflow_state = value
         return value
 
     @property
     def page_state(self):
-        return self.workflow.tab_state.setdefault(self.page_id, {})
+        return self.workflow.workflow_state.setdefault(self.page_id, {})
 
     def save(self):
         logger.debug(f"{self.__class__.__name__}.save()")
@@ -119,20 +130,22 @@ class PageWidget(qtw.QWidget):
     def on_navigate_next(self):
         logger.debug(f"{HLD}{self.__class__.__name__}.on_navigate_next()")
         self.save()
+        return True
 
     def on_navigate_prev(self):
         logger.debug(f"{HLD}{self.__class__.__name__}.on_navigate_prev()")
         self.save()
+        return True
 
-    @property
-    def working_directory(self):
-        if self.part_id is None:
-            retval = self.application.working_directory
-        else:
-            retval = os.path.normpath(
-                            os.path.join(self.application.working_directory, self.part_id))
-        os.makedirs(retval, exist_ok=True)
-        return retval
+    #@property
+    #def working_directory(self):
+    #    if self.part_id is None:
+    #        retval = self.application.working_directory
+    #    else:
+    #        retval = os.path.normpath(
+    #                        os.path.join(self.application.working_directory, self.part_id))
+    #    os.makedirs(retval, exist_ok=True)
+    #    return retval
     #}}}
 
 class TitleBar(qtw.QWidget):
@@ -176,19 +189,22 @@ class NavBar(qtw.QWidget):
 
         super().__init__(*args, **kwargs)
 
-        nav_layout = qtw.QHBoxLayout()
+        main_layout = qtw.QHBoxLayout()
+        main_layout.setContentsMargins(0, 0, 0, 0)
 
         self.back_button = qtw.QPushButton("Back")
+        self.back_button.setStyleSheet(STYLE_LARGE_BUTTON)
         self.back_button.clicked.connect(self.owner.workflow.navigate_prev)
 
         self.continue_button = qtw.QPushButton("Continue")
+        self.continue_button.setStyleSheet(STYLE_LARGE_BUTTON)
         self.continue_button.clicked.connect(self.owner.workflow.navigate_next)
 
-        nav_layout.addWidget(self.back_button)
-        nav_layout.addStretch()
-        nav_layout.addWidget(self.continue_button)
+        main_layout.addWidget(self.back_button)
+        main_layout.addStretch()
+        main_layout.addWidget(self.continue_button)
 
-        self.setLayout(nav_layout)
+        self.setLayout(main_layout)
     #}}}
 
 class LinkedWidget:
@@ -230,17 +246,19 @@ class LinkedWidget:
         return self.owner.page_state
 
     @property
-    def tab_state(self):
-        return self.owner.tab_state
+    def workflow_state(self):
+        return self.owner.workflow_state
 
 
     def restore(self):
         # This is the method that the page should call to restore a widget
+        # but it should not be overloaded unless necessary
         self.blockSignals(True)
         self.restore_state()
         self.blockSignals(False)
 
     def restore_state(self):
+        # Overload this one!
         # This is where the meat of the widget's 'restore' functionality
         # should be implemented
         logger.debug(f"{self.__class__.__name__}.restore_state()")
@@ -271,17 +289,17 @@ class ZDateTimeEdit(qtw.QDateTimeEdit, LinkedWidget):
         self.dateTimeChanged.connect(self.handle_changed)
 
     def handle_changed(self):
-        self.page_state[self.page_state_key] = self.dateTime().toString()
+        self.page_state[self.page_state_key] = self.dateTime().toString(qtc.Qt.DateFormat.ISODate)
         self.owner.update()
 
     def restore_state(self):
         super().restore_state()
-        now = qtc.QDateTime.currentDateTime().toString()
+        now = qtc.QDateTime.currentDateTime().toString(qtc.Qt.DateFormat.ISODate)
 
         datetime = self.page_state.setdefault(self.page_state_key, now)
 
         self.setDateTime(
-            qtc.QDateTime.fromString(datetime)
+            qtc.QDateTime.fromString(datetime, qtc.Qt.DateFormat.ISODate)
         )
     #}}}
 
@@ -425,22 +443,18 @@ class ZFileSelectWidget(qtw.QWidget, LinkedWidget):
         super().__init__(*args, **kwargs)
 
         self.button = qtw.QPushButton(self.button_text)
-        self.button.setStyleSheet('''
-                height: 15px;
-                font-size: 10pt;
-            ''')
+        self.button.setStyleSheet(STYLE_SMALL_BUTTON)
 
         self.button.clicked.connect(self.select_file)
         self.filename_lineedit = qtw.QLineEdit()
+        self.filename_lineedit.setEnabled(False)
         self.filename_lineedit.textChanged.connect(self.handle_changed)
 
-        layout = qtw.QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(layout)
-        layout.addWidget(self.button)
-        layout.addWidget(self.filename_lineedit)
-
-        #self.restore()
+        main_layout = qtw.QHBoxLayout()
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(main_layout)
+        main_layout.addWidget(self.button)
+        main_layout.addWidget(self.filename_lineedit)
 
     def select_file(self):
         file_dialog = qtw.QFileDialog(self)
@@ -466,17 +480,134 @@ class ZInstitutionWidget(qtw.QWidget, LinkedWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        layout = qtw.QHBoxLayout()
-        self.setLayout(layout)
+        self.institution_id = None
+        self.country_code = None
 
-        self.country_list_widget = qtw.QComboBox()
-        self.institution_list_widget = qtw.QComboBox()
+        main_layout = qtw.QHBoxLayout()
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(main_layout)
 
-        layout.addWidget(self.country_list_widget)
-        layout.addWidget(self.institution_list_widget)
+
+        ### Country Widget
+        country_widget = self.country_widget = qtw.QComboBox()
+        country_widget.setStyleSheet("width: 200px")
+        #country_widget.setEditable(True)
+        country_widget.currentIndexChanged.connect(self.on_selectCountry)
+        country_widget.setPlaceholderText("Select Country...")
+        for country_code, country in self.get_countries().items():
+            country_widget.addItem(country, country_code)
+        #country_widget.setCurrentIndex(-1)
+        main_layout.addWidget(country_widget)
+        
+        ### Institution Widget
+        inst_widget = self.inst_widget = qtw.QComboBox()
+        inst_widget.setStyleSheet("width: 400px")
+        #inst_widget.setEditable(True)
+        inst_widget.currentIndexChanged.connect(self.on_selectInstitution)
+        self.inst_widget.setPlaceholderText("Select Institution...")
+        main_layout.addWidget(self.inst_widget)
+
+        main_layout.addStretch()
+    
+    def on_selectCountry(self):
+        self.country_code = self.country_widget.currentData()
+
+        self.inst_widget.clear()
+        for inst_id, inst in self.get_insts(self.country_code).items():
+            self.inst_widget.addItem(inst, inst_id)
+
+        if self.institution_id in self.get_insts(self.country_code):
+            self.inst_widget.setCurrentIndex(
+                    self.inst_widget.findData(self.institution_id))
+        else:
+            self.institution_id = None
+            
+
+
+    def on_selectInstitution(self):
+        self.institution_id = str(self.inst_widget.currentData())
+        self.page_state[self.page_state_key] = str(self.institution_id)
+        self.owner.update()
+
+    def restore_state(self):
+        self.country_widget.blockSignals(True)
+        self.inst_widget.blockSignals(True)
+        
+        self.institution_id = str(self.page_state.setdefault(
+                                            self.page_state_key, self.default_value))
+        self.country_code = self.get_country_of_inst(self.institution_id)
+        
+        if self.country_code:
+            c_index = self.country_widget.findData(self.country_code)
+            self.country_widget.setCurrentIndex(c_index)
+            self.on_selectCountry()
+            i_index = self.inst_widget.findData(self.institution_id)
+            self.inst_widget.setCurrentIndex(i_index)
+        else:        
+            self.country_widget.setCurrentIndex(-1)
+            self.inst_widget.setCurrentIndex(-1)
+    
+        self.country_widget.blockSignals(False)
+        self.inst_widget.blockSignals(False)
+        
+        
+    @classmethod
+    def get_countries(cls):
+        if not hasattr(cls, '_inst_cache'):
+            cls._get_inst_data()
+        return cls._inst_cache['countries']
+
+    @classmethod
+    def get_insts(cls, country_code):
+        if not hasattr(cls, '_inst_cache'):
+            cls._get_inst_data()
+        return cls._inst_cache['insts'][country_code]
+    
+    @classmethod
+    def get_country_of_inst(cls, inst_id):
+        if not hasattr(cls, '_inst_cache'):
+            cls._get_inst_data()
+        return cls._inst_cache['country_by_inst'].get(inst_id, None)
+
+    @classmethod
+    def _get_inst_data(cls):
+        #{{{
+        if hasattr(cls, '_cache'):
+            return cls._cache
+
+        inst_data = dm.Institutions().data
+        full_list = [ (f"({c_code}) {c_name}", f"({inst_id}) {inst_name}", c_code, inst_id)
+                      for c_code, c_name, inst_name, inst_id in
+                sorted(list(
+                    [
+                        (
+                            inst['country']['code'],
+                            inst['country']['name'],
+                            inst['name'],
+                            str(inst['id'])
+                        ) for inst in inst_data 
+                    ]
+                ))
+            ]
+        country_list = {
+                c_code: c_full_name for 
+                    (c_full_name, inst_full_name, c_code, inst_id) in full_list
+            }
+        inst_list = {c_code_key:
+                        {inst_id: inst_full_name
+                            for (c_full_name, inst_full_name, c_code, inst_id) in full_list
+                            if c_code_key == c_code}
+                        for c_code_key in country_list.keys()}
+        inst_list[None] = {}
+        country_lookup_by_inst = {inst_id: c_code 
+                            for (c_full_name, inst_full_name, c_code, inst_id) in full_list}
+        cls._inst_cache = {
+                "countries": country_list,
+                "insts": inst_list,
+                "country_by_inst": country_lookup_by_inst
+            }
+        #}}}
+
 
     #}}}
-
-
-
 

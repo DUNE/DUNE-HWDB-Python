@@ -23,10 +23,10 @@ import re
 import OpenSSL
 import requests
 from datetime import datetime
+from copy import deepcopy
 
 import logging
 import logging.config
-
 
 API_DEV = 'dbwebapi2.fnal.gov:8443/cdbdev'
 API_PROD = 'dbwebapi2.fnal.gov:8443/cdb'
@@ -54,6 +54,20 @@ KW_LOGLEVEL = "loglevel"
 KW_SETTINGS = "settings"
 KW_BEARER_TOKEN = "bearer token"
 KW_AUTHENTICATION = "authentication"
+
+NEW_CONFIG = {
+    "default profile": "development",
+    "profiles": {
+        "development": {
+            "rest api": "dbwebapi2.fnal.gov:8443/cdbdev",
+            "users": {}
+        },
+        "production": {
+            "rest api": "dbwebapi2.fnal.gov:8443/cdb",
+            "users": {}
+        }
+    }
+}
 
 class Config:
     def __init__(self, *, 
@@ -95,6 +109,7 @@ class Config:
         #}}}
 
     def load_additional_config(self, filename, recopy_if_missing=True, recopy_on_error=False):
+        #{{{
         filepath = os.path.join(self.user_settings_dir, filename)
 
         def load_config():
@@ -136,11 +151,8 @@ class Config:
                 raise exc
 
         return config
+        #}}}
             
-            
-            
-    
-
     def _init_logging(self):
         #{{{ 
         # We need to create the directory the logs will be written to
@@ -276,7 +288,7 @@ class Config:
     
     def reset(self):
         self.reset_log_config()
-        self.config_data = {}
+        self.config_data = deepcopy(NEW_CONFIG)
         
     def set_active(self):
         self.config_data[KW_DEFAULT_PROFILE] = self.profile_name
@@ -533,7 +545,7 @@ class Config:
         except Exception:
             # msg = f"The configuration file at '{filename}' could not be read."
             # raise RuntimeError(msg)
-            self.config_data = {}
+            self.config_data = deepcopy(NEW_CONFIG)
             return
         
         # parse it as JSON5

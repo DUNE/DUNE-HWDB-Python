@@ -30,10 +30,8 @@ class MainWindow(qtw.QMainWindow):
         self.tab_widget = TabWidget(owner=self.application)
 
         self.setCentralWidget(self.tab_widget)
-
-
-        #self.setCentralWidget(self.tab_widget)
-        #self.status_bar = self.statusBar()
+        self.status_bar = self.statusBar()
+        
         self.show()
         #}}}
 
@@ -71,7 +69,23 @@ class MainWindow(qtw.QMainWindow):
         exit_action.triggered.connect(self.application.exit)
         options_menu.addAction(exit_action)
 
+        style_menu = menu_bar.addMenu("Style")
+        menu_bar.addMenu(style_menu)
+
+        dark_action = qtw.QAction("Dark", self)
+        dark_action.triggered.connect(self.application.setStyleSheet_dark)
+        style_menu.addAction(dark_action)
+
+        light_action = qtw.QAction("Light", self)
+        light_action.triggered.connect(self.application.setStyleSheet_light)
+        style_menu.addAction(light_action)
+
+        sisyphus_action = qtw.QAction("Sisyphus", self)
+        sisyphus_action.triggered.connect(self.application.setStyleSheet_sisyphus)
+        style_menu.addAction(sisyphus_action)
+
         if self.application._debug:
+       
             debug_menu = menu_bar.addMenu("Debug")
             menu_bar.addMenu(debug_menu)
 

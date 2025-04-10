@@ -6,58 +6,40 @@ Author:
     Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
 """
 
-#{{{
-from Sisyphus.Gui.Shipping.Widgets import PageWidget, NavBar
+from Sisyphus.Configuration import config
+logger = config.getLogger(__name__)
 
-from PyQt5.QtCore import QSize, Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QWidget,
-    QPushButton,
-    QVBoxLayout,
-    QHBoxLayout,
-    QStackedLayout,
-    QLabel,
-    QTextEdit,
-    QPlainTextEdit,
-    QLineEdit,
-    QGridLayout,
-    QTableWidget,
-    QTableWidgetItem,
-    QCheckBox,
-    QTabWidget,
-    QMenu,
-    QMenuBar,
-    QAction,
-    QStackedWidget,
-    QRadioButton,
-)
-#}}}
+from Sisyphus.Gui.Shipping import Widgets as zw
 
-class ShippingComplete(PageWidget):
-    #{{{
+from PyQt5 import QtCore as qtc
+from PyQt5 import QtWidgets as qtw
+
+###############################################################################
+
+class ShippingComplete(zw.PageWidget):
     page_name = "Shipping Workflow Complete"
     page_short_name = "Shipping Complete"
 
     def __init__(self, *args, **kwargs):
+        #{{{
         super().__init__(*args, **kwargs)
 
-        screen_layout = QVBoxLayout()
+        self._setup_UI()
+        #}}}
+
+    def _setup_UI(self):
+        #{{{
+        main_layout = qtw.QVBoxLayout()
+        main_layout.addWidget(self.title_bar)
 
         #############################
-        page_title = QLabel("Shipping Workflow Complete")
-        page_title.setStyleSheet("""
-                font-size: 14pt;
-                font-weight: bold;
-            """)
-        page_title.setAlignment(Qt.AlignCenter)
-        screen_layout.addWidget(page_title)
-        #############################
 
-        screen_layout.addStretch()
+        main_layout.addStretch()
 
-        screen_layout.addWidget(self.nav_bar)
-        self.setLayout(screen_layout)
-    #}}}
+        main_layout.addWidget(self.nav_bar)
+        self.setLayout(main_layout)
+        #}}}
 
+    def update(self):
+        self.nav_bar.back_button.setEnabled(False)
+        self.nav_bar.continue_button.setEnabled(False)

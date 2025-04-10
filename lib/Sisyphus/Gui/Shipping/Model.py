@@ -5,7 +5,7 @@ Copyright (c) 2025 Regents of the University of Minnesota
 Author:
     Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
 """
-from Sisyphus.Configuration import config, USER_SETTINGS_DIR
+from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
 import Sisyphus
@@ -14,7 +14,7 @@ from Sisyphus.RestApiV1 import Utilities as ut
 
 from Sisyphus.Utils.Terminal.Style import Style
 
-from Sisyphus.Gui.Shipping import DataModel as dm
+from Sisyphus.Gui import DataModel as dm
 
 import json
 import base64, PIL.Image, io
@@ -23,6 +23,8 @@ import re
 import functools
 import threading
 import concurrent.futures
+import hashlib
+
 NUM_THREADS = 50
 _executor = concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS)
 
@@ -31,14 +33,14 @@ HLI = highlight = "[bg=#009900,fg=#ffffff]"
 HLW = highlight = "[bg=#999900,fg=#ffffff]"
 HLE = highlight = "[bg=#990000,fg=#ffffff]"
 
-
-#{{{
+###############################################################################
 
 def download_part_info(part_id, status_callback=None):
+    #{{{
 
     fwd_kwargs = {'status_callback': status_callback} if status_callback is not None else {}
 
-    tab_state = {}
+    workflow_state = {}
 
     try:
         hwitem = dm.HWItem(part_id=part_id, **fwd_kwargs)
@@ -70,7 +72,7 @@ def download_part_info(part_id, status_callback=None):
         msg = f'''<div style="color: #990000">{part_id} not found!</div>'''
         self.pid_search_result_label.setText(msg)
 
-        self.tab_state['part_info'] = None
+        self.workflow_state['part_info'] = None
 
         self.update()
         return
@@ -102,7 +104,7 @@ def download_part_info(part_id, status_callback=None):
             "Functional Position Name": subcomp["functional_position"]
         }
 
-    tab_state['part_info'] = part_info
+    workflow_state['part_info'] = part_info
 
 
                 
@@ -128,13 +130,13 @@ def download_part_info(part_id, status_callback=None):
     # If there is a record for pre-shipping, we can assume that all the required
     # checkboxes were checked.
     
-    tab_state["PreShipping1"] = {
+    workflow_state["PreShipping1"] = {
             "confirm_list": preshipping_exists,
             "hwdb_updated": preshipping_exists,
         }
 
 
-    tab_state["PreShipping2"] = {
+    workflow_state["PreShipping2"] = {
             "approver_name": psc.get("POC name", ""),
             "approver_email": ', '.join(psc.get("POC Email", [])),
             "test_info": psc.get("QA/QC related info Line 1", ""),
@@ -142,7 +144,7 @@ def download_part_info(part_id, status_callback=None):
         #"approver_name": "FD Logistics team acknoledgement (name)",
         #"approver_email": 
     
-    tab_state["PreShipping3a"] = {
+    workflow_state["PreShipping3a"] = {
             "hts_code": psc.get("HTS code", ""),
             "shipment_origin": psc.get("Origin of this shipment", ""),
             "dimension": psc.get("Dimension of this shipment",""),
@@ -151,18 +153,18 @@ def download_part_info(part_id, status_callback=None):
                                                 else "International",
         }
 
-    tab_state["PreShipping3b"] = {
+    workflow_state["PreShipping3b"] = {
             "freight_forwarder": psc.get("Freight Forwarder name", ""),
             "mode_of_transportation": psc.get("Mode of Transportation", ""),
             "expected_arrival_time": psc.get("Expected Arrival Date (CT)", ""),
         }
 
-    tab_state["PreShipping4"] = {
+    workflow_state["PreShipping4"] = {
             "email_contents": "",
             "confirm_email_contents": preshipping_exists
         }
 
-    tab_state["PreShipping5"] = {
+    workflow_state["PreShipping5"] = {
             "received_acknowledgement": preshipping_exists,
             "acknowledged_by": psc.get("FD Logistics team acknoledgement (name)", ""),
             "acknowledged_time": psc.get("FD Logistics team acknoledgement (date in CT)", ""),
@@ -175,29 +177,70 @@ def download_part_info(part_id, status_callback=None):
 
     #print(json.dumps(preshipping_checklist, indent=4))
 
-    #print(json.dumps(tab_state, indent=4))
+    #print(json.dumps(workflow_state, indent=4))
 
-    return tab_state
+    return workflow_state
+    #}}}
 
-def upload_shipping(part_id):
+def upload_shipping(workflow_state):
+    #{{{
+
+    ws = workflow_state
+    part_id = ws['part_info']['part_id']
+
     shipping_checklist = {
-        "POC name": "Hajime Muramatsu",
-        "POC Email": [
-            "hmuramat@umn.edu",
-            "hajime.muramatsu@gmail.com"
-        ],
-        "System Name (ID)": "FD1-HD HVS (005)",
-        "Subsystem Name (ID)": "HWDBUnitTest (998)",
-        "Component Type Name (ID)": "Test Type 007 (D00599800007)",
-        "DUNE PID": "D00599800007-00075",
-        "Image ID for BoL": "864966a0-d6c0-11ef-94fc-5fad7be5af4a",
-        "Image ID for Proforma Invoice": "88024d18-d6c0-11ef-9904-0bc5dd4b6979",
-        "Image ID for the final approval message": "93e250ba-d6c0-11ef-a5e4-3349190277b1",
-        "FD Logistics team final approval (name)": "Hajime",
-        "FD Logistics team final approval (date in CST)": "2025-01-19 17:51:14",
-        "DUNE Shipping Sheet has been attached": "YES",
-        "This shipment has been adequately insured for transit": "YES",
+        "POC name":  ws['SelectPID']['user_name'],
+        "POC Email": [s.strip() for s in ws['SelectPID']['user_email'].split(',')],
+        "System Name (ID)": f"{ws['part_info']['system_name']}"
+                               f" ({ws['part_info']['system_id']})",
+        "Subsystem Name (ID)":  f"{ws['part_info']['subsystem_name']}"
+                               f" ({ws['part_info']['subsystem_id']})",
+        "Component Type Name (ID)":  f"{ws['part_info']['part_type_name']}"
+                                f" ({ws['part_info']['part_type_id']})",
+        "DUNE PID": part_id,
+        "Image ID for BoL": ws['Shipping2']['bol_info']['image_id'],
+        "Image ID for Proforma Invoice": ws['Shipping2'].get('proforma_info', {}).get('image_id', None),
+        "Image ID for the final approval message": ws['Shipping4']['approval_info']['image_id'],
+        "FD Logistics team final approval (name)": ws['Shipping4']['approved_by'],
+        "FD Logistics team final approval (date in CST)": ws['Shipping4']['approved_time'],
+        "DUNE Shipping Sheet has been attached": ws['Shipping4']['confirm_attached_sheet'],
+        "This shipment has been adequately insured for transit": ws['Shipping4']['confirm_insured']
     }
+
+    print(json.dumps(shipping_checklist, indent=4))
+
+    # Get the current specifications and add to it
+    item_resp = ut.fetch_hwitems(part_id=part_id)[part_id]
+    logger.info(json.dumps(item_resp, indent=4))
+    specs = item_resp['Item']['specifications'][-1]
+
+    # Sometimes this bastard 'DATA' is a list instead of a dict!
+    # So wipe it out and make it a dict.
+    if not isinstance(specs.get('DATA'), dict):
+        specs['DATA'] = {}
+
+    specs['DATA']['Shipping Checklist'] = \
+                [ {k: v} for k, v in shipping_checklist.items() ]
+
+    if item_resp['Item']['manufacturer'] is not None:
+        manufacturer_node = {"id": item_resp['Item']['manufacturer']['id']}
+    else:
+        manufacturer_node = None
+
+    update_data = {
+        "part_id": part_id,
+        "comments": item_resp['Item']['comments'],
+        "manufacturer": manufacturer_node,
+        "serial_number": item_resp['Item']['serial_number'],
+        "specifications": specs
+    }
+
+    logger.info(json.dumps(update_data, indent=4))
+    resp = ra.patch_hwitem(part_id, update_data)
+    logger.info(json.dumps(resp, indent=4))
+
+    return True
+    #}}}
 
 def populate_preshipping_from_hwdb(part_id):
     ...
@@ -206,11 +249,30 @@ def populate_shipping_from_hwdb(part_id):
     ...
 
 
+def upload_image(part_id, filename):
+    #{{{
+    checksum = hashlib.md5(open(filename, 'rb').read()).hexdigest()
 
-#}}}
+    data = {
+        "comments": checksum
+    }
 
-def main():
-    ...
+    image_id = ra.post_hwitem_image(part_id, data, filename)['image_id']
+    return image_id, checksum
+    #}}}
 
-if __name__ == '__main__':
-    sys.exit(main())
+def update_location(part_id, location, arrived, comments):
+    #{{{
+
+    data = {
+        "location":
+        {
+            "id": location,
+        },
+        "arrived": arrived,
+        "comments": comments,
+    }
+
+    resp = ra.post_hwitem_location(part_id, data)
+    return True
+    #}}}

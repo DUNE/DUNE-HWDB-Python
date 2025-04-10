@@ -6,53 +6,18 @@ Author:
     Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
 """
 
-#{{{
-from Sisyphus.Configuration import config, USER_SETTINGS_DIR
+from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
-import Sisyphus
-from Sisyphus import RestApiV1 as ra
-from Sisyphus.RestApiV1 import Utilities as ut
+from Sisyphus.Gui.Shipping import Widgets as zw
 
-from Sisyphus.Utils.Terminal.Style import Style
+from PyQt5 import QtCore as qtc
+from PyQt5 import QtWidgets as qtw
 
-from Sisyphus.Gui.Shipping.Widgets import PageWidget, NavBar
-from Sisyphus.Gui.Shipping.Widgets import ZLineEdit, ZTextEdit, ZCheckBox, ZRadioButtonGroup
+###############################################################################
 
-from Sisyphus.Gui.Shipping.ShippingLabel import ShippingLabel
-
-from PyQt5.QtCore import QSize, Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QWidget,
-    QPushButton,
-    QVBoxLayout,
-    QHBoxLayout,
-    QStackedLayout,
-    QLabel,
-    QTextEdit,
-    QPlainTextEdit,
-    QLineEdit,
-    QGridLayout,
-    QTableWidget,
-    QTableWidgetItem,
-    QCheckBox,
-    QTabWidget,
-    QMenu,
-    QMenuBar,
-    QAction,
-    QStackedWidget,
-    QRadioButton,
-    QGroupBox,
-    QButtonGroup,
-)
-
-import json
-#}}}
-
-class PreShipping3a(PageWidget):
-    #{{{
+class PreShipping3a(zw.PageWidget):
+    
     page_name = "Pre-Shipping Workflow (3a)"
     page_short_name = "Pre-Shipping (3a)"
 
@@ -60,41 +25,33 @@ class PreShipping3a(PageWidget):
         #{{{
         super().__init__(*args, **kwargs)
 
-        self.destination_type = ZRadioButtonGroup(
+        self.destination_type = zw.ZRadioButtonGroup(
                 owner=self, key='shipping_service_type', default='Domestic')
         self.destination_type.create_button("Domestic", "Domestic")
         self.destination_type.create_button("International", "International")
 
         
-        self.hts_code = ZLineEdit(owner=self, key='hts_code')
+        self.hts_code = zw.ZLineEdit(owner=self, key='hts_code')
         
-        self.shipment_origin = ZLineEdit(owner=self, key='shipment_origin')
-        self.dimension = ZLineEdit(owner=self, key='dimension')
-        self.weight = ZLineEdit(owner=self, key='weight')
+        self.shipment_origin = zw.ZLineEdit(owner=self, key='shipment_origin')
+        self.dimension = zw.ZLineEdit(owner=self, key='dimension')
+        self.weight = zw.ZLineEdit(owner=self, key='weight')
 
         self._setup_UI()
         #}}}
 
     def _setup_UI(self):
         #{{{
-        screen_layout = QVBoxLayout()
+        main_layout = qtw.QVBoxLayout()
+        main_layout.addWidget(self.title_bar)
+
         ########################################
 
-        page_title = QLabel("Pre-Shipping Workflow (3)")
-        page_title.setStyleSheet("""
-                font-size: 14pt;
-                font-weight: bold;
-            """)
-        page_title.setAlignment(Qt.AlignCenter)
-        screen_layout.addWidget(page_title)
-        ################
+        group_box_1 = qtw.QGroupBox()
 
-
-        group_box_1 = QGroupBox()
-
-        group_box_1_layout = QVBoxLayout()
+        group_box_1_layout = qtw.QVBoxLayout()
         group_box_1_layout.addWidget(
-            QLabel("Will this be a domestic or international shipment?")
+            qtw.QLabel("Will this be a domestic or international shipment?")
         )
 
 
@@ -105,10 +62,10 @@ class PreShipping3a(PageWidget):
         group_box_1_layout.addWidget(self.destination_type.button('Domestic'))       
         group_box_1_layout.addWidget(self.destination_type.button('International'))       
 
-        group_box_2 = QGroupBox()
-        group_box_2_layout = QVBoxLayout() 
-        intl_label_1 = QLabel("For international shipment:")
-        intl_label_2 = QLabel(
+        group_box_2 = qtw.QGroupBox()
+        group_box_2_layout = qtw.QVBoxLayout() 
+        intl_label_1 = qtw.QLabel("For international shipment:")
+        intl_label_2 = qtw.QLabel(
                 "Provide your Harmonized Tariff Schedule (HTS) code.\n"
                 " - Use the HTS code that your institution or lab used in the past successfully\n"
                 " - Else, for Equipment and Materials for the LBNF & DUNE Scientific Projects, "
@@ -127,55 +84,55 @@ class PreShipping3a(PageWidget):
     
         group_box_1.setLayout(group_box_1_layout)
 
-        screen_layout.addWidget(group_box_1)
+        main_layout.addWidget(group_box_1)
 
         ################
         ################
 
-        screen_layout.addWidget(QLabel("Provide the shipment's origin:"))
-        screen_layout.addWidget(self.shipment_origin)
+        main_layout.addWidget(qtw.QLabel("Provide the shipment's origin:"))
+        main_layout.addWidget(self.shipment_origin)
 
         ################
 
 
-        dim_wt_label = QLabel(
+        dim_wt_label = qtw.QLabel(
                 "Provide the dimension (length x width x height) and weight of your shipment. "
                 "Don't forget to provide their units as well (inches, m, lbs, kg, etc.)"
         )
         dim_wt_label.setWordWrap(True)
-        screen_layout.addWidget(dim_wt_label)
+        main_layout.addWidget(dim_wt_label)
 
-        dim_wt_layout = QVBoxLayout()
+        dim_wt_layout = qtw.QVBoxLayout()
 
-        dim_layout = QHBoxLayout()
-        dim_layout.addWidget(QLabel("Dimension"))
+        dim_layout = qtw.QHBoxLayout()
+        dim_layout.addWidget(qtw.QLabel("Dimension"))
         dim_layout.addWidget(self.dimension)
-        dim_widget = QWidget()
+        dim_widget = qtw.QWidget()
         dim_widget.setLayout(dim_layout)
 
-        wt_layout = QHBoxLayout()
-        wt_layout.addWidget(QLabel("Weight"))
+        wt_layout = qtw.QHBoxLayout()
+        wt_layout.addWidget(qtw.QLabel("Weight"))
         wt_layout.addWidget(self.weight)
-        wt_widget = QWidget()
+        wt_widget = qtw.QWidget()
         wt_widget.setLayout(wt_layout)
 
         dim_wt_layout.addWidget(dim_widget)
         dim_wt_layout.addWidget(wt_widget)
-        dim_wt_widget = QWidget()
+        dim_wt_widget = qtw.QWidget()
         dim_wt_widget.setLayout(dim_wt_layout)
-        screen_layout.addWidget(dim_wt_widget)
+        main_layout.addWidget(dim_wt_widget)
 
         ################
-        ################
 
-        screen_layout.addStretch()
+        main_layout.addStretch()
 
-        screen_layout.addWidget(self.nav_bar)
+        main_layout.addWidget(self.nav_bar)
 
-        self.setLayout(screen_layout)
+        self.setLayout(main_layout)
         #}}}
 
     def update(self):
+        #{{{
         super().update()
 
         if self.page_state.get('shipping_service_type', None) == 'International':
@@ -194,5 +151,4 @@ class PreShipping3a(PageWidget):
         else:
             self.nav_bar.continue_button.setEnabled(False)
     
-
-    #}}}
+        #}}}

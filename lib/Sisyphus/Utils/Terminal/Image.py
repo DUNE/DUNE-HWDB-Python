@@ -14,7 +14,8 @@ from random import randint
 def image2text(source, 
             columns=None, lines=None,
             max_columns=None, max_lines=None,
-            background=None, get_frames=False):
+            background=None, get_frames=False,
+            allow_halfline=False):
     #{{{
     
     # PIL.Image.open() will recognize if source is a filename that it needs
@@ -26,18 +27,19 @@ def image2text(source,
 
     full_image = PIL.Image.open(source) 
     
-
-    aspect_ratio = full_image.width / full_image.height * 2 
-    
+    aspect_ratio = full_image.width / full_image.height 
+ 
     if columns is not None:
         num_columns = columns
         if lines is not None:
             num_lines = lines
         else:
-            num_lines = int(num_columns / aspect_ratio + 0.5)
+            if allow_halfline:
+                num_halflines = int(num_columns / aspect_ratio + 0.5)
+            num_lines = int(num_columns / aspect_ratio / 2 + 0.5)
     elif lines is not None:
         num_lines = lines
-        num_columns = int(num_lines * aspect_ratio + 0.5)
+        num_columns = int(num_lines * aspect_ratio / 2 + 0.5)
     else:
         if max_columns is None:
             max_columns = shutil.get_terminal_size().columns
@@ -59,6 +61,8 @@ def image2text(source,
             num_lines = max_lines
             scale = full_image.height / num_lines / 2
             num_columns = int(full_image.width / scale)
+    if not allow_halfline:
+        num_halflines = num_lines * 2
 
     # Default: this will make a checkerboard pattern
     bg_parity_0 = ((0, 0, 0), (64, 64, 64))
@@ -73,8 +77,6 @@ def image2text(source,
         except:
             pass
     
-   
- 
     def resolve_alpha(rgba, color):
         # Take a color with an alpha channel and blend it with the
         # background according to that alpha.
@@ -163,7 +165,7 @@ def image2text(source,
     for frame_num in range(num_frames):
 
         full_image.seek(frame_num)
-        image = full_image.convert("RGBA").resize((num_columns*2, num_lines*2))
+        image = full_image.convert("RGBA").resize((num_columns*2, num_halflines))
         mode = image.mode
 
         output = []
@@ -176,8 +178,11 @@ def image2text(source,
 
                 TL = image.getpixel((img_col, img_row))
                 TR = image.getpixel((img_col+1, img_row))
-                BL = image.getpixel((img_col, img_row+1))
-                BR = image.getpixel((img_col+1, img_row+1))
+                if img_row + 1 < num_halflines: 
+                    BL = image.getpixel((img_col, img_row+1))
+                    BR = image.getpixel((img_col+1, img_row+1))
+                else:
+                    BL = BR = (0, 0, 0, 0)
 
                 if mode == 'RGBA':
                     TL = resolve_alpha(TL, bg_parity_0[block_parity])

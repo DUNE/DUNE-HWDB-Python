@@ -17,6 +17,8 @@ HLE = highlight = "[bg=#990000,fg=#ffffff]"
 from PyQt5 import QtCore as qtc
 from PyQt5 import QtWidgets as qtw
 
+import os
+
 from Sisyphus.Gui.Shipping.Screens import (
         SelectPID, SelectWorkflow,
         Packing1, PackingComplete,
@@ -28,9 +30,11 @@ from Sisyphus.Gui.Shipping.Screens import (
         Receiving1, Receiving2, Receiving3, ReceivingComplete
 )
 
+###############################################################################
+
 class WorkflowWidget(qtw.QWidget):
-    #{{{
     def __init__(self, *, owner=None, uuid=None):
+        #{{{
         self._finished_init = False
         if owner is None:
             raise ValueError("required parameter: owner")
@@ -47,40 +51,34 @@ class WorkflowWidget(qtw.QWidget):
         logger.debug(f"{HLD}WorkflowWidget parent: {self.parent()}")
 
         self.create_page_stack()
-        self.current_page = self.tab_state['current_page']
-
         self._finished_init = True
+        #}}}
 
     @property
     def app_state(self):
         return self.application.app_state
 
     @property
-    def tab_state(self):
+    def workflow_state(self):
         return self.application.app_state['workflows'][self.uuid]
 
     @property
-    def current_page(self):
-        logger.debug(f"{HLD}{self.__class__.__name__}.current_page [get]: "
-                    f"{self.tab_state['current_page']} "
-                    f"(init finished: {self._finished_init})")
-        return self.tab_state['current_page']
-    @current_page.setter
-    def current_page(self, page_id):
-        logger.debug(f"{HLD}{self.__class__.__name__}.current_page [set]: "
-                    f"{self.tab_state['current_page']} -> {page_id}"
-                    f"(init finished: {self._finished_init})")
-        if self.tab_state['current_page'] != page_id:
-            self.tab_state['current_page'] = page_id
+    def current_page_id(self):
+        return self.workflow_state['current_page_id']
+
+    def set_current_page(self, new_page_id):
+        
+        if self.workflow_state['current_page_id'] != new_page_id:
+            self.workflow_state['current_page_id'] = new_page_id
             self.activate()
-            #current_page_widget = self.page_lookup[page_id]
+            #current_page_widget = self._page_lookup[page_id]
             #self.page_stack.setCurrentWidget(current_page_widget)
             #current_page_widget.restore()
-        return page_id
+        return new_page_id
 
     def activate(self):
         logger.debug(f"{HLD}{self.__class__.__name__}.activate()")
-        self.page_stack.setCurrentWidget(self.page_lookup[self.current_page])
+        self.page_stack.setCurrentWidget(self._page_lookup[self.current_page_id])
         self.update_tab_title()
         self.current_page_widget.activate()
 
@@ -105,7 +103,7 @@ class WorkflowWidget(qtw.QWidget):
          tab_index = self.application.tab_widget.indexOf(self)
          logger.debug(f"{HLD}(finished_init: {self._finished_init}, "
                     f" tab_index: {tab_index}, "
-                    f" current_page: {self.current_page_widget.__class__.__name__}")
+                    f" current_page_id: {self.current_page_widget.__class__.__name__}")
          #self.application.tab_widget.setTabText(tab_index, self.current_page_widget.page_short_name)
          self.application.tab_widget.setTabText(tab_index, self.current_page_widget.tab_title)
 
@@ -116,7 +114,7 @@ class WorkflowWidget(qtw.QWidget):
         #self.page_stack = qtw.QVBoxLayout()
 
         logger.info("creating pages...")
-        self.page_lookup = {
+        self._page_lookup = {
             "SelectPID": SelectPID(owner=self),
             "SelectWorkflow": SelectWorkflow(owner=self),
 
@@ -150,10 +148,10 @@ class WorkflowWidget(qtw.QWidget):
         }
         logger.info("...finished creating pages")
 
-        for page_id, page in self.page_lookup.items():
+        for page_id, page in self._page_lookup.items():
             self.page_stack.addWidget(page)
 
-        self.next_page = {
+        self._next_page = {
             "SelectPID": "SelectWorkflow",
             "SelectWorkflow": None, # handle special
 
@@ -175,6 +173,7 @@ class WorkflowWidget(qtw.QWidget):
             "Shipping3": "Shipping4",
             "Shipping4": "Shipping5",
             "Shipping5": "Shipping6",
+            "Shipping6": "ShippingComplete",
             "ShippingComplete": None,
 
             "Transit1": "TransitComplete",
@@ -186,7 +185,7 @@ class WorkflowWidget(qtw.QWidget):
             "ReceivingComplete": None,
         }
 
-        self.prev_page = {
+        self._prev_page = {
             "SelectPID": None,
             "SelectWorkflow": "SelectPID",
 
@@ -230,55 +229,68 @@ class WorkflowWidget(qtw.QWidget):
         self.setLayout(self.page_stack)
         #}}}
 
-    #def set_page(self, page_id, state=None):
-    #    state = state or {}
- 
-    #    self.current_page = page_id
-    #    self.tab_state['current_page'] = page_id
-
-     #   self.page_stack.setCurrentWidget(self.page_lookup[page_id])
-
-      #  self.page_lookup[page_id].restore()
-     #   logger.debug(f"current page set to: {self.current_page}")
-
     def navigate_next(self):
-        self.page_lookup[self.current_page].on_navigate_next()
+        #{{{
+        ok = self.current_page_widget.on_navigate_next()
 
-        next_page = self.next_page[self.current_page]
-        logger.debug(f"navigate_next: {self.current_page} -> {next_page}")
-        if next_page is not None:
-            self.current_page = next_page
+        if not ok:
+            logger.warning(f"{self.current_page_id} rejected 'on_navigate_next'")
+            return
+
+        next_page_id = self._next_page[self.current_page_id]
+        logger.debug(f"navigate_next: {self.current_page_id} -> {next_page_id}")
+        if next_page_id is not None:
+            self.set_current_page(next_page_id)
             return
 
         logger.debug("special handling code")
-        if self.current_page == 'SelectWorkflow':
-            page_state = self.tab_state.setdefault('SelectWorkflow', {})
+        if self.current_page_id == 'SelectWorkflow':
+            page_state = self.workflow_state.setdefault('SelectWorkflow', {})
             if page_state['workflow_type'] == "packing":
-                next_page = "Packing1"
+                next_page_id = "Packing1"
             elif page_state['workflow_type'] == "preshipping":
-                next_page = "PreShipping1"
+                next_page_id = "PreShipping1"
             elif page_state['workflow_type'] == "shipping":
-                next_page = "Shipping1"
+                next_page_id = "Shipping1"
             elif page_state['workflow_type'] == "transit":
-                next_page = "Transit1"
+                next_page_id = "Transit1"
             elif page_state['workflow_type'] == "receiving":
-                next_page = "Receiving1"
+                next_page_id = "Receiving1"
             else:
                 logger.warning(f"unrecognized workflow type {self.workflow_type}")
-                next_page = "SelectWorkflow"
+                next_page_id = "SelectWorkflow"
 
-            #self.set_page(next_page)
-            self.current_page = next_page
+            self.set_current_page(next_page_id)
+        #}}}
 
     def navigate_prev(self):
-        self.page_lookup[self.current_page].on_navigate_prev()
+        ok = self.current_page_widget.on_navigate_prev()
         
-        prev_page = self.prev_page[self.current_page]
-        if prev_page is not None:
+        if not ok:
+            return
+
+        prev_page_id = self._prev_page[self.current_page_id]
+        if prev_page_id is not None:
             #self.set_page(prev_page)
-            self.current_page = prev_page
+            self.set_current_page(prev_page_id)
             return
         #print("special handling code")
+
+    @property
+    def part_id(self):
+        return self.workflow_state.get('part_info', {}).get('part_id', None)
+
+    @property
+    def working_directory(self):
+        if self.part_id is None:
+            retval = self.application.working_directory
+        else:
+            retval = os.path.normpath(
+                    os.path.join(self.application.working_directory, self.part_id))
+        os.makedirs(retval, exist_ok=True)
+        return retval
+
+
     #}}}
 
 
