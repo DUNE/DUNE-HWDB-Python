@@ -1,0 +1,181 @@
+{
+  "data": {
+    "component_types": [
+      {
+        "name": "Test Type 001",
+        "part_type_id": "D00599800001"
+      },
+      {
+        "name": "Test Type 002",
+        "part_type_id": "D00599800002"
+      },
+      {
+        "name": "Test Type 003",
+        "part_type_id": "D00599800003"
+      },
+      {
+        "name": "LArASIC Version P5B version preproduction 1",
+        "part_type_id": "D08100100001"
+      },
+      {
+        "name": "FEMB FD1 SAMTEC version",
+        "part_type_id": "D08100400001"
+      },
+      {
+        "name": "FEMB FD2 MINISAS version",
+        "part_type_id": "D08100400002"
+      },
+      {
+        "name": "CPA_Planes",
+        "part_type_id": "Z00100100043"
+      },
+      {
+        "name": "Test_Parts_1",
+        "part_type_id": "Z00100100048"
+      },
+      {
+        "name": "CPA_Parts_FR4_mainbott",
+        "part_type_id": "Z00100100050"
+      },
+      {
+        "name": "CPA_Parts_FR4_Upper_Side_P1_US",
+        "part_type_id": "Z00100100051"
+      },
+      {
+        "name": "FPGA005",
+        "part_type_id": "Z00100200007"
+      },
+      {
+        "name": "VME_rack",
+        "part_type_id": "Z00100200009"
+      },
+      {
+        "name": "MOBO03",
+        "part_type_id": "Z00100200018"
+      },
+      {
+        "name": "MOBO04",
+        "part_type_id": "Z00100200019"
+      },
+      {
+        "name": "SiPM005",
+        "part_type_id": "Z00100200026"
+      },
+      {
+        "name": "SiPM010",
+        "part_type_id": "Z00100200027"
+      },
+      {
+        "name": "SiPM001",
+        "part_type_id": "Z00100200028"
+      },
+      {
+        "name": "MOBO02",
+        "part_type_id": "Z00100200029"
+      },
+      {
+        "name": "Cable_LEMO-LEMO",
+        "part_type_id": "Z00100200030"
+      },
+      {
+        "name": "VME_ADC",
+        "part_type_id": "Z00100200031"
+      },
+      {
+        "name": "SMALLBOX",
+        "part_type_id": "Z00100200033"
+      },
+      {
+        "name": "MOBO01",
+        "part_type_id": "Z00100200034"
+      },
+      {
+        "name": "Box1x1x1",
+        "part_type_id": "Z00100200035"
+      },
+      {
+        "name": "Box1x1x2",
+        "part_type_id": "Z00100200036"
+      },
+      {
+        "name": "Test Type 001",
+        "part_type_id": "Z00100300001"
+      }
+    ],
+    "id": 4,
+    "name": "tester",
+    "users": [
+      {
+        "email": "agooi@fnal.gov",
+        "full_name": "Alvin Zi Yuan Gooi",
+        "user_id": 13298,
+        "username": "agooi"
+      },
+      {
+        "email": "arafique@fnal.gov",
+        "full_name": "Aleena Rafique",
+        "user_id": 12887,
+        "username": "arafique"
+      },
+      {
+        "email": "awagner@fnal.gov",
+        "full_name": "Alex Wagner",
+        "user_id": 13615,
+        "username": "awagner"
+      },
+      {
+        "email": "demuth@fnal.gov",
+        "full_name": "David Demuth",
+        "user_id": 12472,
+        "username": "demuth"
+      },
+      {
+        "email": "hmuramat@umn.edu",
+        "full_name": "Hajime Muramatsu",
+        "user_id": 12624,
+        "username": "hajime3"
+      },
+      {
+        "email": "mverzocc@fnal.gov",
+        "full_name": "Marco Verzocchi",
+        "user_id": 12453,
+        "username": "mverzocc"
+      },
+      {
+        "email": "podstvkv@fnal.gov",
+        "full_name": "Vladimir Podstavkov",
+        "user_id": 3,
+        "username": "podstvkv"
+      },
+      {
+        "email": "srm@anl.gov",
+        "full_name": "Stephen Magill",
+        "user_id": 12925,
+        "username": "st3mag"
+      },
+      {
+        "email": "swhite@fnal.gov",
+        "full_name": "Stephen White",
+        "user_id": 4,
+        "username": "swhite"
+      },
+      {
+        "email": "tdoyle@fnal.gov",
+        "full_name": "Tristan Doyle",
+        "user_id": 13723,
+        "username": "tdoyle"
+      },
+      {
+        "email": "tstokes@fnal.gov",
+        "full_name": "Tyler Stokes",
+        "user_id": 12867,
+        "username": "tstokes"
+      }
+    ]
+  },
+  "link": {
+    "href": "/cdbdev/api/v1/roles/4",
+    "rel": "self"
+  },
+  "status": "OK"
+}

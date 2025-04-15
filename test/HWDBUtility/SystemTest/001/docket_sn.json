@@ -1,0 +1,29 @@
+{
+    "Docket Name": "Docket 001",
+    "Sources":
+    [
+        {
+            "Source Name": "Bongos and Biffs",
+            "Files": "Upload_SN.xlsx",
+            "Sheets": 
+            [   
+                {
+                    "Sheet Name": "Bongo-Items",
+                    "Sheet Type": "Item",
+                    "Part Type ID": "Z00100300023",
+                    "Values":
+                    {
+                    }
+                },
+                {
+                    "Sheet Name": "Biff-Items",
+                    "Sheet Type": "Item",
+                    "Part Type Name": "Z.Sandbox.HWDBUnitTest.biff",
+                    "Values":
+                    {
+                    }
+                }
+            ]
+        }
+    ]
+}

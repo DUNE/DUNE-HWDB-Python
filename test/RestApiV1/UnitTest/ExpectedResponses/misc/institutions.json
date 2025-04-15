@@ -1,0 +1,1681 @@
+{
+  "data": [
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 124,
+      "name": "Abilene Christian University"
+    },
+    {
+      "country": {
+        "code": "IN",
+        "name": "India"
+      },
+      "id": 39,
+      "name": "Aligarh Muslim University"
+    },
+    {
+      "country": {
+        "code": "TR",
+        "name": "Turkey"
+      },
+      "id": 206,
+      "name": "Antalya Bilim University"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 125,
+      "name": "Argonne National Laboratory"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 126,
+      "name": "Augustana University"
+    },
+    {
+      "country": {
+        "code": "TR",
+        "name": "Turkey"
+      },
+      "id": 104,
+      "name": "Beykent University"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 127,
+      "name": "Boston University"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 128,
+      "name": "Brookhaven National Laboratory"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 129,
+      "name": "California Institute of Technology"
+    },
+    {
+      "country": {
+        "code": "IN",
+        "name": "India"
+      },
+      "id": 40,
+      "name": "Central University of South Bihar"
+    },
+    {
+      "country": {
+        "code": "BR",
+        "name": "Brazil"
+      },
+      "id": 4,
+      "name": "Centro Brasileiro de Pesquisas Físicas"
+    },
+    {
+      "country": {
+        "code": "MX",
+        "name": "Mexico"
+      },
+      "id": 79,
+      "name": "Centro de Investigación y de Estudios Avanzados del Instituto Politécnico Nacional (Cinvestav)"
+    },
+    {
+      "country": {
+        "code": "BR",
+        "name": "Brazil"
+      },
+      "id": 5,
+      "name": "Centro de Tecnologia da Informacao Renato Archer"
+    },
+    {
+      "country": {
+        "code": "CH",
+        "name": "Switzerland"
+      },
+      "id": 2,
+      "name": "CERN"
+    },
+    {
+      "country": {
+        "code": "KR",
+        "name": "Korea (South)"
+      },
+      "id": 74,
+      "name": "Chung-Ang University"
+    },
+    {
+      "country": {
+        "code": "ES",
+        "name": "Spain"
+      },
+      "id": 94,
+      "name": "CIEMAT"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 130,
+      "name": "College of William and Mary"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 131,
+      "name": "Colorado State University"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 132,
+      "name": "Columbia University"
+    },
+    {
+      "country": {
+        "code": "CZ",
+        "name": "Czech Republic"
+      },
+      "id": 27,
+      "name": "Czech Technical University"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 133,
+      "name": "Dakota State University"
+    },
+    {
+      "country": {
+        "code": "GB",
+        "name": "Great Britain (UK)"
+      },
+      "id": 106,
+      "name": "Daresbury Laboratory"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 134,
+      "name": "Drexel University"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 135,
+      "name": "Duke University"
+    },
+    {
+      "country": {
+        "code": "GB",
+        "name": "Great Britain (UK)"
+      },
+      "id": 107,
+      "name": "Durham University"
+    },
+    {
+      "country": {
+        "code": "HU",
+        "name": "Hungary"
+      },
+      "id": 207,
+      "name": "Eötvös Loránd University"
+    },
+    {
+      "country": {
+        "code": "CH",
+        "name": "Switzerland"
+      },
+      "id": 101,
+      "name": "ETH Zurich"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 1,
+      "name": "Fermi National Accelerator Laboratory"
+    },
+    {
+      "country": {
+        "code": "IT",
+        "name": "Italy"
+      },
+      "id": 209,
+      "name": "Ferrara"
+    },
+    {
+      "country": {
+        "code": "BR",
+        "name": "Brazil"
+      },
+      "id": 6,
+      "name": "Fluminense Federal University"
+    },
+    {
+      "country": {
+        "code": "GE",
+        "name": "Georgia"
+      },
+      "id": 37,
+      "name": "Georgian Technical University"
+    },
+    {
+      "country": {
+        "code": "IT",
+        "name": "Italy"
+      },
+      "id": 56,
+      "name": "Gran Sasso Science Institute"
+    },
+    {
+      "country": {
+        "code": "IN",
+        "name": "India"
+      },
+      "id": 41,
+      "name": "Harish-Chandra Research Institute"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 136,
+      "name": "Harvard University"
+    },
+    {
+      "country": {
+        "code": "JP",
+        "name": "Japan"
+      },
+      "id": 70,
+      "name": "High Energy Accelerator Research Organization (KEK)"
+    },
+    {
+      "country": {
+        "code": "PL",
+        "name": "Poland"
+      },
+      "id": 86,
+      "name": "H. Niewodniczański Institute of Nuclear Physics"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 137,
+      "name": "Idaho State University"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 138,
+      "name": "Illinois Institute of Technology"
+    },
+    {
+      "country": {
+        "code": "GB",
+        "name": "Great Britain (UK)"
+      },
+      "id": 108,
+      "name": "Imperial College of Science Technology and Medicine"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 139,
+      "name": "Indiana University"
+    },
+    {
+      "country": {
+        "code": "IN",
+        "name": "India"
+      },
+      "id": 42,
+      "name": "Indian Institute of Technology Bombay"
+    },
+    {
+      "country": {
+        "code": "IN",
+        "name": "India"
+      },
+      "id": 43,
+      "name": "Indian Institute of Technology Guwahati"
+    },
+    {
+      "country": {
+        "code": "IN",
+        "name": "India"
+      },
+      "id": 44,
+      "name": "Indian Institute of Technology Hyderabad"
+    },
+    {
+      "country": {
+        "code": "ES",
+        "name": "Spain"
+      },
+      "id": 95,
+      "name": "Institut de Física d’Altes Energies (IFAE)—Barcelona Institute of Science and Technology (BIST)"
+    },
+    {
+      "country": {
+        "code": "FR",
+        "name": "France"
+      },
+      "id": 31,
+      "name": "Institut de Physique des 2 Infinis de Lyon"
+    },
+    {
+      "country": {
+        "code": "RU",
+        "name": "Russian Federation"
+      },
+      "id": 92,
+      "name": "Institute for Nuclear Research of the Russian Academy of Sciences"
+    },
+    {
+      "country": {
+        "code": "IR",
+        "name": "Iran"
+      },
+      "id": 55,
+      "name": "Institute for Research in Fundamental Sciences"
+    },
+    {
+      "country": {
+        "code": "CZ",
+        "name": "Czech Republic"
+      },
+      "id": 28,
+      "name": "Institute of Particle and Nuclear Physics of the Faculty of Mathematics and Physics of the Charles University"
+    },
+    {
+      "country": {
+        "code": "CZ",
+        "name": "Czech Republic"
+      },
+      "id": 29,
+      "name": "Institute of Physics, Czech Academy of Sciences"
+    },
+    {
+      "country": {
+        "code": "ES",
+        "name": "Spain"
+      },
+      "id": 96,
+      "name": "Instituto de Fisica Corpuscular"
+    },
+    {
+      "country": {
+        "code": "ES",
+        "name": "Spain"
+      },
+      "id": 97,
+      "name": "Instituto Galego de Fisica de Altas Enerxias"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 140,
+      "name": "Iowa State University"
+    },
+    {
+      "country": {
+        "code": "FR",
+        "name": "France"
+      },
+      "id": 32,
+      "name": "IRFU, CEA, Université Paris-Saclay"
+    },
+    {
+      "country": {
+        "code": "IT",
+        "name": "Italy"
+      },
+      "id": 57,
+      "name": "Istituto Nazionale di Fisica Nucleare Laboratori Nazionali del Sud"
+    },
+    {
+      "country": {
+        "code": "IT",
+        "name": "Italy"
+      },
+      "id": 58,
+      "name": "Istituto Nazionale di Fisica Nucleare Sezione di Bologna"
+    },
+    {
+      "country": {
+        "code": "IT",
+        "name": "Italy"
+      },
+      "id": 59,
+      "name": "Istituto Nazionale di Fisica Nucleare Sezione di Ferrara"
+    },
+    {
+      "country": {
+        "code": "IT",
+        "name": "Italy"
+      },
+      "id": 60,
+      "name": "Istituto Nazionale di Fisica Nucleare Sezione di Genova"
+    },
+    {
+      "country": {
+        "code": "IT",
+        "name": "Italy"
+      },
+      "id": 61,
+      "name": "Istituto Nazionale di Fisica Nucleare Sezione di Lecce"
+    },
+    {
+      "country": {
+        "code": "IT",
+        "name": "Italy"
+      },
+      "id": 62,
+      "name": "Istituto Nazionale di Fisica Nucleare Sezione di Milano"
+    },
+    {
+      "country": {
+        "code": "IT",
+        "name": "Italy"
+      },
+      "id": 63,
+      "name": "Istituto Nazionale di Fisica Nucleare Sezione di Milano Bicocca"
+    },
+    {
+      "country": {
+        "code": "IT",
+        "name": "Italy"
+      },
+      "id": 64,
+      "name": "Istituto Nazionale di Fisica Nucleare Sezione di Napoli"
+    },
+    {
+      "country": {
+        "code": "IT",
+        "name": "Italy"
+      },
+      "id": 65,
+      "name": "Istituto Nazionale di Fisica Nucleare Sezione di Padova"
+    },
+    {
+      "country": {
+        "code": "IT",
+        "name": "Italy"
+      },
+      "id": 66,
+      "name": "Istituto Nazionale di Fisica Nucleare Sezione di Pavia"
+    },
+    {
+      "country": {
+        "code": "JP",
+        "name": "Japan"
+      },
+      "id": 71,
+      "name": "Iwate University"
+    },
+    {
+      "country": {
+        "code": "IN",
+        "name": "India"
+      },
+      "id": 45,
+      "name": "Jawaharlal Nehru University"
+    },
+    {
+      "country": {
+        "code": "KR",
+        "name": "Korea (South)"
+      },
+      "id": 75,
+      "name": "Jeonbuk National University"
+    },
+    {
+      "country": {
+        "code": "RU",
+        "name": "Russian Federation"
+      },
+      "id": 93,
+      "name": "Joint Institutes for Nuclear Research"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 141,
+      "name": "Kansas State University"
+    },
+    {
+      "country": {
+        "code": "JP",
+        "name": "Japan"
+      },
+      "id": 72,
+      "name": "Kavli Institute for the Physics and Mathematics of the Universe"
+    },
+    {
+      "country": {
+        "code": "IN",
+        "name": "India"
+      },
+      "id": 46,
+      "name": "K L University"
+    },
+    {
+      "country": {
+        "code": "KR",
+        "name": "Korea (South)"
+      },
+      "id": 76,
+      "name": "Korea Institute of Science and Technology Information"
+    },
+    {
+      "country": {
+        "code": "SE",
+        "name": "Sweden"
+      },
+      "id": 100,
+      "name": "KTH Royal Institute of Technology"
+    },
+    {
+      "country": {
+        "code": "UA",
+        "name": "Ukraine"
+      },
+      "id": 105,
+      "name": "Kyiv National University"
+    },
+    {
+      "country": {
+        "code": "FR",
+        "name": "France"
+      },
+      "id": 33,
+      "name": "Laboratoire d'Annecy-le-Vieux de Physique des Particules, CNRS/IN2P3 and Université Savoie Mont Blanc"
+    },
+    {
+      "country": {
+        "code": "IT",
+        "name": "Italy"
+      },
+      "id": 67,
+      "name": "Laboratori Nazionali del Gran Sasso"
+    },
+    {
+      "country": {
+        "code": "PT",
+        "name": "Portugal"
+      },
+      "id": 90,
+      "name": "Laboratório de Instrumentação e Física Experimental de Partículas"
+    },
+    {
+      "country": {
+        "code": "GB",
+        "name": "Great Britain (UK)"
+      },
+      "id": 109,
+      "name": "Lancaster University"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 142,
+      "name": "Lawrence Berkeley National Laboratory"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 143,
+      "name": "Los Alamos National Laboratory"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 144,
+      "name": "Louisiana State University"
+    },
+    {
+      "country": {
+        "code": "ES",
+        "name": "Spain"
+      },
+      "id": 98,
+      "name": "Madrid Autonoma University and IFT UAM/CSIC"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 145,
+      "name": "Massachusetts Institute of Technology"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 146,
+      "name": "Michigan State University"
+    },
+    {
+      "country": {
+        "code": "PL",
+        "name": "Poland"
+      },
+      "id": 87,
+      "name": "National Centre for Nuclear Research"
+    },
+    {
+      "country": {
+        "code": "JP",
+        "name": "Japan"
+      },
+      "id": 73,
+      "name": "National Institute of Technology, Kure College"
+    },
+    {
+      "country": {
+        "code": "NL",
+        "name": "Netherlands"
+      },
+      "id": 82,
+      "name": "Nikhef National Institute of Subatomic Physics"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 147,
+      "name": "Northern Illinois University"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 148,
+      "name": "Northwestern University"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 149,
+      "name": "Occidental College"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 150,
+      "name": "Ohio State University"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 151,
+      "name": "Oregon State University"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 152,
+      "name": "Otterbein University"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 153,
+      "name": "Pacific Northwest National Laboratory"
+    },
+    {
+      "country": {
+        "code": "IN",
+        "name": "India"
+      },
+      "id": 47,
+      "name": "Panjab University"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 154,
+      "name": "Pennsylvania State University"
+    },
+    {
+      "country": {
+        "code": "IN",
+        "name": "India"
+      },
+      "id": 48,
+      "name": "Physical Research Laboratory"
+    },
+    {
+      "country": {
+        "code": "PE",
+        "name": "Peru"
+      },
+      "id": 84,
+      "name": "Pontificia Universidad Católica del Perú"
+    },
+    {
+      "country": {
+        "code": "IN",
+        "name": "India"
+      },
+      "id": 49,
+      "name": "Punjab Agricultural University"
+    },
+    {
+      "country": {
+        "code": "GB",
+        "name": "Great Britain (UK)"
+      },
+      "id": 110,
+      "name": "Queen Mary University of London"
+    },
+    {
+      "country": {
+        "code": "GB",
+        "name": "Great Britain (UK)"
+      },
+      "id": 111,
+      "name": "Royal Holloway College London"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 155,
+      "name": "Rutgers University"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 157,
+      "name": "Sanford Underground Research Facility"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 156,
+      "name": "San Jose State University"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 158,
+      "name": "SLAC National Accelerator Laboratory"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 159,
+      "name": "South Dakota School of Mines and Technology"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 160,
+      "name": "South Dakota State University"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 161,
+      "name": "Southern Methodist University"
+    },
+    {
+      "country": {
+        "code": "GB",
+        "name": "Great Britain (UK)"
+      },
+      "id": 112,
+      "name": "STFC Rutherford Appleton Laboratory"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 162,
+      "name": "Stony Brook University, SUNY"
+    },
+    {
+      "country": {
+        "code": "CN",
+        "name": "China"
+      },
+      "id": 20,
+      "name": "Sun Yat-Sen University"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 163,
+      "name": "Syracuse University"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 164,
+      "name": "Texas A&M University"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 165,
+      "name": "Texas A&M University - Corpus Christi"
+    },
+    {
+      "country": {
+        "code": "CN",
+        "name": "China"
+      },
+      "id": 21,
+      "name": "Tsinghua University"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 166,
+      "name": "Tufts University"
+    },
+    {
+      "country": {
+        "code": "KR",
+        "name": "Korea (South)"
+      },
+      "id": 77,
+      "name": "Ulsan National Institute of Science and Technology"
+    },
+    {
+      "country": {
+        "code": "CO",
+        "name": "Colombia"
+      },
+      "id": 22,
+      "name": "Universidad Antonio Nariño"
+    },
+    {
+      "country": {
+        "code": "CL",
+        "name": "Chile"
+      },
+      "id": 18,
+      "name": "Universidad Católica del Norte"
+    },
+    {
+      "country": {
+        "code": "MX",
+        "name": "Mexico"
+      },
+      "id": 80,
+      "name": "Universidad de Colima"
+    },
+    {
+      "country": {
+        "code": "MX",
+        "name": "Mexico"
+      },
+      "id": 81,
+      "name": "Universidad de Guanajuato"
+    },
+    {
+      "country": {
+        "code": "CO",
+        "name": "Colombia"
+      },
+      "id": 23,
+      "name": "Universidad del Atlántico"
+    },
+    {
+      "country": {
+        "code": "BR",
+        "name": "Brazil"
+      },
+      "id": 7,
+      "name": "Universidade Estadual de Campinas"
+    },
+    {
+      "country": {
+        "code": "BR",
+        "name": "Brazil"
+      },
+      "id": 8,
+      "name": "Universidade Estadual de Feira de Santana"
+    },
+    {
+      "country": {
+        "code": "BR",
+        "name": "Brazil"
+      },
+      "id": 9,
+      "name": "Universidade Federal de Alfenas"
+    },
+    {
+      "country": {
+        "code": "BR",
+        "name": "Brazil"
+      },
+      "id": 10,
+      "name": "Universidade Federal de Goias"
+    },
+    {
+      "country": {
+        "code": "BR",
+        "name": "Brazil"
+      },
+      "id": 11,
+      "name": "Universidade Federal de São Carlos"
+    },
+    {
+      "country": {
+        "code": "BR",
+        "name": "Brazil"
+      },
+      "id": 12,
+      "name": "Universidade Federal de São Paulo"
+    },
+    {
+      "country": {
+        "code": "BR",
+        "name": "Brazil"
+      },
+      "id": 13,
+      "name": "Universidade Federal do ABC"
+    },
+    {
+      "country": {
+        "code": "BR",
+        "name": "Brazil"
+      },
+      "id": 14,
+      "name": "Universidade Federal do Rio de Janeiro"
+    },
+    {
+      "country": {
+        "code": "CO",
+        "name": "Colombia"
+      },
+      "id": 24,
+      "name": "Universidad EIA"
+    },
+    {
+      "country": {
+        "code": "BR",
+        "name": "Brazil"
+      },
+      "id": 15,
+      "name": "Universidade Tecnológica Federal do Paraná"
+    },
+    {
+      "country": {
+        "code": "PY",
+        "name": "Paraguay"
+      },
+      "id": 83,
+      "name": "Universidad Nacional de Asunción"
+    },
+    {
+      "country": {
+        "code": "PE",
+        "name": "Peru"
+      },
+      "id": 85,
+      "name": "Universidad Nacional de Ingeniería"
+    },
+    {
+      "country": {
+        "code": "CO",
+        "name": "Colombia"
+      },
+      "id": 25,
+      "name": "Universidad Sergio Arboleda"
+    },
+    {
+      "country": {
+        "code": "CL",
+        "name": "Chile"
+      },
+      "id": 19,
+      "name": "Universidad Tecnica Federico Santa Maria"
+    },
+    {
+      "country": {
+        "code": "IT",
+        "name": "Italy"
+      },
+      "id": 68,
+      "name": "Università di Pisa"
+    },
+    {
+      "country": {
+        "code": "FR",
+        "name": "France"
+      },
+      "id": 34,
+      "name": "Université de Paris, CNRS, Astroparticule et Cosmologie"
+    },
+    {
+      "country": {
+        "code": "FR",
+        "name": "France"
+      },
+      "id": 35,
+      "name": "Université Paris-Saclay, CNRS/IN2P3"
+    },
+    {
+      "country": {
+        "code": "GB",
+        "name": "Great Britain (UK)"
+      },
+      "id": 113,
+      "name": "University College London"
+    },
+    {
+      "country": {
+        "code": "FR",
+        "name": "France"
+      },
+      "id": 36,
+      "name": "University Grenoble Alpes, CNRS, Grenoble INP, LPSC-IN2P3"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 167,
+      "name": "University of Albany, SUNY"
+    },
+    {
+      "country": {
+        "code": "MG",
+        "name": "Madagascar"
+      },
+      "id": 78,
+      "name": "University of Antananarivo"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 168,
+      "name": "University of Arizona"
+    },
+    {
+      "country": {
+        "code": "GR",
+        "name": "Greece"
+      },
+      "id": 38,
+      "name": "University of Athens"
+    },
+    {
+      "country": {
+        "code": "CH",
+        "name": "Switzerland"
+      },
+      "id": 102,
+      "name": "University of Basel"
+    },
+    {
+      "country": {
+        "code": "CH",
+        "name": "Switzerland"
+      },
+      "id": 103,
+      "name": "University of Bern"
+    },
+    {
+      "country": {
+        "code": "GB",
+        "name": "Great Britain (UK)"
+      },
+      "id": 114,
+      "name": "University of Birmingham"
+    },
+    {
+      "country": {
+        "code": "GB",
+        "name": "Great Britain (UK)"
+      },
+      "id": 115,
+      "name": "University of Bristol"
+    },
+    {
+      "country": {
+        "code": "RO",
+        "name": "Romania"
+      },
+      "id": 91,
+      "name": "University of Bucharest"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 169,
+      "name": "University of California Berkeley"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 170,
+      "name": "University of California Davis"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 171,
+      "name": "University of California Irvine"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 172,
+      "name": "University of California Los Angeles"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 173,
+      "name": "University of California Riverside"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 174,
+      "name": "University of California Santa Barbara"
+    },
+    {
+      "country": {
+        "code": "GB",
+        "name": "Great Britain (UK)"
+      },
+      "id": 116,
+      "name": "University of Cambridge"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 175,
+      "name": "University of Chicago"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 176,
+      "name": "University of Cincinnati"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 177,
+      "name": "University of Colorado Boulder"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 178,
+      "name": "University of Dallas"
+    },
+    {
+      "country": {
+        "code": "IN",
+        "name": "India"
+      },
+      "id": 51,
+      "name": "University of Delhi"
+    },
+    {
+      "country": {
+        "code": "GB",
+        "name": "Great Britain (UK)"
+      },
+      "id": 117,
+      "name": "University of Edinburgh"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 179,
+      "name": "University of Florida"
+    },
+    {
+      "country": {
+        "code": "ES",
+        "name": "Spain"
+      },
+      "id": 99,
+      "name": "University of Granada & CAFPE"
+    },
+    {
+      "country": {
+        "code": "JP",
+        "name": "Japan"
+      },
+      "id": 208,
+      "name": "University of Hajime"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 180,
+      "name": "University of Hawaii"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 181,
+      "name": "University of Houston"
+    },
+    {
+      "country": {
+        "code": "IN",
+        "name": "India"
+      },
+      "id": 50,
+      "name": "University of  Hyderabad"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 182,
+      "name": "University of Iowa"
+    },
+    {
+      "country": {
+        "code": "IN",
+        "name": "India"
+      },
+      "id": 52,
+      "name": "University of Jammu"
+    },
+    {
+      "country": {
+        "code": "FI",
+        "name": "Finland"
+      },
+      "id": 30,
+      "name": "University of Jyvaskyla"
+    },
+    {
+      "country": {
+        "code": "GB",
+        "name": "Great Britain (UK)"
+      },
+      "id": 118,
+      "name": "University of Liverpool"
+    },
+    {
+      "country": {
+        "code": "IN",
+        "name": "India"
+      },
+      "id": 53,
+      "name": "University of Lucknow"
+    },
+    {
+      "country": {
+        "code": "GB",
+        "name": "Great Britain (UK)"
+      },
+      "id": 119,
+      "name": "University of Manchester"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 183,
+      "name": "University of Maryland"
+    },
+    {
+      "country": {
+        "code": "CO",
+        "name": "Colombia"
+      },
+      "id": 26,
+      "name": "University of Medellín"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 184,
+      "name": "University of Michigan"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 185,
+      "name": "University of Minnesota Duluth"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 186,
+      "name": "University of Minnesota Twin Cities"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 187,
+      "name": "University of Mississippi"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 188,
+      "name": "University of New Mexico"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 189,
+      "name": "University of North Dakota"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 190,
+      "name": "University of Notre Dame"
+    },
+    {
+      "country": {
+        "code": "GB",
+        "name": "Great Britain (UK)"
+      },
+      "id": 120,
+      "name": "University of Oxford"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 191,
+      "name": "University of Pennsylvania"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 192,
+      "name": "University of Pittsburgh"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 193,
+      "name": "University of Puerto Rico"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 194,
+      "name": "University of Rochester"
+    },
+    {
+      "country": {
+        "code": "GB",
+        "name": "Great Britain (UK)"
+      },
+      "id": 121,
+      "name": "University of Sheffield"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 195,
+      "name": "University of South Carolina"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 196,
+      "name": "University of South Dakota"
+    },
+    {
+      "country": {
+        "code": "GB",
+        "name": "Great Britain (UK)"
+      },
+      "id": 122,
+      "name": "University of Sussex"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 197,
+      "name": "University of Tennessee at Knoxville"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 198,
+      "name": "University of Texas at Arlington"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 199,
+      "name": "University of Texas at Austin"
+    },
+    {
+      "country": {
+        "code": "CA",
+        "name": "Canada"
+      },
+      "id": 16,
+      "name": "University of Toronto"
+    },
+    {
+      "country": {
+        "code": "PL",
+        "name": "Poland"
+      },
+      "id": 88,
+      "name": "University of Warsaw"
+    },
+    {
+      "country": {
+        "code": "GB",
+        "name": "Great Britain (UK)"
+      },
+      "id": 123,
+      "name": "University of Warwick"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 200,
+      "name": "University of Wisconsin Madison"
+    },
+    {
+      "country": {
+        "code": "PL",
+        "name": "Poland"
+      },
+      "id": 89,
+      "name": "University of Wroclaw"
+    },
+    {
+      "country": {
+        "code": "IT",
+        "name": "Italy"
+      },
+      "id": 69,
+      "name": "Universtà degli Studi di Padova"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 201,
+      "name": "Valley City State University"
+    },
+    {
+      "country": {
+        "code": "IN",
+        "name": "India"
+      },
+      "id": 54,
+      "name": "Variable Energy Cyclotron Centre"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 202,
+      "name": "Virginia Tech"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 203,
+      "name": "Wellesley College"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 204,
+      "name": "Wichita State University"
+    },
+    {
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "id": 205,
+      "name": "Yale University"
+    },
+    {
+      "country": {
+        "code": "AM",
+        "name": "Armenia"
+      },
+      "id": 3,
+      "name": "Yerevan Institute for Theoretical Physics and Modeling"
+    },
+    {
+      "country": {
+        "code": "CA",
+        "name": "Canada"
+      },
+      "id": 17,
+      "name": "York University"
+    }
+  ],
+  "link": {
+    "href": "/cdbdev/api/v1/institutions",
+    "rel": "self"
+  },
+  "status": "OK"
+}

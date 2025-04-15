@@ -1,0 +1,43 @@
+#!/bin/bash
+
+DEBUG="\x1b[38;2;102;102;102m"
+INFO="\x1b[1;34m"
+WARNING="\x1b[38;2;255;170;34m"
+ERROR="\x1b[1;31m"
+CRITICAL="\x1b[37;41m\x1b[K"
+
+TEST="\x1b[1;49;35m"
+PASS="\x1b[1;49;32m"
+FAIL="\x1b[1;49;38;2;255;102;68m"
+
+LOG_INIT="\x1b[44;37;1m\x1b[K"
+
+NORMAL_SENTINEL="@N@"
+NORMAL="\x1b[0m"
+#NORMAL="@n@"
+
+TIMESTAMP="[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}.[0-9]\{2\}:[0-9]\{2\}:[0-9]\{2\}.[0-9]\{3\}"
+
+DEBUG_MATCH="${TIMESTAMP}"' \[DEBUG\] '
+INFO_MATCH="${TIMESTAMP}"' \[INFO\] '
+WARNING_MATCH="${TIMESTAMP}"' \[WARNING\] '
+ERROR_MATCH="${TIMESTAMP}"' \[ERROR\] '
+CRITICAL_MATCH="${TIMESTAMP}"' \[CRITICAL\] '
+
+echo -ne '\x1b]0;HWDB Log\a'
+#2023-09-15:20:17:19
+tail -n 1000 -F ~/.sisyphus/log.txt | sed \
+    -e "s/.*\[LOG INIT\].*/${LOG_INIT}&${NORMAL}/g" \
+    -e "s/\[TEST[^]]*\]/${TEST}&${NORMAL_SENTINEL}/g" \
+    -e "s/\[PASS[^]]*\]/${PASS}&${NORMAL_SENTINEL}/g" \
+    -e "s/\[FAIL[^]]*\]/${FAIL}&${NORMAL_SENTINEL}/g" \
+    -e ":label1" -e "s/^\(${DEBUG_MATCH}.*\)${NORMAL_SENTINEL}/\1${DEBUG}/g" -e "t label1" \
+    -e ":label2" -e "s/^\(${INFO_MATCH}.*\)${NORMAL_SENTINEL}/\1${INFO}/g" -e "t label2" \
+    -e ":label3" -e "s/^\(${WARNING_MATCH}.*\)${NORMAL_SENTINEL}/\1${WARNING}/g" -e "t label3" \
+    -e ":label4" -e "s/^\(${ERROR_MATCH}.*\)${NORMAL_SENTINEL}/\1${ERROR}/g" -e "t label4" \
+    -e ":label5" -e "s/^\(${CRITICAL_MATCH}.*\)${NORMAL_SENTINEL}/\1${CRITICAL}/g" -e "t label5" \
+    -e "s/^\(${DEBUG_MATCH}.*\)/${DEBUG}\1${NORMAL}/" \
+    -e "s/^\(${INFO_MATCH}.*\)/${INFO}\1${NORMAL}/" \
+    -e "s/^\(${WARNING_MATCH}.*\)/${WARNING}\1${NORMAL}/" \
+    -e "s/^\(${ERROR_MATCH}.*\)/${ERROR}\1${NORMAL}/" \
+    -e "s/^\(${CRITICAL_MATCH}.*\)/${CRITICAL}\1${NORMAL}/" \

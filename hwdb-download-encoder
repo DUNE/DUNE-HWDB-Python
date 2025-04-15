@@ -1,0 +1,28 @@
+#!/bin/bash
+
+#
+# Let's assume that the directory containing this script is at the root level for the project.
+#
+
+PROJECT_ROOT="$(dirname ${BASH_SOURCE[0]})"
+
+#
+# Set all the scripts to be executable
+#
+
+chmod +x $PROJECT_ROOT/hwdb-*
+chmod +x $PROJECT_ROOT/bin/*.py
+
+#
+# Set some path variables.
+# 
+
+export PYTHONPATH=$PROJECT_ROOT/lib:$PYTHONPATH
+export PATH=$PROJECT_ROOT/bin:$PATH
+
+#
+# Run the script
+#
+
+#python $PROJECT_ROOT/bin/list-institutions.py "$@"
+python $PROJECT_ROOT/bin/download-encoder.py "$@"

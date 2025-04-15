@@ -1,7 +1,8 @@
-
-lib/Sisyphus/__pycache__/__init__.cpython-39.pyc
-*.pyc
-Examples/upload-docket/Tutorial/Example01/.~lock.HWItems.xlsx\#
-*.pyc
-*.pyc
-*.swp
+**/*.pyc
+**/*.swp
+**/*.swo
+scratch
+**/*.~lock.*\#
+**/.DS_Store
+test/RestApiV1/UnitTest/post_tests/images/upload/*
+lib/Sisyphus/backup-__init__.py

@@ -1,0 +1,135 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2024 Regents of the University of Minnesota
+Author: Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
+"""
+
+from Sisyphus.Utils.Terminal import Image
+import argparse
+import sys, os, termios
+import time
+
+def parse_args(argv):
+
+    description = "Preview an image in the terminal"
+
+    arg_table = [
+        (('filename',), {"metavar": "<filename>"}),
+        
+        (('--max-columns', '-c'), 
+                    {"metavar": "columns", "dest": "maxcols", "required": False,
+                        "type": int,
+                        "help": "Limit width of image to this maximum, but do not "
+                            "stretch the image if it is smaller. Aspect ratio will be "
+                            "respected. Defaults to the width of the terminal, or 80 "
+                            "columns if stdout is not a tty."}),
+        (('--max-lines', '-l'), 
+                    {"metavar": "<lines>", "dest": "maxlines", "required": False,
+                        "type": int,
+                        "help": "Limit height of image to this maximum, with similar "
+                            "rules as --max-columns. Defaults to the width of the "
+                            "terminal, or 24 lines if stdout is not a tty."}),
+
+        (('--columns', '-C'), 
+                    {"metavar": "columns", "dest": "columns", "required": False, 
+                        "type": int,
+                        "help": "Set the width of the image to this exact number of "
+                            "columns. If --lines is not set, it will be calculated "
+                            "from the aspect ratio of the image."}),
+        (('--lines', '-L'), 
+                    {"metavar": "lines", "dest": "lines", "required": False,
+                        "type": int,
+                        "help": "Set the height of the image to this exact number of "
+                            "lines. If --columns is not set, it will be calculated "
+                            "from the aspect ratio of the image."}),
+
+        (('--background-color', '-b'), 
+                {"metavar": "<color>", "dest": "background", "required": False,
+                    "help": "If the image has an alpha channel, use this color as the "
+                        "background. Color can be a named color, a hex value (e.g., "
+                        "'#ffffff'), or a triplet of values from 0-255 with no spaces "
+                        "(e.g., '255,255,255')."}),
+        (('--static', '-s'),
+                {"dest": "animate", "action": "store_false",
+                    "help": "If the image is animated, display the first frame only."}),
+        (('--top', '-t'), {"dest": "top", "action": "store_true"})    
+
+    ]
+
+    parser = argparse.ArgumentParser(description=description, add_help=True)
+
+    for args, kwargs in arg_table:
+        parser.add_argument(*args, **kwargs)
+
+    args = parser.parse_args(argv[1:])
+    
+    return args
+
+class NoScreenEcho:
+    #{{{
+    def __init__(self, disable_echo=True):
+        self.disable_echo = disable_echo
+
+    def __enter__(self):
+        if self.disable_echo:
+            sys.stdout.write("\033[?25l")
+            self.terminal_fd = os.open('/dev/tty', os.O_RDWR|os.O_NOCTTY)
+            self.old_attr = termios.tcgetattr(self.terminal_fd)
+            self.new_attr = self.old_attr[:]
+            self.new_attr[3] &= ~termios.ECHO
+            self.tcsetattr_flags = termios.TCSAFLUSH
+            termios.tcsetattr(self.terminal_fd, self.tcsetattr_flags, self.new_attr)
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.disable_echo:
+            termios.tcsetattr(self.terminal_fd, self.tcsetattr_flags, self.old_attr)
+            sys.stdout.write("\033[?25h")
+        return False # let the exception be raised after done
+    #}}}
+
+def display(args):
+    #print(args)
+ 
+    frames = (Image.image2text(source=args.filename, columns=args.columns, lines=args.lines,
+                            max_columns=args.maxcols, max_lines=args.maxlines,
+                            background=args.background, get_frames=args.animate))
+
+    if args.animate:
+        if len(frames) > 1:
+            num_lines = len(frames[0]["image"].split("\n"))
+            sys.stdout.write("\n" * num_lines)
+            loop = (frames[0]["loop"] or ...)
+
+            nextframe = time.time()
+
+            while (loop is ... or (loop := loop - 1)):
+                for frame in frames:
+                    if args.top:
+                        sys.stdout.write(f"\033[s\033[0;0H")
+                    else:
+                        sys.stdout.write(f"\033[{num_lines}F")
+                    print(frame["image"])
+                    if args.top:
+                        sys.stdout.write("\033[u")
+
+                    nextframe += 0.001 * frame["duration"]
+                    #time.sleep(frame["duration"]*0.001)
+                    time.sleep(max(nextframe-time.time(), 0.0))
+        else:
+            print(frames[0]["image"])
+    else:
+        print(frames)
+
+
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv
+    args = parse_args(argv)
+    try:
+        with NoScreenEcho(not args.top):
+            display(args)
+    except KeyboardInterrupt:
+        pass
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))

@@ -1,0 +1,32 @@
+{
+  "data": [
+    {
+      "category": "generic",
+      "comments": null,
+      "created": "2022-05-08T18:39:31.930028-05:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "full_name": "D.FD1-HD Complete Detector.FD1.FD1 Complete Detector",
+      "id": 647,
+      "link": {
+        "href": "/cdbdev/api/v1/component-types/D00100100001",
+        "rel": "self"
+      },
+      "part_type_id": "D00100100001"
+    }
+  ],
+  "link": {
+    "href": "/cdbdev/api/v1/component-types/D/1/1?page=1&size=100",
+    "rel": "self"
+  },
+  "pagination": {
+    "next": null,
+    "page": 1,
+    "pages": 1,
+    "prev": null
+  },
+  "status": "OK"
+}

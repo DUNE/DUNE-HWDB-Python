@@ -1,0 +1,173 @@
+QWidget {
+    background-color: #ddf;
+    color: #000;
+    font-size: 12pt;
+}
+
+QLabel {
+    color: #000;
+    font-size: 12pt;
+}
+
+QLineEdit, QTextEdit {
+    background-color: #eef;
+}
+
+/*
+QTextEdit {
+    background-color: #eef;
+}
+*/
+
+QLineEdit::disabled, QTextEdit::disabled {
+    color: #333;
+    background-color: #ccc;
+}
+
+
+QDateTimeEdit {
+    background-color: #eef;
+}
+
+QCalendarWidget {
+    background-color: #eef;
+}
+
+QTableWidget {
+    background-color: #eef;
+}
+
+QTableWidgetItem {
+    background-color: #eef;
+}
+
+
+/******************************
+ QCheckBox
+******************************/
+/* {{{
+QCheckBox {
+    spacing: 5px;
+}
+
+QCheckBox::indicator {
+    background-color: #eef;
+    width: 13px;
+    height: 13px;
+}
+
+QCheckBox::indicator:unchecked {
+    background-color: #fdd;
+    image: url(:/images/checkbox_unchecked.png);
+}
+
+QCheckBox::indicator:unchecked:hover {
+    background-color: #ffd;
+    image: url(:/images/checkbox_unchecked_hover.png);
+}
+
+QCheckBox::indicator:unchecked:pressed {
+    background-color: #fdf;
+    image: url(:/images/checkbox_unchecked_pressed.png);
+}
+
+QCheckBox::indicator:checked {
+    background-color: #333;
+    image: url(:/images/checkbox_checked.png); 
+}
+
+QCheckBox::indicator:checked:hover {
+    background-color: #ffd;
+    image: url(:/images/checkbox_checked_hover.png);
+}
+
+QCheckBox::indicator:checked:pressed {
+    background-color: #fdf;
+    image: url(:/images/checkbox_checked_pressed.png);
+}
+
+QCheckBox::indicator:indeterminate:hover {
+    image: url(:/images/checkbox_indeterminate_hover.png);
+}
+
+QCheckBox::indicator:indeterminate:pressed {
+    image: url(:/images/checkbox_indeterminate_pressed.png);
+}
+}}} */
+
+/******************************
+ QRadioButton
+******************************/
+
+QRadioButton::indicator {
+}
+
+/******************************
+ QTabBar
+******************************/
+
+QTabBar {
+    background-color: #ddf;
+    font-size: 9pt;
+}
+
+QTabBar::tab {
+    /*top: 1px;*/
+    color: #666;
+    padding: 5px;
+    background-color: #bbf;
+    border-width: 1px;
+    border-style: solid;
+    border-color: #666;
+    border-bottom-color: #000;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    font-size: 9pt;
+    min-height: 30px;
+    max-height: 30px;
+}
+
+QTabBar::tab:selected {
+    top: 0px;
+    color: #000;
+    background-color: #ddf;
+    border-bottom-color: #ddf;
+    font-size: 9pt;
+}
+
+/******************************
+ QPushButton 
+******************************/
+
+QPushButton {
+    background-color: #0d6efd;
+    color: #fff;
+    font-weight: 600;
+    border-radius: 8px;
+    border: 1px solid #0d6efd;
+    padding: 5px 15px;
+    margin-top: 10px;
+    outline: 0px;
+}
+
+QPushButton:hover {
+    background-color: #0b5ed7;
+}
+
+
+QPushButton:focus {
+    border: 3px solid #9ac3fe;
+}
+
+QPushButton:pressed {
+    background-color: #0b5ed7;
+    border-style: inset;
+}
+
+QPushButton:disabled {
+    background-color: #ccc;
+}
+
+QRadioButton:disabled {
+    color: #ccc;
+}

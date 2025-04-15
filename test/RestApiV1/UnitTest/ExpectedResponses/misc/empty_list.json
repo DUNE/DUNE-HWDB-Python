@@ -1,0 +1,14 @@
+{
+  "data": [],
+  "link": {
+    "href": "/cdbdev/api/v1/systems/s?page=1",
+    "rel": "self"
+  },
+  "pagination": {
+    "next": null,
+    "page": 1,
+    "pages": 0,
+    "prev": null
+  },
+  "status": "OK"
+}

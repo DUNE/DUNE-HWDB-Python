@@ -7,7 +7,7 @@ Author: Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
 """
 
 from Sisyphus.Configuration import config
-logger = config.getLogger()
+logger = config.getLogger(__name__)
 
 #from Sisyphus.RestApiV1 import get_institutions
 from Sisyphus.RestApiV1 import get_manufacturers
@@ -143,11 +143,12 @@ def list_manufacturers(manufacturers):
     print()
     #print(manu_ids)
 
-    print(" ID Name")
-    print("=== ==================================================")
+    print(" (ID) Name")
+    print("===== ==================================================")
     
     for manu_id, manu_name in manufacturers.items():
-        print(f"{manu_id:3d} {manu_name}")
+        manu_id_str = f"({manu_id})".rjust(5)
+        print(f"{manu_id_str} {manu_name}")
 
     print()
 

@@ -1,0 +1,201 @@
+{
+  "data": [
+    {
+      "comments": "testing from curl",
+      "created": "2022-04-26T08:58:15.390115-05:00",
+      "creator": {
+        "id": 12624,
+        "name": "Hajime Muramatsu",
+        "username": "hajime3"
+      },
+      "image_id": "eda40038-c568-11ec-bb3d-bb303ad6adbb",
+      "image_name": "10-0_10-1-6k_small.pdf",
+      "library": "comp",
+      "link": {
+        "href": "/cdbdev/api/v1/img/eda40038-c568-11ec-bb3d-bb303ad6adbb",
+        "rel": "self"
+      }
+    },
+    {
+      "comments": "testing from curl",
+      "created": "2022-04-26T09:42:34.103207-05:00",
+      "creator": {
+        "id": 12624,
+        "name": "Hajime Muramatsu",
+        "username": "hajime3"
+      },
+      "image_id": "1c279e1e-c56f-11ec-a7bd-cfc7dff2306e",
+      "image_name": "10-0_10-1-6k_small.jpg",
+      "library": "comp",
+      "link": {
+        "href": "/cdbdev/api/v1/img/1c279e1e-c56f-11ec-a7bd-cfc7dff2306e",
+        "rel": "self"
+      }
+    },
+    {
+      "comments": "testing from curl",
+      "created": "2022-04-26T09:44:15.431201-05:00",
+      "creator": {
+        "id": 12624,
+        "name": "Hajime Muramatsu",
+        "username": "hajime3"
+      },
+      "image_id": "588681ea-c56f-11ec-a7bd-2f04a625073e",
+      "image_name": "10-0_10-1-6k_small.png",
+      "library": "comp",
+      "link": {
+        "href": "/cdbdev/api/v1/img/588681ea-c56f-11ec-a7bd-2f04a625073e",
+        "rel": "self"
+      }
+    },
+    {
+      "comments": "testing from curl",
+      "created": "2022-04-26T09:45:57.555407-05:00",
+      "creator": {
+        "id": 12624,
+        "name": "Hajime Muramatsu",
+        "username": "hajime3"
+      },
+      "image_id": "95438a7e-c56f-11ec-a7bd-73cdea0c0ba6",
+      "image_name": "10-0_10-1-6k_small.tiff",
+      "library": "comp",
+      "link": {
+        "href": "/cdbdev/api/v1/img/95438a7e-c56f-11ec-a7bd-73cdea0c0ba6",
+        "rel": "self"
+      }
+    },
+    {
+      "comments": "testing from curl",
+      "created": "2022-04-26T12:10:05.328368-05:00",
+      "creator": {
+        "id": 12624,
+        "name": "Hajime Muramatsu",
+        "username": "hajime3"
+      },
+      "image_id": "bb1f77f8-c583-11ec-a0df-277dd0fcd4f7",
+      "image_name": "10-0_10-1-6k.pdf",
+      "library": "comp",
+      "link": {
+        "href": "/cdbdev/api/v1/img/bb1f77f8-c583-11ec-a0df-277dd0fcd4f7",
+        "rel": "self"
+      }
+    },
+    {
+      "comments": null,
+      "created": "2022-05-20T18:27:51.993977-05:00",
+      "creator": {
+        "id": 12624,
+        "name": "Hajime Muramatsu",
+        "username": "hajime3"
+      },
+      "image_id": "78122482-d894-11ec-b600-23c049e1f0b3",
+      "image_name": "test.png",
+      "library": "comp",
+      "link": {
+        "href": "/cdbdev/api/v1/img/78122482-d894-11ec-b600-23c049e1f0b3",
+        "rel": "self"
+      }
+    },
+    {
+      "comments": null,
+      "created": "2022-05-20T18:28:13.483629-05:00",
+      "creator": {
+        "id": 12624,
+        "name": "Hajime Muramatsu",
+        "username": "hajime3"
+      },
+      "image_id": "84de88d6-d894-11ec-86ba-4b7e9a4c356c",
+      "image_name": "test.png",
+      "library": "comp",
+      "link": {
+        "href": "/cdbdev/api/v1/img/84de88d6-d894-11ec-86ba-4b7e9a4c356c",
+        "rel": "self"
+      }
+    },
+    {
+      "comments": null,
+      "created": "2022-05-20T18:28:33.078110-05:00",
+      "creator": {
+        "id": 12624,
+        "name": "Hajime Muramatsu",
+        "username": "hajime3"
+      },
+      "image_id": "9087e948-d894-11ec-86ba-0b6dcacbc1ba",
+      "image_name": "test.png",
+      "library": "comp",
+      "link": {
+        "href": "/cdbdev/api/v1/img/9087e948-d894-11ec-86ba-0b6dcacbc1ba",
+        "rel": "self"
+      }
+    },
+    {
+      "comments": null,
+      "created": "2022-05-20T18:28:28.024565-05:00",
+      "creator": {
+        "id": 12624,
+        "name": "Hajime Muramatsu",
+        "username": "hajime3"
+      },
+      "image_id": "8d7a2586-d894-11ec-b600-eb80531f3c37",
+      "image_name": "test.png",
+      "library": "comp",
+      "link": {
+        "href": "/cdbdev/api/v1/img/8d7a2586-d894-11ec-b600-eb80531f3c37",
+        "rel": "self"
+      }
+    },
+    {
+      "comments": null,
+      "created": "2022-05-20T18:29:30.584844-05:00",
+      "creator": {
+        "id": 12624,
+        "name": "Hajime Muramatsu",
+        "username": "hajime3"
+      },
+      "image_id": "b2cf87c2-d894-11ec-b600-b79b1315529b",
+      "image_name": "test.png",
+      "library": "comp",
+      "link": {
+        "href": "/cdbdev/api/v1/img/b2cf87c2-d894-11ec-b600-b79b1315529b",
+        "rel": "self"
+      }
+    },
+    {
+      "comments": null,
+      "created": "2023-03-31T10:45:07.224715-05:00",
+      "creator": {
+        "id": 12624,
+        "name": "Hajime Muramatsu",
+        "username": "hajime3"
+      },
+      "image_id": "0315219a-cfdb-11ed-b127-bb364b40d6e5",
+      "image_name": "test.png",
+      "library": "comp",
+      "link": {
+        "href": "/cdbdev/api/v1/img/0315219a-cfdb-11ed-b127-bb364b40d6e5",
+        "rel": "self"
+      }
+    },
+    {
+      "comments": null,
+      "created": "2023-05-11T10:52:58.947798-05:00",
+      "creator": {
+        "id": 12624,
+        "name": "Hajime Muramatsu",
+        "username": "hajime3"
+      },
+      "image_id": "e72ef092-f013-11ed-9a79-db3b2da978d1",
+      "image_name": "test.png",
+      "library": "comp",
+      "link": {
+        "href": "/cdbdev/api/v1/img/e72ef092-f013-11ed-9a79-db3b2da978d1",
+        "rel": "self"
+      }
+    }
+  ],
+  "link": {
+    "href": "/cdbdev/api/v1/components/Z00100100048-00033/images",
+    "rel": "self"
+  },
+  "status": "OK"
+}

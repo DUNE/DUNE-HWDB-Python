@@ -2,12 +2,15 @@
 # -*- coding: utf-8 -*-
 """
 Sisyphus/Configuration/_Configuration.py
-Copyright (c) 2023 Regents of the University of Minnesota
+Copyright (c) 2024 Regents of the University of Minnesota
 Author: Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
 """
 
 # This module should NOT import anything else from this project that uses
 # Config or uses anything that uses Config
+
+import Sisyphus # for version and some file paths
+from Sisyphus.Utils.Terminal.Style import Style
 
 import os
 import shutil
@@ -18,24 +21,26 @@ import subprocess
 import tempfile
 import re
 import OpenSSL
+import requests
 from datetime import datetime
+from copy import deepcopy
 
 import logging
 import logging.config
 
-# def pp(obj):
-#     print(json.dumps(obj, indent=4))
-
-from Sisyphus import version as SISYPHUS_VERSION
-
 API_DEV = 'dbwebapi2.fnal.gov:8443/cdbdev'
-API_PROD = 'dbwebapi2.final.gov:8443/cdb'
+API_PROD = 'dbwebapi2.fnal.gov:8443/cdb'
 DEFAULT_API = API_DEV
 
-APPLICATION_PATH = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../.."))
-CONFIG_ROOT = os.path.normpath(os.path.expanduser("~/.sisyphus"))
-CONFIG_BASENAME = "config.json"
-LOGGING_BASENAME = "logging.json"
+MY_PATH = os.path.normpath(os.path.join(os.path.dirname(__file__)))
+USER_SETTINGS_DIR = os.path.normpath(os.path.expanduser("~/.sisyphus"))
+
+USER_CONFIG_FILE = os.path.join(USER_SETTINGS_DIR, "config.json")
+DEFAULT_LOG_CONFIG_FILE = os.path.join(MY_PATH, "default_log_config.py")
+LOG_CONFIG_FILE = os.path.join(USER_SETTINGS_DIR, "log_config.py")
+
+VAULT_TOKEN_FILE = os.path.join(USER_SETTINGS_DIR, 'vault_token')
+BEARER_TOKEN_FILE = os.path.join(USER_SETTINGS_DIR, 'bearer_token')
 
 KW_DEFAULT_PROFILE = "default profile"
 KW_PROFILES = "profiles"
@@ -44,87 +49,168 @@ KW_CERT_TYPE = "certificate type"
 KW_CERTIFICATE = "certificate"
 KW_P12 = "p12"
 KW_PEM = "pem"
-KW_COUNTRY = "country"
-KW_NAME = "name"
-KW_COUNTRY_CODE = "country code"
-KW_ID = "id"
 KW_LOGGING = "logging"
 KW_LOGLEVEL = "loglevel"
+KW_SETTINGS = "settings"
+KW_BEARER_TOKEN = "bearer token"
+KW_AUTHENTICATION = "authentication"
+
+NEW_CONFIG = {
+    "default profile": "development",
+    "profiles": {
+        "development": {
+            "rest api": "dbwebapi2.fnal.gov:8443/cdbdev",
+            "users": {}
+        },
+        "production": {
+            "rest api": "dbwebapi2.fnal.gov:8443/cdb",
+            "users": {}
+        }
+    }
+}
 
 class Config:
     def __init__(self, *, 
-                    config_root=CONFIG_ROOT, 
-                    logging_basename=LOGGING_BASENAME, 
-                    config_basename=CONFIG_BASENAME, 
-                    args=sys.argv):
-        
-        self.config_root = config_root
-        self.config_basename = config_basename
-        self.logging_basename = logging_basename
-        self.config_file = os.path.join(self.config_root, self.config_basename)
-        self.logging_file = os.path.join(self.config_root, self.logging_basename)
-        
-        self.logger = self.getLogger("Config")
+            user_settings_dir=None, user_config_file=None, log_config_file=None, args=sys.argv):
+        #{{{
+        self.original_args = args
+
+        self.user_config_file = (user_config_file or USER_CONFIG_FILE)
+        self.log_config_file = (log_config_file or LOG_CONFIG_FILE)
+        self.user_settings_dir = (user_settings_dir or USER_SETTINGS_DIR)
+
+        self.logger = self.getLogger(__name__)
         self.logger.info("[LOG INIT] logging initialized")
-        self.logger.info(f"[LOG INIT] ver={SISYPHUS_VERSION}")
-        self.logger.info(f"[LOG INIT] path={APPLICATION_PATH}")
-        
+        self.logger.info(f"[LOG INIT] ver={Sisyphus.version}")
+        self.logger.info(f"[LOG INIT] path={Sisyphus.project_root}")
+ 
         self._parse_args(args)
         self.load()
+        #}}}
 
-        self.logger = self.getLogger("Config")
-        #self._load_config(filename)
-        #self._populate_config()
-
-
-    def getLogger(self, name="config"):
-        
+    def getLogger(self, name="unnamed"):
+        #{{{     
         if not getattr(self, "_logging_initialized", False):
             self._init_logging()
+        
+        already_loaded = (name in logging.Logger.manager.loggerDict
+                and not isinstance(logging.Logger.manager.loggerDict[name], logging.PlaceHolder))
+
         logger = logging.getLogger(name)
        
         if getattr(self, "active_profile", None) is not None:
             if self.active_profile[KW_LOGLEVEL] is not None:
                 logger.setLevel(self.active_profile[KW_LOGLEVEL])
- 
+        if not already_loaded:
+            logger.debug(f"created logger '{name}'")
+        #else:
+        #    logger.debug(f"returning logger '{name}'")
         return logger
+        #}}}
 
+    def load_additional_config(self, filename, recopy_if_missing=True, recopy_on_error=False):
+        #{{{
+        filepath = os.path.join(self.user_settings_dir, filename)
+
+        def load_config():
+            with open(filepath, 'r') as fp:
+                raw_data = fp.read()
+
+                _locals, _globals = {}, {}
+                exec(raw_data, _globals, _locals)
+            
+            return _locals["contents"]
+
+        def reset_config():
+            default_filename = f"default_{filename}"
+            try:
+                src_file = os.path.join(MY_PATH, default_filename)
+                with open(src_file, "r") as f:
+                    raw_data = f.read()
+            except Exception:
+                msg = f"The configuration file at '{src_file}' could not be read."
+                raise RuntimeError(msg)
+
+            raw_data = raw_data.replace("${SISYPHUS_VERSION}", Sisyphus.version)
+
+            try:
+                with open(filepath, "w") as fp:
+                    fp.write(raw_data)
+                os.chmod(filepath, mode=0o600)
+            except Exception:
+                msg = f"The config file '{filepath}' could not be created."
+                raise RuntimeError(msg)
+
+        try:
+            config = load_config()
+        except Exception as exc:
+            if (type(exc) is FileNotFoundError and recopy_if_missing) or recopy_on_error:
+                reset_config()
+                config = load_config()
+            else:
+                raise exc
+
+        return config
+        #}}}
+            
     def _init_logging(self):
-        
+        #{{{ 
         # We need to create the directory the logs will be written to
         try:
-            path = os.path.dirname(self.logging_file)
+            path = os.path.dirname(self.log_config_file)
             os.makedirs(path, mode=0o700, exist_ok=True) 
         except Exception:
             msg = f"Could not create the log directory at {path}"
             raise RuntimeError(msg)
-        
-        # Read and use the data in logging_file, if it exists
-        # Otherwise, use a default version
-        if os.path.exists(self.logging_file):
-            # open the file
-            try:
-                with open(self.logging_file, "r") as f:
-                    raw_data = f.read()
-            except Exception:
-                msg = f"The log configuration file at '{self.logging_file}' could not be read."
-                raise RuntimeError(msg)
+   
+        # Read and use the data in log_config_file, if it exists
+        # If it doesn't exist, or if it is corrupt, create a new one
+
+        def configure_logs():
+            # Try to read the configuration file and let any exceptions
+            # bubble up to the next level.
+                    
+            with open(self.log_config_file, "r") as f:
+                raw_data = f.read()
             
-            # parse it as JSON5
-            try:
-                self.logging_data = json5.loads(raw_data)
-            except Exception as ex:
-                raise RuntimeError(f"'{self.logging_file}' was not a valid JSON/JSON5 file --> {ex}")
-        else:
-            self.logging_data = self._default_log_settings()
-          
-        logging.config.dictConfig(self.logging_data)
+            _locals = {}
+            _globals = {} #globals()
+            exec(raw_data, _globals, _locals)
+            
+            # we will use "all" here because we don't want the usual
+            # short-circuit logic to apply. We want to make sure _locals
+            # has both of these variables.
+            if all([_locals["overwrite_on_new_version"], 
+                    _locals["sisyphus_version"] != Sisyphus.version]):
+                raise ValueError("log config is obsolete")
+
+            self.log_config_dict = _locals["contents"]
+
+            # Unfortunately, Python's logging module doesn't do an 
+            # expanduser on the logging handlers, so we have to go into
+            # that part of the configuration and do it ourselves.
+            for handler_name, handler_def in self.log_config_dict["handlers"].items():
+                if "filename" in handler_def:
+                    handler_def["filename"] = os.path.expanduser(handler_def["filename"])
+
+            logging.config.dictConfig(self.log_config_dict)
+
+        try:
+            configure_logs()
+        except Exception:
+            self.reset_log_config()
+            configure_logs()
+
         self._logging_initialized = True   
-        
-        
+        #}}}
+   
+    @property 
+    def authentication(self):
+        return self.active_profile.get(KW_AUTHENTICATION, 'token')
+    
     @property 
     def log_settings(self):
-        return self.logging_data #[KW_LOGGING]
+        return self.log_config_dict #[KW_LOGGING]
     
     @property
     def rest_api(self):
@@ -142,7 +228,17 @@ class Config:
     def default_profile(self):
         return self.config_data[KW_DEFAULT_PROFILE]
 
+    @property
+    def settings(self):
+        return self.config_data.get(KW_SETTINGS, {})
+
+    @property
+    def bearer_token(self):
+        return self.active_profile.get(KW_BEARER_TOKEN, BEARER_TOKEN_FILE)
+
+
     def _extract_cert_info(self):
+        #{{{
         self.logger.debug("Extracting certificate information")
             
         self.cert_has_expired = None
@@ -188,17 +284,17 @@ class Config:
         log_msg = (f"Certificate info: {self.cert_fullname} ({self.cert_username}), "
                    f"expires {self.cert_expires.strftime('%Y-%m-%d %H:%M:%S')}")
         self.logger.debug(log_msg)
-                         
-    
+        #}}}             
     
     def reset(self):
-        self.logging_data = self._default_log_settings()
-        self.config_data = {}
+        self.reset_log_config()
+        self.config_data = deepcopy(NEW_CONFIG)
         
     def set_active(self):
         self.config_data[KW_DEFAULT_PROFILE] = self.profile_name
     
     def remove(self, profile_name=None):
+        #{{{
         if profile_name is None:
             profile_name = self.profile_name
             
@@ -208,21 +304,16 @@ class Config:
         else:
             self.logger.info(f"Unable to remove profile '{profile_name}' from configuration "
                              "because it does not exist.")
-            
-        # if self.default_profile == profile_name:
-        #     if "default" in self.profiles.keys():
-        #         self.config_data[KW_DEFAULT_PROFILE] = "default"
-        #     else:
-        #         if len(self.profiles
-        #         self.config_data[KW_DEFAULT_PROFILE] = list(self.profiles.keys())[0]
-            
+        #}}}
+                
     def save(self):
+        #{{{
         '''Make the current config permanent'''
 
         # create the config directory, if needed
-        if not os.path.exists(self.config_file):
+        if not os.path.exists(self.user_config_file):
             try:
-                path = os.path.dirname(self.config_file)
+                path = os.path.dirname(self.user_config_file)
                 os.makedirs(path, mode=0o700, exist_ok=True) 
             except Exception:
                 msg = "The configuration directory does not exist and could not be created."
@@ -230,53 +321,48 @@ class Config:
 
         # If we started from a p12 file and extracted a certificate, save the certificate
         if hasattr(self, 'temp_pem_file'):
-            perm_filename = os.path.join(self.config_root, f"certificate_{self.profile_name}.pem")
+            perm_filename = os.path.join(self.user_settings_dir, f"certificate_{self.profile_name}.pem")
             shutil.copyfile(self.temp_pem_file.name, perm_filename)
             self.active_profile[KW_CERTIFICATE] = perm_filename
             del self.temp_pem_file
         
         # Delete any saved certificates that don't correspond to a current profile
-        pattern = re.compile('certificate_(.*)\.pem')
+        pattern = re.compile('certificate_(.*)\\.pem')
         files = {
                 pattern.match(f).group(1): f 
-                    for f in os.listdir(self.config_root) 
+                    for f in os.listdir(self.user_settings_dir) 
                     if pattern.match(f) is not None
         }
         profiles = list(self.config_data["profiles"].keys())
         for k, v in files.items():
             if k not in profiles:
-                filepath = os.path.join(self.config_root, v)
+                filepath = os.path.join(self.user_settings_dir, v)
                 os.remove(filepath)
         
         # Save the config file
         try:
-            with open(self.config_file, "w") as f:
+            with open(self.user_config_file, "w") as f:
                 f.write(json.dumps(self.config_data, indent=4))
-            os.chmod(self.config_file, mode=0o600)
+            os.chmod(self.user_config_file, mode=0o600)
         except Exception:
             msg = "The configuration file could not be created."
             raise RuntimeError(msg)
-     
-        # Save the logging config
-        try:
-            with open(self.logging_file, "w") as f:
-                f.write(json.dumps(self.logging_data, indent=4))
-            os.chmod(self.logging_file, mode=0o600)
-        except Exception:
-            msg = "The logging config file could not be created."
-            raise RuntimeError(msg)
-     
+        #}}}
                 
-            
     def load(self):
+        #{{{
         self.logger.debug("Loading config file and merging with command line args")
-        self._load_config(self.config_file)
+        self._load_config(self.user_config_file)
         self._populate_config()
         self._extract_cert_info()
-
+        #}}}
 
     def _extract_pem(self, p12_file, password):
+        #{{{
         #print(p12_file)
+
+        import ssl
+        use_legacy = ssl.OPENSSL_VERSION.startswith("OpenSSL 3")
        
         self.temp_pem_file = tempfile.NamedTemporaryFile(
             mode='w+b', 
@@ -285,22 +371,27 @@ class Config:
             newline=None, 
             suffix=".pem", 
             prefix="tmp_", 
-            dir=self.config_root, 
+            dir=self.user_settings_dir, 
             delete=True,
             errors=None)
         
         #print(dir(self.temp_pem_file))
         #print(self.temp_pem_file)
-        
+    
+        tokens =  [
+                    "openssl",
+                    "pkcs12",
+                    "-in", p12_file,
+                    #"-out", outfile,
+                    "-nodes",
+                    "-passin", f"pass:{password}",
+                ]
+    
+        if use_legacy:
+            tokens.append("-legacy")
+
         gen_pem = subprocess.Popen(
-                            [
-                                "openssl",
-                                "pkcs12",
-                                "-in", p12_file,
-                                #"-out", outfile,
-                                "-nodes",
-                                "-passin", f"pass:{password}",
-                            ],
+                            tokens,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE)
         
@@ -312,8 +403,10 @@ class Config:
         else:
             self.temp_pem_file.write(output)
             self.temp_pem_file.flush()
-        
+        #}}}
+
     def _populate_config(self):
+        #{{{
         # populate the Config object using data from both the configuration file
         # and the command line arguments. Command line arguments have priority.
         #
@@ -358,7 +451,6 @@ class Config:
             active_profile[KW_LOGLEVEL] = active_profile.get(KW_LOGLEVEL, None)
 
         # get the REST API
-        self.logger.info(f"rest_api={self.args.rest_api}, dev={self.args.dev}, prod={self.args.prod}")
         if [self.args.rest_api is not None, self.args.dev, self.args.prod].count(True) > 1:
             err_msg = "Error: --rest-api, --dev, and --prod are mutually exclusive" 
             self.logger.error(err_msg)
@@ -373,7 +465,7 @@ class Config:
         else:
             active_profile[KW_REST_API] = active_profile.get(KW_REST_API, DEFAULT_API)
 
-        self.logger.debug(f"using rest api '{active_profile[KW_REST_API]}'")
+        self.logger.info(f"using rest api '{active_profile[KW_REST_API]}'")
         
         # let's figure out the certificate situation...
         # 0) if --cert is provided without --cert-type, it will guess based on the
@@ -442,24 +534,10 @@ class Config:
         else:
             #self.logger.debug(f"{active_profile[KW_CERT_TYPE]}, {self.args.password}")
             self.logger.debug("using PEM certificate")
-     
+        #}}}
+    
     def _load_config(self, filename):
-        
-        # # find the file, or create it (plus directories) if it's missing
-        # if not os.path.exists(filename):
-        #     try:
-        #         path = os.path.dirname(filename)
-        #         os.makedirs(path, mode=0o700, exist_ok=True) 
-        #         
-        #         with open(filename, "w") as f:
-        #             f.write(json.dumps({}, indent=4))
-        #             
-        #         os.chmod(filename, mode=0o600)
-        #             
-        #     except Exception:
-        #         msg = f"The configuration file at '{filename}' does not exist and could not be created."
-        #         raise RuntimeError(msg)
-            
+        #{{{
         # open the file
         try:
             with open(filename, "r") as f:
@@ -467,7 +545,7 @@ class Config:
         except Exception:
             # msg = f"The configuration file at '{filename}' could not be read."
             # raise RuntimeError(msg)
-            self.config_data = {}
+            self.config_data = deepcopy(NEW_CONFIG)
             return
         
         # parse it as JSON5
@@ -475,13 +553,31 @@ class Config:
             self.config_data = json5.loads(raw_data)
         except Exception as ex:
             raise RuntimeError(f"'{filename}' was not a valid JSON/JSON5 file --> {ex}")
-        
+
+        # Let's check for a new version, but don't do it more than once per day
+        today = datetime.now().date().strftime("%Y-%m-%d")
+        if self.config_data.get("version", None) is not None:
+            if self.config_data["version"].get("last checked", None) >= today:
+                self.latest_release_version = self.config_data["version"]["latest release version"]
+        if getattr(self, "latest_release_version", None) is None:
+            self.config_data["version"] = \
+            {
+                "current version": Sisyphus.version,
+                "latest release version": self.get_latest_release_version(),
+                "last checked": today,
+            }                
+            with open(filename, "w") as f:
+                f.write(json.dumps(self.config_data, indent=4))
+
+
+        #}}}
 
     def _parse_args(self, args=None):
+        #{{{
         self.arg_parser = argparse.ArgumentParser(allow_abbrev=False, add_help=False)        
 
         group = self.arg_parser.add_argument_group(
-                        'Global Configuration Options',
+                        Style.notice('Global Configuration Options'),
                         'These options are available for most scripts, and are only set '
                         'for the duration of the script. If used with the '
                         'Configuration Utility, however, they will be set permanently.')
@@ -490,7 +586,8 @@ class Config:
                             dest='cert_type',
                             metavar='[ p12 | pem ]',
                             required=False,
-                            help='type of certificate file being used: p12 or pem')
+                            #help='type of certificate file being used: p12 or pem')
+                            help=argparse.SUPPRESS)
         group.add_argument('--cert',
                             dest='cert',
                             metavar='<filename>',
@@ -518,37 +615,6 @@ class Config:
                             metavar='<url>',
                             required=False,
                             help=f'use the REST API at <url>, ex. {DEFAULT_API}')
-
-        '''
-        self.arg_parser.add_argument('--institution-id', '--inst-id', '--inst',
-                            dest='inst_id',
-                            metavar='<inst-id>',
-                            required=False,
-                            help='set default institution id to use for new items')
-        self.arg_parser.add_argument('--institution-name', '--inst-name',
-                            dest='inst_name',
-                            required=False,
-                            metavar='<regex>',
-                            help='uses <regex> to find matching institutions. if the result '
-                                  'uniquely identifies an institution, use '
-                                  'that one; otherwise list all matches without adding '
-                                  'any institution to the configuration') 
-        
-        self.arg_parser.add_argument('--country-code',
-                            dest='country_code',
-                            metavar='<country-code>',
-                            required=False,
-                            help='set default 2-letter country code to use for new items')
-        self.arg_parser.add_argument('--country-name',
-                            dest='country_name',
-                            metavar='<regex>',
-                            required=False,
-                            help='uses <regex> to find matching country names. if the result '
-                                  'uniquely identifies a country, use '
-                                  'that country; otherwise list all matches without adding '
-                                  'any country to the configuration')
-        '''
-        
         group.add_argument('--profile',
                             dest='profile',
                             metavar='<profile-name>',
@@ -560,93 +626,57 @@ class Config:
                             metavar='<loglevel>',
                             required=False,
                             help="Only log messages at <loglevel> or higher in severity. "
-                                "(DEBUG, INFO, WARNING, ERRROR, CRITICAL, or 'default' to "
+                                "(DEBUG, INFO, WARNING, ERROR, CRITICAL, or 'default' to "
                                 "use the default level")    
 
+        group.add_argument('--version',
+                            action='version',
+                            version=f'Sisyphus {Sisyphus.version}')
 
-        self.args, unknown = self.arg_parser.parse_known_args(args)
-    
-    def _default_log_settings(self):
+        self.args, self.remaining_args = self.arg_parser.parse_known_args(args)
+        #}}}    
+
+    def reset_log_config(self):
+        #{{{
         '''Generate the settings for the Logging module'''
-        logging_data = \
-        { 
-            "version": 1,
-            "disable_existing_loggers": False,
-            "formatters": 
-            { 
-                "standard": 
-                { 
-                    "format": "%(asctime)s [%(levelname)s] %(filename)s, line %(lineno)d: %(message)s",
-                    "datefmt": "%Y-%m-%d:%H:%M:%S"
-                },
-                "brief":
-                { 
-                    "format": "%(asctime)s [%(levelname)s] %(name)s %(message)s",
-                    "datefmt": "%H:%M:%S"
-                }
-            },
-            "handlers": { 
-                "stdout": { 
-                    "level": "DEBUG",
-                    "formatter": "standard",
-                    "class": "logging.StreamHandler",
-                    "stream": "ext://sys.stdout"
-                },
-                "logfile": {
-                    "level": "DEBUG",
-                    "formatter": "standard",
-                    "class": "logging.handlers.RotatingFileHandler",
-                    "filename": os.path.join(self.config_root, "log.txt"),
-                    "maxBytes": 0x1000000,
-                    "backupCount": 3
-                }
-            },
-            "loggers": { 
-                "": 
-                {
-                    "handlers": ["logfile"],
-                    "level": "DEBUG",
-                    "propagate": False
-                },
-                "urllib3.connectionpool": 
-                { 
-                    "handlers": ["logfile"],
-                    "level": "INFO",
-                    "propagate": False
-                },
-                "__main__": 
-                {
-                    "handlers": ["logfile"],
-                    "level": "DEBUG",
-                    "propagate": False
-                },
-                "Sisyphus.DataModel":
-                {
-                    "handlers": ["logfile"],
-                    "level": "DEBUG",
-                    "propagate": False
-                },
-                "Sisyphus.Logging":
-                {
-                    "handlers": ["logfile"],
-                    "level": "DEBUG",
-                    "propagate": False
-                },
-                "Sisyphus.DataModel.Tools":
-                {
-                    "handlers": ["logfile"],
-                    "level": "INFO",
-                    "propagate": False
-                }
-            }
-        }
-        return logging_data
-    
+        
+        try:
+            with open(DEFAULT_LOG_CONFIG_FILE, "r") as f:
+                raw_data = f.read()
+        except Exception:
+            msg = f"The log configuration file at '{self.log_config_file}' could not be read."
+            raise RuntimeError(msg)
+
+        raw_data = raw_data.replace("${SISYPHUS_VERSION}", Sisyphus.version)
+
+        try:
+            with open(self.log_config_file, "w") as f:
+                f.write(raw_data)
+            os.chmod(self.log_config_file, mode=0o600)
+        except Exception:
+            msg = "The logging config file could not be created."
+            raise RuntimeError(msg)
+        #}}}
+
+    def get_latest_release_version(self):
+        if getattr(self, "tag_name", None) is None:
+            resp = requests.get("https://api.github.com/repos/DUNE/DUNE-HWDB-Python/releases/latest")   
+            self.latest_release_version = resp.json()["tag_name"]
+        return self.latest_release_version
+
+    def newer_version_exists(self):
+        re_version = re.compile(r"""
+                ^[v]{0,1}(?P<version>.*)$
+            """, re.VERBOSE)
+        current_version = tuple(re_version.match(Sisyphus.version)["version"].split("."))
+
+        latest_version = tuple(
+                re_version.match(self.get_latest_release_version())["version"].split("."))
+
+        return latest_version > current_version
+
+ 
 def run_tests():
-    #test_path = os.path.join(APPLICATION_PATH, "test/Sisyphus/Config/test_Config.py")
-    #print(APPLICATION_PATH)
-    #print(sys.argv) 
-    #os.execvp(test_path, sys.argv)
     print("Tests have been moved to a separate directory")
     
 if __name__ == '__main__':

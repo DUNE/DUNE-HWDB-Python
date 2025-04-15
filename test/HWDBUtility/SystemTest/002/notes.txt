@@ -1,0 +1,112 @@
+Example Calling Convention
+==========================
+
+hwdb-upload
+        (positional)
+            item-manifest-1.xlsx
+            item-manifest-2.csv
+            test-results.xlsx
+            image-manifest.xlsx
+        
+        --docket
+            docket.json [docket2.json [...]]
+        
+        --encoder           (include a docket, but ignore sources)
+            encoder.json [encoder2.json [...]]
+
+        --images
+            image-1.jpg
+            image-2.pdf
+            image-3.png
+
+        --image
+            image-4.jpg "comment for image-4.jpg"
+
+
+        --part-type-id=Z00100300022
+        --part-type-name=z.sandbox.hwdbunittest.snork
+
+        --record-type [ item | item-image | test | test-image ]
+
+        --test-name=bounce_test
+        --encoder=bounce_test_encoder
+
+        --part-id=Z00100300022-00001
+        --serial-number=ABC123
+
+        --value=institution_id,186
+        --value=manufacturer_id,7
+        --submit
+
+        -c      (create a new record using only command line args)
+
+
+        ??--insert-missing-items??
+
+        ??--merge-keyed-data
+
+
+        ??--overwrite-test-keys??
+        ??--ignore-warnings??
+        ??--use-inst-country=False??
+
+        ??--report
+        ??--
+
+
+Examples:
+=========
+
+Create a new item with no files
+-------------------------------
+
+hwdb-upload
+    -c
+    --record-type item
+    --part-type-name z.sandbox.hwdbunittest.biff
+    
+
+
+
+
+
+
+
+Manufacturer        (7) Hajime Inc
+Manufacturer ID     7
+Manufacturer Name   Hajime Inc
+Country             (US) United States
+Country Code        US
+Country Name        United States
+Institution         (186) University of Minnesota Twin Cities
+Institution ID      186
+Institution Name    University of Minnesota Twin Cities
+Comments            (but is it for an item or a test?)
+Specifications      (dict)
+Test Results        (dict)
+<named field>       (value)
+<func pos>          (part_type_id)
+
+
+---------------------
+
+Docket Format
+=============
+
+Root Node
+---------
+Docket Name
+Part Type ID
+Part Type Name
+Test Name
+Part ID
+Serial Number
+Values (node)
+Sources (node)
+Encoders (node)
+
+
+
+
+
+

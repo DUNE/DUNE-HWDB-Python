@@ -1,0 +1,4 @@
+#!/bin/bash
+
+hwdb-upload docket.json --submit
+

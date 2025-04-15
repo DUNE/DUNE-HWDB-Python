@@ -1,0 +1,94 @@
+{
+  "data": {
+    "category": "generic",
+    "comments": "Setting up this Type",
+    "connectors": {
+      "CPA Plane PID": "D00502004501",
+      "FC Bot NJ PID": "D00502102160",
+      "FC Bot SS PID": "D00502102150",
+      "FC Top NJ PID": "D00502102120",
+      "FC Top SS PID": "D00502102130"
+    },
+    "created": "2022-05-06T11:31:09.573753-05:00",
+    "creator": {
+      "id": 3,
+      "name": "Vladimir Podstavkov",
+      "username": "podstvkv"
+    },
+    "full_name": "D.FD1-HD HVS.TPC HV Assembly.CPA/FC Assembly US",
+    "id": 639,
+    "manufacturers": [
+      {
+        "id": 26,
+        "name": "Kansas State University"
+      },
+      {
+        "id": 28,
+        "name": "ANL-HEP"
+      },
+      {
+        "id": 27,
+        "name": "CERN"
+      },
+      {
+        "id": 30,
+        "name": "ATLAS Fibre"
+      }
+    ],
+    "part_type_id": "D00501341001",
+    "properties": {
+      "specifications": [
+        {
+          "created": "2022-09-28 09:43:28-05:00",
+          "creator": "Hajime Muramatsu",
+          "datasheet": {
+            "Drawing Number": "DFD-13-5100",
+            "Name": "CPA/FC Assembly US"
+          },
+          "version": 0
+        }
+      ]
+    },
+    "roles": [
+      {
+        "id": 30,
+        "name": "HVS-CPA"
+      }
+    ],
+    "subsystem": {
+      "id": 78,
+      "name": "TPC HV Assembly"
+    }
+  },
+  "link": {
+    "href": "/cdbdev/api/v1/component-types/D00501341001?history=False",
+    "rel": "self"
+  },
+  "methods": [
+    {
+      "href": "/cdbdev/api/v1/component-types/D00501341001/components",
+      "rel": "Components"
+    },
+    {
+      "href": "/cdbdev/api/v1/component-types/D00501341001/test-types",
+      "rel": "Test Types"
+    },
+    {
+      "href": "/cdbdev/api/v1/component-types/D00501341001/connectors",
+      "rel": "Connectors description"
+    },
+    {
+      "href": "/cdbdev/api/v1/component-types/D00501341001/specifications",
+      "rel": "Type specs"
+    },
+    {
+      "href": "/cdbdev/api/v1/component-types/D00501341001/images",
+      "rel": "Images"
+    },
+    {
+      "href": "/cdbdev/api/v1/component-types/D00501341001/bulk-add",
+      "rel": "Bulk Add"
+    }
+  ],
+  "status": "OK"
+}

@@ -1,0 +1,20 @@
+{
+  "data": {
+    "comments": "Test system",
+    "created": "2022-01-28T16:24:45.409103-06:00",
+    "creator": {
+      "id": 3,
+      "name": "Vladimir Podstavkov",
+      "username": "podstvkv"
+    },
+    "project_id": "Z",
+    "subsystem_id": 1,
+    "subsystem_name": "Sandbox",
+    "system_id": 1
+  },
+  "link": {
+    "href": "/cdbdev/api/v1/subsystems/Z/1/1",
+    "rel": "self"
+  },
+  "status": "OK"
+}

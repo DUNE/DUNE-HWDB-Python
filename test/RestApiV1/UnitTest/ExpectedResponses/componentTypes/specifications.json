@@ -1,0 +1,19 @@
+{
+  "data": [
+    {
+      "created": "2022-09-28 09:43:28-05:00",
+      "creator": "Hajime Muramatsu",
+      "datasheet": {
+        "Drawing Number": "DFD-13-5100",
+        "Name": "CPA/FC Assembly US"
+      },
+      "version": 0
+    }
+  ],
+  "link": {
+    "href": "/cdbdev/api/v1/component-types/D00501341001/specifications",
+    "rel": "self"
+  },
+  "part_type_id": "D00501341001",
+  "status": "OK"
+}

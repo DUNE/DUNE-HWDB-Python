@@ -1,0 +1,32 @@
+#!/bin/bash
+
+tokendir=~/.sisyphus
+vault=${tokendir}/vault_token
+bearer=${tokendir}/bearer_token
+
+do_htgettoken() {
+    #echo CALLING
+    python -u \
+    $(which alt-htgettoken) \
+        -q \
+        --configdir=${tokendir} \
+        --vaulttokenfile=${vault} \
+        --outfile=${bearer} \
+        --vaultserver=htvaultprod.fnal.gov \
+        --issuer=fermilab 
+        #--web-open-command=
+    #echo FINISHED
+}
+
+
+if [[ "$1" == "--reset" ]] ; then
+    rm -f ${vault} ${bearer} ${tokendir}/credkey-fermilab-default
+    do_htgettoken
+
+elif [[ "$1" == "--clear" ]] ; then
+    rm -f ${vault} ${bearer} ${tokendir}/credkey-fermilab-default
+
+else
+    do_htgettoken
+
+fi

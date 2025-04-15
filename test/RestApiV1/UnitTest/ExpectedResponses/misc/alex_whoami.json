@@ -1,0 +1,39 @@
+{
+  "data": {
+    "active": true,
+    "administrator": true,
+    "affiliation": "University of Minnesota",
+    "architect": false,
+    "email": "awagner@fnal.gov",
+    "full_name": "Alex Wagner",
+    "roles": [
+      {
+        "id": 30,
+        "name": "HVS-CPA"
+      },
+      {
+        "id": 32,
+        "name": "HVS-EW"
+      },
+      {
+        "id": 31,
+        "name": "HVS-FC"
+      },
+      {
+        "id": 4,
+        "name": "tester"
+      },
+      {
+        "id": 3,
+        "name": "type-manager"
+      }
+    ],
+    "user_id": 13615,
+    "username": "awagner"
+  },
+  "link": {
+    "href": "/cdbdev/api/v1/users/13615",
+    "rel": "self"
+  },
+  "status": "OK"
+}

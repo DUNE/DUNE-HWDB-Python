@@ -1,0 +1,177 @@
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "Homenick Ltd"
+    },
+    {
+      "id": 2,
+      "name": "Schuster-Balistreri"
+    },
+    {
+      "id": 3,
+      "name": "Bergnaum and Sons"
+    },
+    {
+      "id": 4,
+      "name": "Schulist-Zulauf"
+    },
+    {
+      "id": 5,
+      "name": "Bauch Inc"
+    },
+    {
+      "id": 6,
+      "name": "Stanton-O'Kon"
+    },
+    {
+      "id": 8,
+      "name": "Haag-Langworth"
+    },
+    {
+      "id": 9,
+      "name": "Bergstrom, Howe and Quigley"
+    },
+    {
+      "id": 10,
+      "name": "Hickle-Lebsack"
+    },
+    {
+      "id": 11,
+      "name": "Lang Inc"
+    },
+    {
+      "id": 12,
+      "name": "Pouros-Sauer"
+    },
+    {
+      "id": 13,
+      "name": "Reichel Group"
+    },
+    {
+      "id": 14,
+      "name": "Hauck-Crona"
+    },
+    {
+      "id": 15,
+      "name": "Waelchi, Jacobs and Denesik"
+    },
+    {
+      "id": 16,
+      "name": "Lowe, Dietrich and Flatley"
+    },
+    {
+      "id": 17,
+      "name": "Daugherty, Beahan and O'Hara"
+    },
+    {
+      "id": 18,
+      "name": "Reilly, Nitzsche and Williamson"
+    },
+    {
+      "id": 19,
+      "name": "Huel Inc"
+    },
+    {
+      "id": 20,
+      "name": "Stiedemann-Hill"
+    },
+    {
+      "id": 21,
+      "name": "Dibbert-Weber"
+    },
+    {
+      "id": 7,
+      "name": "Hajime Inc"
+    },
+    {
+      "id": 25,
+      "name": "ColdLogik"
+    },
+    {
+      "id": 26,
+      "name": "Kansas State University"
+    },
+    {
+      "id": 27,
+      "name": "CERN"
+    },
+    {
+      "id": 28,
+      "name": "ANL-HEP"
+    },
+    {
+      "id": 29,
+      "name": "HB Inc."
+    },
+    {
+      "id": 30,
+      "name": "ATLAS Fibre"
+    },
+    {
+      "id": 31,
+      "name": "TSMC Taiwan Semiconductor Manufacturing Corporation"
+    },
+    {
+      "id": 32,
+      "name": "Louisiana State University"
+    },
+    {
+      "id": 33,
+      "name": "DEFI"
+    },
+    {
+      "id": 34,
+      "name": "Trafilerie Alluminio Alexia"
+    },
+    {
+      "id": 35,
+      "name": "Bomans Lackering"
+    },
+    {
+      "id": 36,
+      "name": "STOCA"
+    },
+    {
+      "id": 37,
+      "name": "Dell"
+    },
+    {
+      "id": 38,
+      "name": "Intel"
+    },
+    {
+      "id": 39,
+      "name": "Istituto Nazionale di Fisica Nucleare Sezione di Milano Bicocca"
+    },
+    {
+      "id": 40,
+      "name": "Stony Brook University"
+    },
+    {
+      "id": 41,
+      "name": "University of Texas at Arlington"
+    },
+    {
+      "id": 42,
+      "name": "University of Bologna and INFN"
+    },
+    {
+      "id": 44,
+      "name": "Ferrara"
+    },
+    {
+      "id": 48,
+      "name": "Hamamatsu Photonics"
+    },
+    {
+      "id": 49,
+      "name": "Fondazione Bruno Kessler"
+    }
+  ],
+  "link": {
+    "href": "/cdbdev/api/v1/manufacturers",
+    "rel": "self"
+  },
+  "status": "OK"
+}

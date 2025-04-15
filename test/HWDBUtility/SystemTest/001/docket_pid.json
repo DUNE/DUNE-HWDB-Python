@@ -1,0 +1,29 @@
+{
+    "Docket Name": "Docket 001",
+    "Sources":
+    [
+        {
+            "Source Name": "Bulk Bongos and Biffs",
+            "Files": "Upload_PID.xlsx",
+            "Sheets": 
+            [   
+                {
+                    "Sheet Name": "Bongo-Items",
+                    "Sheet Type": "Item",
+                    "Values":
+                    {
+                        "Type ID": "Z00100300023"
+                    }
+                },
+                {
+                    "Sheet Name": "Biff-Items",
+                    "Sheet Type": "Item",
+                    "Values":
+                    {
+                        "Type Name": "Z.Sandbox.HWDBUnitTest.biff"
+                    }
+                }
+            ]
+        }
+    ]
+}

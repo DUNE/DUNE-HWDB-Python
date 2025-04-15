@@ -1,0 +1,43 @@
+{
+  "component_type": {
+    "name": "CPA/FC Assembly US",
+    "part_type_id": "D00501341001"
+  },
+  "data": [
+    {
+      "comments": "Setting up Test Type",
+      "created": "2023-05-22T13:26:15.593400-05:00",
+      "creator": {
+        "id": 12624,
+        "name": "Hajime Muramatsu",
+        "username": "hajime3"
+      },
+      "id": 465,
+      "link": {
+        "href": "/cdbdev/api/v1/component-test-types/465",
+        "rel": "self"
+      },
+      "name": "CPAFC Cryo Pos QC check"
+    },
+    {
+      "comments": "Setting up Test Type",
+      "created": "2022-09-28T09:44:42.692980-05:00",
+      "creator": {
+        "id": 12624,
+        "name": "Hajime Muramatsu",
+        "username": "hajime3"
+      },
+      "id": 394,
+      "link": {
+        "href": "/cdbdev/api/v1/component-test-types/394",
+        "rel": "self"
+      },
+      "name": "CPAFC assembly US QC check"
+    }
+  ],
+  "link": {
+    "href": "/cdbdev/api/v1/component-types/D00501341001/test-types",
+    "rel": "self"
+  },
+  "status": "OK"
+}

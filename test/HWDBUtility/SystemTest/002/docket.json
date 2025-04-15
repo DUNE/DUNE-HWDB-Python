@@ -1,0 +1,74 @@
+{
+    "Docket Name": "My Docket",
+    "Sources": [
+        {
+            "Source Name": "SiPM Item Manifest",
+            "Files": "SiPM-item-manifest.xlsx",
+            "Values": {
+                "Sample Value 1": 1
+            },
+            "Part Type Name": "Z.Sandbox.HWDBUnitTest.snork",
+            "Part Type ID": "Z00100300022",
+            "Encoder": "SiPM Item (from source info)"
+        }
+    ],
+    "Encoders": [
+        {
+            "Encoder Name": "SiPM Item",
+            "Sheet Type": "Item",
+            "Part Type Name": "Z.Sandbox.HWDBUnitTest.snork",
+            "Specifications": {
+                "Vendor_Delivery_ID": "string",
+                "Vendor_Box_Number": "integer",
+                "Tray_Number": "integer",
+                "SiPM_Strip_ID": "string",
+                "Test_Box_ID": "string",
+                "Documentation": "string"
+            }
+        },
+        {
+            "Encoder Name": "Snork.Dark_Noise_SiPM_Counts",
+            "Sheet Type": "Test",
+            "Part Type Name": "Z.Sandbox.HWDBUnitTest.snork",
+            "Test Name": "Dark Noise SiPM Counts",
+            "Test Results": {
+                "SiPM_Strip_ID": "string",
+                "Content Manager": {
+                    "type": "string",
+                    "value": "HWDB Python Utility"
+                },
+                "Contents": {
+                    "type": "group",
+                    "key": [
+                        "Date",
+                        "Location"
+                    ],
+                    "members": {
+                        "SiPM_Strip_ID": "string",
+                        "Date": "string",
+                        "Location": "string",
+                        "Operator": "string",
+                        "Thermal_Cycle": "integer",
+                        "Polarization": "string",
+                        "Temperature": "string",
+                        "Acquisition_Time": "float",
+                        "Weighted_Threshold_Charge": "integer",
+                        "SiPM Location": {
+                            "type": "group",
+                            "key": [
+                                "SiPM_Location"
+                            ],
+                            "members": {
+                                "SiPM_Location": "integer",
+                                "OV": "float",
+                                "Counts": "integer",
+                                "Status": "string",
+                                "Comment": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}

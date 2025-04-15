@@ -1,0 +1,42 @@
+{
+  "data": [
+    {
+      "comments": null,
+      "created": "2021-10-28T10:14:44.215630-05:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": "a",
+      "name": "Dummy a"
+    },
+    {
+      "comments": "Includes approved far detector modules and near detectors",
+      "created": "2022-01-31T16:12:30.338331-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": "D",
+      "name": "DUNE"
+    },
+    {
+      "comments": "Test project",
+      "created": "2022-01-28T16:22:22.319197-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": "Z",
+      "name": "Sandbox"
+    }
+  ],
+  "link": {
+    "href": "/cdbdev/api/v1/projects",
+    "rel": "self"
+  },
+  "status": "OK"
+}

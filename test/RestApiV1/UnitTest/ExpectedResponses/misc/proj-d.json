@@ -1,0 +1,720 @@
+{
+  "data": [
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 500,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/500",
+        "rel": "self"
+      },
+      "name": "Computing"
+    },
+    {
+      "comments": null,
+      "created": "2022-05-04T10:51:22.484599-05:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 21,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/21",
+        "rel": "self"
+      },
+      "name": "DAQ"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 3,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/3",
+        "rel": "self"
+      },
+      "name": "FD1-HD Anode Plane Assemblies (bare wire planes)"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 6,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/6",
+        "rel": "self"
+      },
+      "name": "FD1-HD Calibration"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 1,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/1",
+        "rel": "self"
+      },
+      "name": "FD1-HD Complete Detector"
+    },
+    {
+      "comments": null,
+      "created": "2022-05-06T11:31:09.573753-05:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 5,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/5",
+        "rel": "self"
+      },
+      "name": "FD1-HD HVS"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 2,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/2",
+        "rel": "self"
+      },
+      "name": "FD1-HD Instrumented Anode Plane (with Elec and photon Det.)"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 4,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/4",
+        "rel": "self"
+      },
+      "name": "FD1-HD Photon Detection System"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 81,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/81",
+        "rel": "self"
+      },
+      "name": "FD1-HD TPC_Elec. and FD2-VD Bottom_Elec."
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 56,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/56",
+        "rel": "self"
+      },
+      "name": "FD2-VD Bottom Charge Readout Planes (CRP)"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 59,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/59",
+        "rel": "self"
+      },
+      "name": "FD2-VD Calibration"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 51,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/51",
+        "rel": "self"
+      },
+      "name": "FD2-VD Complete Detector"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 80,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/80",
+        "rel": "self"
+      },
+      "name": "FD-2-VD HV"
+    },
+    {
+      "comments": null,
+      "created": "2022-05-04T12:17:13.259527-05:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 60,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/60",
+        "rel": "self"
+      },
+      "name": "FD2-VD HVS"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 53,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/53",
+        "rel": "self"
+      },
+      "name": "FD2-VD Instrumented Bottom Charge Readout Planes (CRP) (inc. Elect)"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 54,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/54",
+        "rel": "self"
+      },
+      "name": "FD2-VD Instrumented Cathode Plane (inc. PD)"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 52,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/52",
+        "rel": "self"
+      },
+      "name": "FD2-VD Instrumented Top Charge Readout Planes (CRP) (inc. Elect)"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 901,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/901",
+        "rel": "self"
+      },
+      "name": "FD2-VD Module-0 complete detector"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 58,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/58",
+        "rel": "self"
+      },
+      "name": "FD2-VD Photon Detector"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 55,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/55",
+        "rel": "self"
+      },
+      "name": "FD2-VD Top Charge Readout Planes (CRP)"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 57,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/57",
+        "rel": "self"
+      },
+      "name": "FD2-VD Top Vertical Drift CRP Electronics"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 84,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/84",
+        "rel": "self"
+      },
+      "name": "FD Cryogenic Instrumentation"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 600,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/600",
+        "rel": "self"
+      },
+      "name": "FD Cryostat"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 82,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/82",
+        "rel": "self"
+      },
+      "name": "FD DAQ"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 86,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/86",
+        "rel": "self"
+      },
+      "name": "FD Installation"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 85,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/85",
+        "rel": "self"
+      },
+      "name": "FD Integration"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 83,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/83",
+        "rel": "self"
+      },
+      "name": "FD Slow Control"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 201,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/201",
+        "rel": "self"
+      },
+      "name": "FS: BSI"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 300,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/300",
+        "rel": "self"
+      },
+      "name": "FS: Cryogenics"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 400,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/400",
+        "rel": "self"
+      },
+      "name": "FS: Networking"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 200,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/200",
+        "rel": "self"
+      },
+      "name": "FS: Safety"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 0,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/0",
+        "rel": "self"
+      },
+      "name": "Invalid "
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 103,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/103",
+        "rel": "self"
+      },
+      "name": "ND: Beam Monitor - SAND"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 621,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/621",
+        "rel": "self"
+      },
+      "name": "ND Cryostat"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 104,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/104",
+        "rel": "self"
+      },
+      "name": "ND: DAQ"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 108,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/108",
+        "rel": "self"
+      },
+      "name": "ND: Installation"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 107,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/107",
+        "rel": "self"
+      },
+      "name": "ND: Integration"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 101,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/101",
+        "rel": "self"
+      },
+      "name": "ND: Liquid Argon Near Detector"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 100,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/100",
+        "rel": "self"
+      },
+      "name": "ND: Near detector complex"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 106,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/106",
+        "rel": "self"
+      },
+      "name": "ND: Prism Infrastructure"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 105,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/105",
+        "rel": "self"
+      },
+      "name": "ND: Slow Controls"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 102,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/102",
+        "rel": "self"
+      },
+      "name": "ND: TMS"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 221,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/221",
+        "rel": "self"
+      },
+      "name": "NS: BSI"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 321,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/321",
+        "rel": "self"
+      },
+      "name": "NS: Cryogenics"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 421,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/421",
+        "rel": "self"
+      },
+      "name": "NS: Networking"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 220,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/220",
+        "rel": "self"
+      },
+      "name": "NS: Safety"
+    },
+    {
+      "comments": null,
+      "created": "2022-02-01T17:24:12.036562-06:00",
+      "creator": {
+        "id": 3,
+        "name": "Vladimir Podstavkov",
+        "username": "podstvkv"
+      },
+      "id": 900,
+      "link": {
+        "href": "/cdbdev/api/v1/systems/D/900",
+        "rel": "self"
+      },
+      "name": "ProtoDUNE-II complete detector"
+    }
+  ],
+  "link": {
+    "href": "/cdbdev/api/v1/systems/D?page=1",
+    "rel": "self"
+  },
+  "pagination": {
+    "next": null,
+    "page": 1,
+    "pages": 1,
+    "prev": null
+  },
+  "status": "OK"
+}

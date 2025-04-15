@@ -1,0 +1,64 @@
+{
+  "component_type": {
+    "name": "SiPM001",
+    "part_type_id": "Z00100200028"
+  },
+  "data": {
+    "comments": "Test type 1 updated",
+    "created": "2020-10-05T15:08:50.648086-05:00",
+    "creator": {
+      "id": 3,
+      "name": "Vladimir Podstavkov",
+      "username": "podstvkv"
+    },
+    "id": 1,
+    "name": "SiPM001 test1",
+    "properties": {
+      "specifications": [
+        {
+          "created": "2020-07-10 10:34:51-05:00",
+          "creator": "Vladimir Podstavkov",
+          "datasheet": {
+            "gain is in range": [
+              true,
+              false
+            ],
+            "size": null,
+            "status": [
+              "not tested",
+              "yellow",
+              "green"
+            ]
+          },
+          "version": 0
+        },
+        {
+          "created": "2020-07-10 10:40:00-05:00",
+          "creator": "Vladimir Podstavkov",
+          "datasheet": {
+            "QR is in place": [
+              true,
+              false
+            ],
+            "gain is in range": [
+              true,
+              false
+            ],
+            "size": null,
+            "status": [
+              "not tested",
+              "yellow",
+              "green"
+            ]
+          },
+          "version": 1
+        }
+      ]
+    }
+  },
+  "link": {
+    "href": "/cdbdev/api/v1/component-test-types/1",
+    "rel": "self"
+  },
+  "status": "OK"
+}

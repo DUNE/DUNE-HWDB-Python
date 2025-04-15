@@ -1,0 +1,15 @@
+{
+  "data": {
+    "CPA Plane PID": "D00502004501",
+    "FC Bot NJ PID": "D00502102160",
+    "FC Bot SS PID": "D00502102150",
+    "FC Top NJ PID": "D00502102120",
+    "FC Top SS PID": "D00502102130"
+  },
+  "link": {
+    "href": "/cdbdev/api/v1/component-types/D00501341001/connectors",
+    "rel": "self"
+  },
+  "part_type_id": "D00501341001",
+  "status": "OK"
+}

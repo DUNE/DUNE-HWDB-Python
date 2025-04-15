@@ -1,0 +1,4 @@
+#!/bin/bash
+
+hwdb-upload Items.xlsx docket.json --submit
+

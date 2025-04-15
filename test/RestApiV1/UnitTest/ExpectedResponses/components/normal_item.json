@@ -1,0 +1,81 @@
+{
+  "data": {
+    "batch": null,
+    "component_id": 44801,
+    "component_type": {
+      "name": "Test Type 001",
+      "part_type_id": "Z00100300001"
+    },
+    "country_code": "US",
+    "created": "2023-07-12T15:05:23.758470-05:00",
+    "creator": {
+      "id": 13615,
+      "name": "Alex Wagner",
+      "username": "awagner"
+    },
+    "institution": {
+      "id": 186,
+      "name": "University of Minnesota Twin Cities"
+    },
+    "manufacturer": {
+      "id": 7,
+      "name": "Hajime Inc"
+    },
+    "part_id": "Z00100300001-00021",
+    "serial_number": "S00021",
+    "specifications": [
+      {
+        "Color": "blue",
+        "Comment": "Third comment.",
+        "Widget ID": "S00021",
+        "_meta": {
+          "_column_order": [
+            "Widget ID",
+            "Color",
+            "Comment"
+          ]
+        }
+      }
+    ],
+    "specs_version": null
+  },
+  "link": {
+    "href": "/cdbdev/api/v1/components/Z00100300001-00021",
+    "rel": "self"
+  },
+  "methods": [
+    {
+      "href": "/cdbdev/api/v1/components/Z00100300001-00021/container",
+      "rel": "Container Info"
+    },
+    {
+      "href": "/cdbdev/api/v1/components/Z00100300001-00021/subcomponents",
+      "rel": "Subcomponents"
+    },
+    {
+      "href": "/cdbdev/api/v1/components/Z00100300001-00021/tests",
+      "rel": "Component Tests"
+    },
+    {
+      "href": "/cdbdev/api/v1/components/Z00100300001-00021/attributes",
+      "rel": "Component Attributes"
+    },
+    {
+      "href": "/cdbdev/api/v1/components/Z00100300001-00021/images",
+      "rel": "Component Images"
+    },
+    {
+      "href": "/cdbdev/api/v1/components/Z00100300001-00021/enable",
+      "rel": "Allow the use of Component"
+    },
+    {
+      "href": "/cdbdev/api/v1/get-qrcode/Z00100300001-00021",
+      "rel": "Generate QR Code"
+    },
+    {
+      "href": "/cdbdev/api/v1/get-barcode/Z00100300001-00021",
+      "rel": "Generate Barode"
+    }
+  ],
+  "status": "OK"
+}

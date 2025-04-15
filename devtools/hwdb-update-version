@@ -1,0 +1,70 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2024 Regents of the University of Minnesota
+Author: Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
+"""
+
+import re, sys, os, shutil
+from datetime import datetime
+import Sisyphus
+
+def update_file(new_version):
+    # Make a backup of the Sisyphus file
+    print("Backing up old file")
+    path, filename = os.path.split(Sisyphus.__file__)
+    new_filename = os.path.join(path, f"backup-{filename}")
+    shutil.copy(Sisyphus.__file__, new_filename)
+    
+    print(f"Changing version from '{Sisyphus.version}' to '{new_version}'")
+    
+    re_version = re.compile(r"""
+            ^version[ ]*=[ ]*('|")
+            [v]{0,1}(?P<version>[^\1]*)
+            \1[ ]*[#]{0,1}.*$""", re.VERBOSE)
+
+    replacements = 0
+    with open(new_filename, "r") as src, open(Sisyphus.__file__, "w") as dst:
+        for line in src:
+            if re_version.match(line):
+                dst.write(f"version = '{new_version}'\n")
+                replacements += 1
+            else:
+                dst.write(line)
+
+    if replacements == 1:
+        print("Changes complete.")
+        return 0
+    else:
+        print(f"{replacements} replacements were made. "
+                "You may wish to check the file!")
+        return 1
+
+
+
+def main(argv=None):
+
+    # Get the old version
+    try:
+        old_version = Sisyphus.version.split('.')
+        old_last = old_version.pop()
+        old_version.extend([old_last[:-1], old_last[-1:]])
+    except IndexError:
+        old_version = ['invalid', 'a']
+
+    # Get the (proposed) new version
+    now = datetime.now()
+    new_version = ['v1', '3', '0', 'dev', 
+            f"{now.year}", f"{now.month:02d}", f"{now.day:02d}", 'a']
+    
+    # If the old version is the same day as today, change the 
+    # sequence letter at the end instead.
+    if old_version[:-1] == new_version[:-1]:
+        new_version[-1] = chr(ord(old_version[-1])+1)
+
+    new_version_str = '.'.join(new_version[:-1]) + new_version[-1]
+
+    return update_file(new_version_str)
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

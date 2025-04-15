@@ -1,0 +1,125 @@
+
+
+1 Post a single item: /component-types/{part_type_id}/components
+
+Python:
+    post_hwitem
+        * Try making a spec with a choice field, and submit a value not in the list of choices
+    
+
+
+2 Get a single item: /components/{part_id}
+
+Python:
+    get_hwitem
+
+
+
+3 Post a bunch: /component-types/{part_type_id}/bulk-add
+  * Posting 2 items at once would be sufficient.
+
+Python:
+    post_bulk_hwitems
+        * Try making a spec with a choice field, and submit a value not in the list of choices
+
+
+
+
+3.5 Patch a bunch: (look at docs)
+
+Python:
+    (create new)
+
+
+
+
+
+4 Get a list of items: /component-types/{part_type_id}/components 
+
+Python:
+    get_hwitems
+        * test page, size, fields, serial_number, part_id
+
+
+
+
+4.5 Might be worth to test the DB (PostgreSQL) searching functionality:
+  * /component-types/Z00100100003/components?serial_number=SMB%"
+  * /component-types/Z00100100003/components?serial_number=SMB%&fields=serial_number"
+  * /component-types/Z00100100003/components?serial_number=SMB%&fields=serial_number,creator"
+  * /component-types/Z00100100003/components?serial_number=SMB___98%"
+
+
+
+
+
+5 Post a Test Type: /component-types/{part_type_id}/test-types
+
+Python:
+    post_test_type(s?)
+        * Test that the name of the test can't have leading or trailing spaces, 
+            e.g. " test name  "
+
+
+6 Get a list of Test Types: /component-types/{part_type_id}/test-types
+
+Python:
+    get_test_types
+        * Test if the list of tests is empty
+    
+    get_test_type_by_oid (optional)
+
+
+
+7 Post a test result: /components/{part_id}/tests
+
+Python:
+    post_test
+        * Try posting a test when the test definition is {}
+        * Try making a test def that is a choice and submit an item that's not in that list
+
+
+
+
+8 Get a test result: /components/{part_id}/tests/{test_type_id}
+
+Python:
+    (create get_test)
+
+
+---
+
+Here are things to do with sub-components:
+
+9 Patch: Enable a single item: /components/{part_id}/enable
+
+9.5 Patch: Disable a single item: /components/{part_id}/enable
+
+10 Patch: Enable a bunch: /components/bulk-enable
+
+10.5 Patch: Disable a bunch: /components/bulk-enable
+
+11 Post an item with sub-components: /component-types/{part_type_id}/components
+   * notice that this endpoint is identical to 1 above.
+
+12 Patch an item to add sub-components: /components/{part_id}/subcomponents
+
+13 Get sub-components of an item: /components/{part_id}/subcomponents
+
+14 Get a parent info of an item: /components/{part_id}/container
+
+15 Patch an item to undo (clear) sub-components: /components/{part_id}/subcomponents
+
+---
+
+misc:
+
+16 Get bar/QR codes: /get-barcode/{oid}, /get-qrcode/{oid}
+
+17 Post an image: /components/{part_id}/images
+
+18 Get an image info: /components/{part_id}/images
+
+19 Get an image: /img/{image link}
+   * image link can be obtained from the step 18 above.
+

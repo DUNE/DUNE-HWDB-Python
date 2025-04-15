@@ -1,0 +1,15 @@
+{
+    "Sources": [
+        {
+            "Source Name": "Item Source",
+            "Files": "Items.xlsx"
+        }
+    ],
+    "Values": {
+        "Record Type": "Item",
+        "Part Type ID": "Z00100300012",
+        "Part Type Name": "Z.Sandbox.HWDBUnitTest.doodad",
+        "Institution": "(186) University of Minnesota Twin Cities",
+        "Manufacturer": "(50) Acme Corporation"
+    }
+}

@@ -1,0 +1,106 @@
+{
+  "component_type": {
+    "name": "CPA/FC Assembly US",
+    "part_type_id": "D00501341001"
+  },
+  "data": [
+    {
+      "component_id": 39607,
+      "created": "2023-02-14T16:00:57.525384-06:00",
+      "creator": {
+        "id": 12925,
+        "name": "Stephen Magill",
+        "username": "st3mag"
+      },
+      "link": {
+        "href": "/cdbdev/api/v1/components/D00501341001-00001",
+        "rel": "self"
+      },
+      "part_id": "D00501341001-00001",
+      "serial_number": "",
+      "specifications": [
+        {
+          "Drawing Number": "DFD-13-5100",
+          "Name": "CPA/FC Assembly US"
+        },
+        {
+          "Drawing Number": "DFD-13-5100",
+          "Name": "CPA/FC Assembly US"
+        },
+        {
+          "Drawing Number": "DFD-13-5100",
+          "Name": "CPA/FC Assembly US"
+        },
+        {
+          "Drawing Number": "DFD-13-5100",
+          "Name": "CPA/FC Assembly US"
+        }
+      ]
+    },
+    {
+      "component_id": 39642,
+      "created": "2023-02-27T10:39:51.964811-06:00",
+      "creator": {
+        "id": 12925,
+        "name": "Stephen Magill",
+        "username": "st3mag"
+      },
+      "link": {
+        "href": "/cdbdev/api/v1/components/D00501341001-00002",
+        "rel": "self"
+      },
+      "part_id": "D00501341001-00002",
+      "serial_number": "",
+      "specifications": [
+        {
+          "Drawing Number": "DFD-13-5100",
+          "Name": "CPA/FC Assembly US"
+        },
+        {
+          "Drawing Number": "DFD-13-5100",
+          "Name": "CPA/FC Assembly US"
+        },
+        {
+          "Drawing Number": "DFD-13-5100",
+          "Name": "CPA/FC Assembly US"
+        }
+      ]
+    },
+    {
+      "component_id": 44675,
+      "created": "2023-06-02T09:02:27.582144-05:00",
+      "creator": {
+        "id": 12925,
+        "name": "Stephen Magill",
+        "username": "st3mag"
+      },
+      "link": {
+        "href": "/cdbdev/api/v1/components/D00501341001-00003",
+        "rel": "self"
+      },
+      "part_id": "D00501341001-00003",
+      "serial_number": null,
+      "specifications": [
+        {
+          "Drawing Number": "DFD-13-5100",
+          "Name": "CPA/FC Assembly US"
+        },
+        {
+          "Drawing Number": "DFD-13-5100",
+          "Name": "CPA/FC Assembly US"
+        }
+      ]
+    }
+  ],
+  "link": {
+    "href": "/cdbdev/api/v1/component-types/D00501341001/components?page=1",
+    "rel": "self"
+  },
+  "pagination": {
+    "next": null,
+    "page": 1,
+    "pages": 1,
+    "prev": null
+  },
+  "status": "OK"
+}

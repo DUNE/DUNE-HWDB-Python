@@ -1,0 +1,9 @@
+#!/bin/bash
+
+hwdb-upload Items.xlsx \
+    --part-type-id=Z00100300012 \
+    --record-type=Item \
+    --value "Manufacturer ID" 50 \
+    --value "Institution ID" 186 \
+    --submit
+

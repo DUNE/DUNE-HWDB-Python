@@ -1,0 +1,1737 @@
+{
+  "data": [
+    {
+      "component_types": [
+        {
+          "name": "Test Type 001",
+          "part_type_id": "D00599800001"
+        },
+        {
+          "name": "Test Type 002",
+          "part_type_id": "D00599800002"
+        },
+        {
+          "name": "Test Type 003",
+          "part_type_id": "D00599800003"
+        },
+        {
+          "name": "LArASIC Version P5B version preproduction 1",
+          "part_type_id": "D08100100001"
+        },
+        {
+          "name": "FEMB FD1 SAMTEC version",
+          "part_type_id": "D08100400001"
+        },
+        {
+          "name": "FEMB FD2 MINISAS version",
+          "part_type_id": "D08100400002"
+        },
+        {
+          "name": "CPA_Planes",
+          "part_type_id": "Z00100100043"
+        },
+        {
+          "name": "Test_Parts_1",
+          "part_type_id": "Z00100100048"
+        },
+        {
+          "name": "CPA_Parts_FR4_mainbott",
+          "part_type_id": "Z00100100050"
+        },
+        {
+          "name": "CPA_Parts_FR4_Upper_Side_P1_US",
+          "part_type_id": "Z00100100051"
+        },
+        {
+          "name": "FPGA005",
+          "part_type_id": "Z00100200007"
+        },
+        {
+          "name": "VME_rack",
+          "part_type_id": "Z00100200009"
+        },
+        {
+          "name": "MOBO03",
+          "part_type_id": "Z00100200018"
+        },
+        {
+          "name": "MOBO04",
+          "part_type_id": "Z00100200019"
+        },
+        {
+          "name": "SiPM005",
+          "part_type_id": "Z00100200026"
+        },
+        {
+          "name": "SiPM010",
+          "part_type_id": "Z00100200027"
+        },
+        {
+          "name": "SiPM001",
+          "part_type_id": "Z00100200028"
+        },
+        {
+          "name": "MOBO02",
+          "part_type_id": "Z00100200029"
+        },
+        {
+          "name": "Cable_LEMO-LEMO",
+          "part_type_id": "Z00100200030"
+        },
+        {
+          "name": "VME_ADC",
+          "part_type_id": "Z00100200031"
+        },
+        {
+          "name": "SMALLBOX",
+          "part_type_id": "Z00100200033"
+        },
+        {
+          "name": "MOBO01",
+          "part_type_id": "Z00100200034"
+        },
+        {
+          "name": "Box1x1x1",
+          "part_type_id": "Z00100200035"
+        },
+        {
+          "name": "Box1x1x2",
+          "part_type_id": "Z00100200036"
+        },
+        {
+          "name": "Test Type 001",
+          "part_type_id": "Z00100300001"
+        }
+      ],
+      "id": 4,
+      "name": "tester",
+      "users": [
+        {
+          "email": "agooi@fnal.gov",
+          "full_name": "Alvin Zi Yuan Gooi",
+          "user_id": 13298,
+          "username": "agooi"
+        },
+        {
+          "email": "arafique@fnal.gov",
+          "full_name": "Aleena Rafique",
+          "user_id": 12887,
+          "username": "arafique"
+        },
+        {
+          "email": "awagner@fnal.gov",
+          "full_name": "Alex Wagner",
+          "user_id": 13615,
+          "username": "awagner"
+        },
+        {
+          "email": "demuth@fnal.gov",
+          "full_name": "David Demuth",
+          "user_id": 12472,
+          "username": "demuth"
+        },
+        {
+          "email": "hmuramat@umn.edu",
+          "full_name": "Hajime Muramatsu",
+          "user_id": 12624,
+          "username": "hajime3"
+        },
+        {
+          "email": "mverzocc@fnal.gov",
+          "full_name": "Marco Verzocchi",
+          "user_id": 12453,
+          "username": "mverzocc"
+        },
+        {
+          "email": "podstvkv@fnal.gov",
+          "full_name": "Vladimir Podstavkov",
+          "user_id": 3,
+          "username": "podstvkv"
+        },
+        {
+          "email": "srm@anl.gov",
+          "full_name": "Stephen Magill",
+          "user_id": 12925,
+          "username": "st3mag"
+        },
+        {
+          "email": "swhite@fnal.gov",
+          "full_name": "Stephen White",
+          "user_id": 4,
+          "username": "swhite"
+        },
+        {
+          "email": "tdoyle@fnal.gov",
+          "full_name": "Tristan Doyle",
+          "user_id": 13723,
+          "username": "tdoyle"
+        },
+        {
+          "email": "tstokes@fnal.gov",
+          "full_name": "Tyler Stokes",
+          "user_id": 12867,
+          "username": "tstokes"
+        }
+      ]
+    },
+    {
+      "component_types": [],
+      "id": 5,
+      "name": "feb-tester",
+      "users": []
+    },
+    {
+      "component_types": [
+        {
+          "name": "PROM008",
+          "part_type_id": "Z00100200002"
+        },
+        {
+          "name": "PROM004",
+          "part_type_id": "Z00100200004"
+        },
+        {
+          "name": "PROM003",
+          "part_type_id": "Z00100200005"
+        },
+        {
+          "name": "PROM009",
+          "part_type_id": "Z00100200008"
+        },
+        {
+          "name": "PROM007",
+          "part_type_id": "Z00100200013"
+        },
+        {
+          "name": "PROM002",
+          "part_type_id": "Z00100200014"
+        },
+        {
+          "name": "PROM006",
+          "part_type_id": "Z00100200015"
+        },
+        {
+          "name": "PROM001",
+          "part_type_id": "Z00100200017"
+        },
+        {
+          "name": "PROM005",
+          "part_type_id": "Z00100200023"
+        },
+        {
+          "name": "SiPM002",
+          "part_type_id": "Z00100200024"
+        },
+        {
+          "name": "SiPM003",
+          "part_type_id": "Z00100200025"
+        },
+        {
+          "name": "SiPM001",
+          "part_type_id": "Z00100200028"
+        },
+        {
+          "name": "PROM010",
+          "part_type_id": "Z00100200038"
+        }
+      ],
+      "id": 6,
+      "name": "prom-programmer",
+      "users": []
+    },
+    {
+      "component_types": [],
+      "id": 7,
+      "name": "fpga-programmer",
+      "users": []
+    },
+    {
+      "component_types": [
+        {
+          "name": "VME_CPU",
+          "part_type_id": "Z00100200021"
+        },
+        {
+          "name": "VME_ADC",
+          "part_type_id": "Z00100200031"
+        }
+      ],
+      "id": 8,
+      "name": "vme-master",
+      "users": []
+    },
+    {
+      "component_types": [
+        {
+          "name": "Rack",
+          "part_type_id": "D02100200001"
+        },
+        {
+          "name": "Server (1U general purpose)",
+          "part_type_id": "D02100200003"
+        },
+        {
+          "name": "RM_BLANK",
+          "part_type_id": "Z00100100038"
+        },
+        {
+          "name": "DAQ_RACK_42U_Watercooled",
+          "part_type_id": "Z00100100039"
+        },
+        {
+          "name": "VME_rack",
+          "part_type_id": "Z00100200009"
+        },
+        {
+          "name": "VME_crate",
+          "part_type_id": "Z00100200016"
+        },
+        {
+          "name": "MOBO04",
+          "part_type_id": "Z00100200019"
+        },
+        {
+          "name": "MOBO05",
+          "part_type_id": "Z00100200020"
+        },
+        {
+          "name": "MOBO06",
+          "part_type_id": "Z00100200022"
+        },
+        {
+          "name": "FEB001",
+          "part_type_id": "Z00100200032"
+        },
+        {
+          "name": "FEBCPU",
+          "part_type_id": "Z00100200039"
+        }
+      ],
+      "id": 9,
+      "name": "builder",
+      "users": [
+        {
+          "email": "mverzocc@fnal.gov",
+          "full_name": "Marco Verzocchi",
+          "user_id": 12453,
+          "username": "mverzocc"
+        }
+      ]
+    },
+    {
+      "component_types": [
+        {
+          "name": "Test Type 001",
+          "part_type_id": "D00599800001"
+        },
+        {
+          "name": "Test Type 002",
+          "part_type_id": "D00599800002"
+        },
+        {
+          "name": "Test Type 003",
+          "part_type_id": "D00599800003"
+        },
+        {
+          "name": "LArASIC Version P5B version preproduction 1",
+          "part_type_id": "D08100100001"
+        },
+        {
+          "name": "FEMB FD1 SAMTEC version",
+          "part_type_id": "D08100400001"
+        },
+        {
+          "name": "FEMB FD2 MINISAS version",
+          "part_type_id": "D08100400002"
+        },
+        {
+          "name": "CPA",
+          "part_type_id": "Z00100100001"
+        },
+        {
+          "name": "CPA_Parts_RPs",
+          "part_type_id": "Z00100100002"
+        },
+        {
+          "name": "CPA_Parts_HVBus",
+          "part_type_id": "Z00100100003"
+        },
+        {
+          "name": "CPA_Parts_Profiles",
+          "part_type_id": "Z00100100004"
+        },
+        {
+          "name": "CPA_Parts_HingeBlocks",
+          "part_type_id": "Z00100100005"
+        },
+        {
+          "name": "CPA_Parts_BrassHdwre",
+          "part_type_id": "Z00100100006"
+        },
+        {
+          "name": "CPA_Parts_FSSs",
+          "part_type_id": "Z00100100007"
+        },
+        {
+          "name": "CPA_Parts_FR4_Upper_Side_LH_B",
+          "part_type_id": "Z00100100008"
+        },
+        {
+          "name": "CPA_Parts_FR4_Upper_Side_RH_A",
+          "part_type_id": "Z00100100009"
+        },
+        {
+          "name": "CPA_Parts_FR4_Intermediate_A",
+          "part_type_id": "Z00100100010"
+        },
+        {
+          "name": "CPA_Parts_FR4_Lower_Side_LH_A",
+          "part_type_id": "Z00100100011"
+        },
+        {
+          "name": "CPA_Parts_FR4_Lower_Side_LH_B",
+          "part_type_id": "Z00100100012"
+        },
+        {
+          "name": "CPA_Parts_FR4_Side_Middle_LH_A",
+          "part_type_id": "Z00100100013"
+        },
+        {
+          "name": "CPA_Parts_FR4_Side_Middle_LH_B",
+          "part_type_id": "Z00100100014"
+        },
+        {
+          "name": "CPA_Parts_FR4_Side_Middle_RH_A",
+          "part_type_id": "Z00100100015"
+        },
+        {
+          "name": "CPA_Parts_FR4_Upper_Side_LH_A",
+          "part_type_id": "Z00100100016"
+        },
+        {
+          "name": "CPA_Parts_FR4_bottom",
+          "part_type_id": "Z00100100017"
+        },
+        {
+          "name": "CPA_Parts_FR4_Lower_Side_RH_A",
+          "part_type_id": "Z00100100018"
+        },
+        {
+          "name": "CPA_Parts",
+          "part_type_id": "Z00100100019"
+        },
+        {
+          "name": "CPA_Parts_HVBus_ProfileJumper",
+          "part_type_id": "Z00100100020"
+        },
+        {
+          "name": "CPA_Parts_ARRod",
+          "part_type_id": "Z00100100021"
+        },
+        {
+          "name": "CPA_Parts_ARRod_G10_Nuts",
+          "part_type_id": "Z00100100022"
+        },
+        {
+          "name": "CPA_Parts_FSSs_Ext_Lower_L",
+          "part_type_id": "Z00100100023"
+        },
+        {
+          "name": "CPA_Parts_FSSs_Ext_Lower_R",
+          "part_type_id": "Z00100100024"
+        },
+        {
+          "name": "CPA_Parts_FSSs_Ext_Middle_L",
+          "part_type_id": "Z00100100025"
+        },
+        {
+          "name": "CPA_Parts_FSSs_Ext_Middle_R",
+          "part_type_id": "Z00100100026"
+        },
+        {
+          "name": "CPA_Parts_FSSs_Ext_Upper_L",
+          "part_type_id": "Z00100100027"
+        },
+        {
+          "name": "CPA_Parts_FSSs_Ext_Upper_R",
+          "part_type_id": "Z00100100028"
+        },
+        {
+          "name": "CPA_Parts_FSSs_Int_Lower_L",
+          "part_type_id": "Z00100100029"
+        },
+        {
+          "name": "CPA_Parts_FSSs_Int_Lower_R",
+          "part_type_id": "Z00100100030"
+        },
+        {
+          "name": "CPA_Parts_FSSs_Int_Middle_L",
+          "part_type_id": "Z00100100031"
+        },
+        {
+          "name": "CPA_Parts_FSSs_Int_Middle_R",
+          "part_type_id": "Z00100100032"
+        },
+        {
+          "name": "CPA_Parts_FSSs_TopBott_Horiz_B",
+          "part_type_id": "Z00100100033"
+        },
+        {
+          "name": "CPA_Parts_FSSs_TopBott_Horiz_L",
+          "part_type_id": "Z00100100034"
+        },
+        {
+          "name": "CPA_Parts_FSSs_TopBott_IntVert_L",
+          "part_type_id": "Z00100100035"
+        },
+        {
+          "name": "CPA_Parts_FSSs_TopBott_IntVert_R",
+          "part_type_id": "Z00100100036"
+        },
+        {
+          "name": "CPA_Parts_FSSs_TopBott_Horiz_A",
+          "part_type_id": "Z00100100037"
+        },
+        {
+          "name": "CPA_Parts_MRBs",
+          "part_type_id": "Z00100100040"
+        },
+        {
+          "name": "CPA_Units",
+          "part_type_id": "Z00100100041"
+        },
+        {
+          "name": "CPA_Panels",
+          "part_type_id": "Z00100100042"
+        },
+        {
+          "name": "CPA_Planes",
+          "part_type_id": "Z00100100043"
+        },
+        {
+          "name": "CPA_FC",
+          "part_type_id": "Z00100100044"
+        },
+        {
+          "name": "Test_Parts_4",
+          "part_type_id": "Z00100100045"
+        },
+        {
+          "name": "Test_Parts_3",
+          "part_type_id": "Z00100100046"
+        },
+        {
+          "name": "CPA_Parts_FR4",
+          "part_type_id": "Z00100100047"
+        },
+        {
+          "name": "Test_Parts_1",
+          "part_type_id": "Z00100100048"
+        },
+        {
+          "name": "Test_Parts_5",
+          "part_type_id": "Z00100100049"
+        },
+        {
+          "name": "CPA_Parts_FR4_mainbott",
+          "part_type_id": "Z00100100050"
+        },
+        {
+          "name": "CPA_Parts_FR4_Upper_Side_P1_US",
+          "part_type_id": "Z00100100051"
+        },
+        {
+          "name": "CPA_Parts_FR4_Upper_Side_P1_DS",
+          "part_type_id": "Z00100100052"
+        },
+        {
+          "name": "CPA_Parts_FR4_Intermediate",
+          "part_type_id": "Z00100100053"
+        },
+        {
+          "name": "CPA_Parts_FR4_Middle_Side_P1_US",
+          "part_type_id": "Z00100100054"
+        },
+        {
+          "name": "CPA_Parts_FR4_Middle_Side_P1256_DS",
+          "part_type_id": "Z00100100055"
+        },
+        {
+          "name": "CPA_Parts_FR4_Lower_Side_P1_US",
+          "part_type_id": "Z00100100056"
+        },
+        {
+          "name": "CPA_Parts_FR4_Lower_Side_P1_DS",
+          "part_type_id": "Z00100100057"
+        },
+        {
+          "name": "CPA_Parts_FR4_Upper_Side_P256_US",
+          "part_type_id": "Z00100100058"
+        },
+        {
+          "name": "CPA_Parts_FR4_Upper_Side_P25_DS",
+          "part_type_id": "Z00100100059"
+        },
+        {
+          "name": "CPA_Parts_FR4_Middle_Side_P256_US",
+          "part_type_id": "Z00100100060"
+        },
+        {
+          "name": "CPA_Parts_FR4_Lower_Side_P25_DS",
+          "part_type_id": "Z00100100061"
+        },
+        {
+          "name": "CPA_Parts_FR4_Lower_Side_P256_US",
+          "part_type_id": "Z00100100062"
+        },
+        {
+          "name": "CPA_Parts_FR4_Upper_Side_P6_DS",
+          "part_type_id": "Z00100100063"
+        },
+        {
+          "name": "CPA_Parts_FR4_Lower_Side_P6_DS",
+          "part_type_id": "Z00100100064"
+        },
+        {
+          "name": "CPA_Parts_FSS_TopUSBottDS_Horz_P16",
+          "part_type_id": "Z00100100065"
+        },
+        {
+          "name": "CPA_Parts_FSSs_Horiz",
+          "part_type_id": "Z00100100066"
+        },
+        {
+          "name": "CPA_Parts_FSS_Upper_Int_P125",
+          "part_type_id": "Z00100100067"
+        },
+        {
+          "name": "CPA_Parts_FSS_Horiz",
+          "part_type_id": "Z00100100068"
+        },
+        {
+          "name": "CPA_Parts_FSS_Upper_Ext_P1256",
+          "part_type_id": "Z00100100069"
+        },
+        {
+          "name": "CPA_Parts_FSS_Middle_Int_P1256",
+          "part_type_id": "Z00100100070"
+        },
+        {
+          "name": "CPA_Parts_RPs_UpperLower",
+          "part_type_id": "Z00100100071"
+        },
+        {
+          "name": "CPA_Parts_RPs_Middle",
+          "part_type_id": "Z00100100072"
+        },
+        {
+          "name": "CPA_Parts_HVBus_DonutJumper",
+          "part_type_id": "Z00100100073"
+        },
+        {
+          "name": "CPA_Parts_HVBus_HorizHVCable",
+          "part_type_id": "Z00100100074"
+        },
+        {
+          "name": "CPA_Parts_HVBus_VertHVCable",
+          "part_type_id": "Z00100100075"
+        },
+        {
+          "name": "CPA_Parts_HVBus_HVCableVert",
+          "part_type_id": "Z00100100076"
+        },
+        {
+          "name": "CPA_Parts_Profiles_Short_Z_Bracket",
+          "part_type_id": "Z00100100077"
+        },
+        {
+          "name": "CPA_Parts_Profiles_Long_Z_Bracket",
+          "part_type_id": "Z00100100078"
+        },
+        {
+          "name": "CPA_Parts_Profiles_ProfileJumper",
+          "part_type_id": "Z00100100079"
+        },
+        {
+          "name": "CPA_Parts_Profiles_Profile_Assembly_1991mm",
+          "part_type_id": "Z00100100080"
+        },
+        {
+          "name": "CPA_Parts_Profiles_Profile_Assembly_1822mm",
+          "part_type_id": "Z00100100081"
+        },
+        {
+          "name": "CPA_Parts_Profiles_Profile_Assembly_488mm",
+          "part_type_id": "Z00100100082"
+        },
+        {
+          "name": "CPA_Parts_Profiles_Profile_Assembly_1150mm",
+          "part_type_id": "Z00100100083"
+        },
+        {
+          "name": "CPA_Parts_Profiles_Profile_Assembly_1885mm",
+          "part_type_id": "Z00100100084"
+        },
+        {
+          "name": "CPA_Parts_Profiles_Profile_Assembly_90_Bend_Top",
+          "part_type_id": "Z00100100085"
+        },
+        {
+          "name": "CPA_Parts_Profiles_Profile_Assembly_90_Bend_Bot",
+          "part_type_id": "Z00100100086"
+        },
+        {
+          "name": "CPA_Parts_Profiles_Profile_Nuts_Type1B",
+          "part_type_id": "Z00100100087"
+        },
+        {
+          "name": "CPA_Parts_Profiles_Profile_End_Cap",
+          "part_type_id": "Z00100100088"
+        },
+        {
+          "name": "CPA_Parts_HingeBlocks_Upper_Center_Support_Tab",
+          "part_type_id": "Z00100100089"
+        },
+        {
+          "name": "CPA_Parts_HingeBlocks_Bottom_Center_Support_Tab",
+          "part_type_id": "Z00100100090"
+        },
+        {
+          "name": "CPA_Parts_BrassHdwre_Connection_Plate",
+          "part_type_id": "Z00100100091"
+        },
+        {
+          "name": "CPA_Parts_BrassHdwre_Electrical_T_Strap",
+          "part_type_id": "Z00100100092"
+        },
+        {
+          "name": "CPA_Parts_BrassHdwre_Electrical_Strap",
+          "part_type_id": "Z00100100093"
+        },
+        {
+          "name": "CPA_Parts_BrassHdwre_Electrical_Tab",
+          "part_type_id": "Z00100100094"
+        },
+        {
+          "name": "CPA_Parts_MRB_N",
+          "part_type_id": "Z00100100095"
+        },
+        {
+          "name": "CPA_Parts_MRB_S",
+          "part_type_id": "Z00100100096"
+        },
+        {
+          "name": "CPA_Parts_HangerBar",
+          "part_type_id": "Z00100100097"
+        },
+        {
+          "name": "CPA_Parts_ARRod_Top",
+          "part_type_id": "Z00100100098"
+        },
+        {
+          "name": "CPA_Parts_ARRod_Bottom",
+          "part_type_id": "Z00100100099"
+        },
+        {
+          "name": "CPA_Parts_FSS_Upper_Int_P125_BR",
+          "part_type_id": "Z00100100100"
+        },
+        {
+          "name": "CPA_Parts_FSS_Upper_Int_P125_BL",
+          "part_type_id": "Z00100100101"
+        },
+        {
+          "name": "CPA_Parts_FSS_Lower_Int_P125_BR",
+          "part_type_id": "Z00100100102"
+        },
+        {
+          "name": "CPA_Parts_FSS_Lower_Int_P125_BL",
+          "part_type_id": "Z00100100103"
+        },
+        {
+          "name": "CPA_Parts_FSS_Middle_Int_P25_BR",
+          "part_type_id": "Z00100100104"
+        },
+        {
+          "name": "CPA_Parts_FSS_Middle_Int_P25_BL",
+          "part_type_id": "Z00100100105"
+        },
+        {
+          "name": "CPA_Parts_FSS_TopDSBottUS_Horz_P16",
+          "part_type_id": "Z00100100106"
+        },
+        {
+          "name": "CPA_Parts_FSS_UpperLower_Ext_P16",
+          "part_type_id": "Z00100100107"
+        },
+        {
+          "name": "CPA_Parts_FSS_Middle_Ext_P16_BL",
+          "part_type_id": "Z00100100108"
+        },
+        {
+          "name": "CPA_Parts_FSS_ Middle_Ext_P16_BR",
+          "part_type_id": "Z00100100109"
+        },
+        {
+          "name": "CPA_Parts_FSS_UpperLower_Int_P6_BL",
+          "part_type_id": "Z00100100110"
+        },
+        {
+          "name": "CPA_Parts_FSS_TopUSDSBottUSDS_Horz_P25",
+          "part_type_id": "Z00100100111"
+        },
+        {
+          "name": "CPA_Parts_FSS_UpperLower_Int_P6_BR",
+          "part_type_id": "Z00100100112"
+        },
+        {
+          "name": "CPA_Parts_FSS_Middle_Ext_P16_BR",
+          "part_type_id": "Z00100100113"
+        },
+        {
+          "name": "CPA_Parts_HVBus_SectionToSectionWire",
+          "part_type_id": "Z00100100114"
+        },
+        {
+          "name": "EW_Parts_BoxBeam",
+          "part_type_id": "Z00100100115"
+        },
+        {
+          "name": "EW_Parts_HangerBarsTop",
+          "part_type_id": "Z00100100116"
+        },
+        {
+          "name": "EW_Parts_HangerBarsMid",
+          "part_type_id": "Z00100100117"
+        },
+        {
+          "name": "EW_Parts_HangerBarsBot",
+          "part_type_id": "Z00100100118"
+        },
+        {
+          "name": "EW_Parts_CBrackets",
+          "part_type_id": "Z00100100119"
+        },
+        {
+          "name": "EW_Parts_Spacers",
+          "part_type_id": "Z00100100120"
+        },
+        {
+          "name": "EW_Parts_StraightAlProfile1988mm",
+          "part_type_id": "Z00100100121"
+        },
+        {
+          "name": "EW_Parts_StraightAlProfile1969mm",
+          "part_type_id": "Z00100100122"
+        },
+        {
+          "name": "EW_Parts_StraightAlProfile1810mm",
+          "part_type_id": "Z00100100123"
+        },
+        {
+          "name": "EW_Parts_StraightAlProfile2147mm",
+          "part_type_id": "Z00100100124"
+        },
+        {
+          "name": "EW_Parts_BentAlProfile",
+          "part_type_id": "Z00100100125"
+        },
+        {
+          "name": "EW_Parts_TopPortedLongHangerBars",
+          "part_type_id": "Z00100100126"
+        },
+        {
+          "name": "EW_Parts_TopPortedShortHangerBars",
+          "part_type_id": "Z00100100127"
+        },
+        {
+          "name": "EW_Parts_MiddlePortedLongHangerBars",
+          "part_type_id": "Z00100100128"
+        },
+        {
+          "name": "EW_Parts_MiddlePortedShortHangerBars",
+          "part_type_id": "Z00100100129"
+        },
+        {
+          "name": "EW_Parts_PortedBoxBeam",
+          "part_type_id": "Z00100100130"
+        },
+        {
+          "name": "EW_Parts_PortedBentAlProfile",
+          "part_type_id": "Z00100100132"
+        },
+        {
+          "name": "CPA_Shipping_Crate_PD2",
+          "part_type_id": "Z00100100133"
+        },
+        {
+          "name": "CPA_Panel_US_PD2",
+          "part_type_id": "Z00100100134"
+        },
+        {
+          "name": "CPA_Panel_Center_PD2",
+          "part_type_id": "Z00100100135"
+        },
+        {
+          "name": "CPA_Panel_DS_PD2",
+          "part_type_id": "Z00100100136"
+        },
+        {
+          "name": "Test_Parts_2",
+          "part_type_id": "Z00100200037"
+        },
+        {
+          "name": "CPA_Parts_FR4_main",
+          "part_type_id": "Z00100200040"
+        },
+        {
+          "name": "Test Type 001",
+          "part_type_id": "Z00100300001"
+        },
+        {
+          "name": "Test Type 005",
+          "part_type_id": "Z00100300005"
+        }
+      ],
+      "id": 3,
+      "name": "type-manager",
+      "users": [
+        {
+          "email": "agooi@fnal.gov",
+          "full_name": "Alvin Zi Yuan Gooi",
+          "user_id": 13298,
+          "username": "agooi"
+        },
+        {
+          "email": "aminotti@fnal.gov",
+          "full_name": "Alessandro Minotti",
+          "user_id": 13434,
+          "username": "aminotti"
+        },
+        {
+          "email": "awagner@fnal.gov",
+          "full_name": "Alex Wagner",
+          "user_id": 13615,
+          "username": "awagner"
+        },
+        {
+          "email": "demuth@fnal.gov",
+          "full_name": "David Demuth",
+          "user_id": 12472,
+          "username": "demuth"
+        },
+        {
+          "email": "hmuramat@umn.edu",
+          "full_name": "Hajime Muramatsu",
+          "user_id": 12624,
+          "username": "hajime3"
+        },
+        {
+          "email": "jdelgadg@fnal.gov",
+          "full_name": "Maritza Delgado",
+          "user_id": 12769,
+          "username": "jdelgadg"
+        },
+        {
+          "email": "jsoto@fnal.gov",
+          "full_name": "Jose alfonso Soto",
+          "user_id": 12789,
+          "username": "jsoto"
+        },
+        {
+          "email": "jurenag@fnal.gov",
+          "full_name": "Julio Urena Gonzalez",
+          "user_id": 13695,
+          "username": "jurenag"
+        },
+        {
+          "email": "moggi@fnal.gov",
+          "full_name": "Niccolo Moggi",
+          "user_id": 13125,
+          "username": "moggi"
+        },
+        {
+          "email": "mualem@fnal.gov",
+          "full_name": "Leon Mualem",
+          "user_id": 12468,
+          "username": "mualem"
+        },
+        {
+          "email": "mverzocc@fnal.gov",
+          "full_name": "Marco Verzocchi",
+          "user_id": 12453,
+          "username": "mverzocc"
+        },
+        {
+          "email": "podstvkv@fnal.gov",
+          "full_name": "Vladimir Podstavkov",
+          "user_id": 3,
+          "username": "podstvkv"
+        },
+        {
+          "email": "pslucas@fnal.gov",
+          "full_name": "Patricia Sanchez Lucas",
+          "user_id": 13602,
+          "username": "pslucas"
+        },
+        {
+          "email": "srm@anl.gov",
+          "full_name": "Stephen Magill",
+          "user_id": 12925,
+          "username": "st3mag"
+        },
+        {
+          "email": "tdoyle@fnal.gov",
+          "full_name": "Tristan Doyle",
+          "user_id": 13723,
+          "username": "tdoyle"
+        },
+        {
+          "email": "tomas@fnal.gov",
+          "full_name": "Luca Tomassetti",
+          "user_id": 13398,
+          "username": "tomas"
+        },
+        {
+          "email": "tstokes@fnal.gov",
+          "full_name": "Tyler Stokes",
+          "user_id": 12867,
+          "username": "tstokes"
+        },
+        {
+          "email": "zalesak@fnal.gov",
+          "full_name": "Jaroslav Zalesak",
+          "user_id": 12544,
+          "username": "zalesak"
+        }
+      ]
+    },
+    {
+      "component_types": [],
+      "id": 10,
+      "name": "fpga-master",
+      "users": []
+    },
+    {
+      "component_types": [
+        {
+          "name": "MOBO01",
+          "part_type_id": "Z00100200034"
+        }
+      ],
+      "id": 28,
+      "name": "new-board",
+      "users": []
+    },
+    {
+      "component_types": [],
+      "id": 29,
+      "name": "pcb-tester",
+      "users": [
+        {
+          "email": "podstvkv@fnal.gov",
+          "full_name": "Vladimir Podstavkov",
+          "user_id": 3,
+          "username": "podstvkv"
+        }
+      ]
+    },
+    {
+      "component_types": [
+        {
+          "name": "CPA/FC Assembly US",
+          "part_type_id": "D00501341001"
+        },
+        {
+          "name": "CPA/FC Assembly DS",
+          "part_type_id": "D00501341003"
+        },
+        {
+          "name": "CPA/EW Assembly Upper",
+          "part_type_id": "D00501342001"
+        },
+        {
+          "name": "CPA/EW Assembly Lower",
+          "part_type_id": "D00501342003"
+        },
+        {
+          "name": "CPA PD2 Array HV Bus",
+          "part_type_id": "D00501390003"
+        },
+        {
+          "name": "Profiles - Long Clip",
+          "part_type_id": "D00502000001"
+        },
+        {
+          "name": "Profiles - Short Z Bracket",
+          "part_type_id": "D00502000015"
+        },
+        {
+          "name": "Mini Resistor Board - T/B Type I",
+          "part_type_id": "D00502000021"
+        },
+        {
+          "name": "Mini Resistor Board - EW Type I",
+          "part_type_id": "D00502000022"
+        },
+        {
+          "name": "Brass Hardware - Connection Plate",
+          "part_type_id": "D00502000025"
+        },
+        {
+          "name": "Profiles - Profile Assembly 74 NOM",
+          "part_type_id": "D00502000032"
+        },
+        {
+          "name": "Profiles - Profile Assembly 46 NOM",
+          "part_type_id": "D00502000035"
+        },
+        {
+          "name": "Mini Resistor Board - T/B Type II",
+          "part_type_id": "D00502000040"
+        },
+        {
+          "name": "Mini Resistor Board - EW Type II",
+          "part_type_id": "D00502000041"
+        },
+        {
+          "name": "FSS - Top USNDSS/Bott USSDSN Horizontal",
+          "part_type_id": "D00502000101"
+        },
+        {
+          "name": "Brass Hardware - Electrical T Strap",
+          "part_type_id": "D00502000111"
+        },
+        {
+          "name": "Brass Hardware - Electrical Strap",
+          "part_type_id": "D00502000112"
+        },
+        {
+          "name": "Resistive Panel - Upper/Lower",
+          "part_type_id": "D00502000114"
+        },
+        {
+          "name": "Profiles - Profile Jumper",
+          "part_type_id": "D00502000115"
+        },
+        {
+          "name": "FSS - Top USSDSN/Bott USNDSS Horizontal",
+          "part_type_id": "D00502000118"
+        },
+        {
+          "name": "Resistive Panel - Middle",
+          "part_type_id": "D00502000124"
+        },
+        {
+          "name": "Profiles - Profile One 76 NOM",
+          "part_type_id": "D00502000133"
+        },
+        {
+          "name": "HV Bus - Panel to Panel Wire",
+          "part_type_id": "D00502000141"
+        },
+        {
+          "name": "HV Bus - Section to Section Wire",
+          "part_type_id": "D00502000142"
+        },
+        {
+          "name": "Hinge Blocks - Upper Center Support Tab",
+          "part_type_id": "D00502000401"
+        },
+        {
+          "name": "HV Bus - Horizontal HV Cable",
+          "part_type_id": "D00502000409"
+        },
+        {
+          "name": "HV Bus - Vertical HV Cable",
+          "part_type_id": "D00502000411"
+        },
+        {
+          "name": "Brass Hardware - Electrical Tab",
+          "part_type_id": "D00502000412"
+        },
+        {
+          "name": "Hinge Blocks - Bottom Center Support Tab",
+          "part_type_id": "D00502000603"
+        },
+        {
+          "name": "CPA Panel Assembly PD2 US",
+          "part_type_id": "D00502001000"
+        },
+        {
+          "name": "FR4 Frame - Upper Side Bar USW",
+          "part_type_id": "D00502001113"
+        },
+        {
+          "name": "FR4 Frame - Intermediate Bar",
+          "part_type_id": "D00502001115"
+        },
+        {
+          "name": "FR4 Frame - Upper Side Bar USE",
+          "part_type_id": "D00502001116"
+        },
+        {
+          "name": "Profiles - Profile Assembly 90 Bend Top",
+          "part_type_id": "D00502001117"
+        },
+        {
+          "name": "FSS - Upper Int USNC",
+          "part_type_id": "D00502001118"
+        },
+        {
+          "name": "FSS - Upper Ext USS/DSN/Lower Ext USN/DSS",
+          "part_type_id": "D00502001119"
+        },
+        {
+          "name": "Profiles - Profile Assembly W/Clips",
+          "part_type_id": "D00502001120"
+        },
+        {
+          "name": "FSS - Middle Int CDSE",
+          "part_type_id": "D00502001121"
+        },
+        {
+          "name": "FSS - Upper Int USSC",
+          "part_type_id": "D00502001122"
+        },
+        {
+          "name": "FSS - Lower Int USNC",
+          "part_type_id": "D00502001123"
+        },
+        {
+          "name": "FSS - Lower Int USSC",
+          "part_type_id": "D00502001124"
+        },
+        {
+          "name": "FSS - Middle Int CWN",
+          "part_type_id": "D00502001125"
+        },
+        {
+          "name": "FSS - Middle Int CWS",
+          "part_type_id": "D00502001126"
+        },
+        {
+          "name": "Profiles - Profile Assembly 90 Bend Bottom",
+          "part_type_id": "D00502001127"
+        },
+        {
+          "name": "Profiles - Profile Assembly 72 NOM",
+          "part_type_id": "D00502001128"
+        },
+        {
+          "name": "FR4 Frame - Lower Side Bar USE",
+          "part_type_id": "D00502001134"
+        },
+        {
+          "name": "FSS - Upper Ext USN/DSS/Lower Ext USS/DSN",
+          "part_type_id": "D00502001139"
+        },
+        {
+          "name": "Profiles - Profile Assembly 20 NOM",
+          "part_type_id": "D00502001147"
+        },
+        {
+          "name": "Hanger Bar",
+          "part_type_id": "D00502001150"
+        },
+        {
+          "name": "FSS - Horizontal",
+          "part_type_id": "D00502001217"
+        },
+        {
+          "name": "FSS - Middle Ext USDS",
+          "part_type_id": "D00502001220"
+        },
+        {
+          "name": "FSS - Middle Int US",
+          "part_type_id": "D00502001221"
+        },
+        {
+          "name": "FR4 Frame - Middle Side Bar USE",
+          "part_type_id": "D00502001223"
+        },
+        {
+          "name": "FR4 Frame - Middle Side Bar USCDSW",
+          "part_type_id": "D00502001224"
+        },
+        {
+          "name": "FR4 Frame - Main/Bottom Support Bar",
+          "part_type_id": "D00502001312"
+        },
+        {
+          "name": "FR4 Frame - Lower Side Bar USW",
+          "part_type_id": "D00502001333"
+        },
+        {
+          "name": "CPA Panel Assembly PD2 Center",
+          "part_type_id": "D00502002000"
+        },
+        {
+          "name": "FSS - Top/Bottom Horizontal C",
+          "part_type_id": "D00502002101"
+        },
+        {
+          "name": "FR4 Frame - Upper Side Bar CW",
+          "part_type_id": "D00502002113"
+        },
+        {
+          "name": "FR4 Frame - Upper Side Bar CDSE",
+          "part_type_id": "D00502002116"
+        },
+        {
+          "name": "FR4 Frame - Middle Side Bar EDSE",
+          "part_type_id": "D00502002123"
+        },
+        {
+          "name": "FR4 Frame - Lower Side Bar CW",
+          "part_type_id": "D00502002133"
+        },
+        {
+          "name": "FR4 Frame - Lower Side Bar CDSE",
+          "part_type_id": "D00502002134"
+        },
+        {
+          "name": "CPA Panel Assembly PD2 DS",
+          "part_type_id": "D00502003000"
+        },
+        {
+          "name": "FR4 Frame - Upper Side Bar DSW",
+          "part_type_id": "D00502003113"
+        },
+        {
+          "name": "FSS - Upper Int DSN/Lower Int DSS",
+          "part_type_id": "D00502003318"
+        },
+        {
+          "name": "FSS - Upper Int DSS/Lower Int DSN",
+          "part_type_id": "D00502003322"
+        },
+        {
+          "name": "FR4 Frame - Lower Side Bar DSW",
+          "part_type_id": "D00502003333"
+        },
+        {
+          "name": "Anti-Rotation Rod - Top",
+          "part_type_id": "D00502004401"
+        },
+        {
+          "name": "Anti-Rotation Rod - Bottom",
+          "part_type_id": "D00502004402"
+        },
+        {
+          "name": "CPA Plane US",
+          "part_type_id": "D00502004501"
+        },
+        {
+          "name": "CPA Plane Center",
+          "part_type_id": "D00502005501"
+        },
+        {
+          "name": "CPA Plane DS",
+          "part_type_id": "D00502006501"
+        },
+        {
+          "name": "HV Bus - Donut Jumper",
+          "part_type_id": "D00502009114"
+        },
+        {
+          "name": "Shipping Crate PD2",
+          "part_type_id": "D00599900001"
+        },
+        {
+          "name": "Test_Parts_4",
+          "part_type_id": "Z00100100045"
+        },
+        {
+          "name": "Test_Parts_3",
+          "part_type_id": "Z00100100046"
+        },
+        {
+          "name": "CPA_Parts_FR4_Upper_Side_P6_DS",
+          "part_type_id": "Z00100100063"
+        },
+        {
+          "name": "CPA_Panel_US_PD2",
+          "part_type_id": "Z00100100134"
+        }
+      ],
+      "id": 30,
+      "name": "HVS-CPA",
+      "users": [
+        {
+          "email": "arafique@fnal.gov",
+          "full_name": "Aleena Rafique",
+          "user_id": 12887,
+          "username": "arafique"
+        },
+        {
+          "email": "awagner@fnal.gov",
+          "full_name": "Alex Wagner",
+          "user_id": 13615,
+          "username": "awagner"
+        },
+        {
+          "email": "hmuramat@umn.edu",
+          "full_name": "Hajime Muramatsu",
+          "user_id": 12624,
+          "username": "hajime3"
+        },
+        {
+          "email": "srm@anl.gov",
+          "full_name": "Stephen Magill",
+          "user_id": 12925,
+          "username": "st3mag"
+        }
+      ]
+    },
+    {
+      "component_types": [
+        {
+          "name": "HV Divider Boards",
+          "part_type_id": "D00502100009"
+        },
+        {
+          "name": "Main Beam",
+          "part_type_id": "D00502102101"
+        },
+        {
+          "name": "Latch Beam",
+          "part_type_id": "D00502102111"
+        },
+        {
+          "name": "Field Cage Assembly - Type B Upper",
+          "part_type_id": "D00502102120"
+        },
+        {
+          "name": "Field Cage Assembly - Type C Upper",
+          "part_type_id": "D00502102130"
+        },
+        {
+          "name": "Field Cage Assembly - Type E Lower",
+          "part_type_id": "D00502102150"
+        },
+        {
+          "name": "Field Cage Assembly - Type F Lower",
+          "part_type_id": "D00502102160"
+        },
+        {
+          "name": "FC termination board",
+          "part_type_id": "D00502105811"
+        },
+        {
+          "name": "EWFC termination board",
+          "part_type_id": "D00502205810"
+        },
+        {
+          "name": "Test_Parts_4",
+          "part_type_id": "Z00100100045"
+        },
+        {
+          "name": "Test_Parts_3",
+          "part_type_id": "Z00100100046"
+        },
+        {
+          "name": "EW_Parts_RDB",
+          "part_type_id": "Z00100100131"
+        }
+      ],
+      "id": 31,
+      "name": "HVS-FC",
+      "users": [
+        {
+          "email": "awagner@fnal.gov",
+          "full_name": "Alex Wagner",
+          "user_id": 13615,
+          "username": "awagner"
+        },
+        {
+          "email": "ggurung@fnal.gov",
+          "full_name": "Gajendra Gurung",
+          "user_id": 13683,
+          "username": "ggurung"
+        },
+        {
+          "email": "hmuramat@umn.edu",
+          "full_name": "Hajime Muramatsu",
+          "user_id": 12624,
+          "username": "hajime3"
+        },
+        {
+          "email": "rraut@fnal.gov",
+          "full_name": "Rohit Raut",
+          "user_id": 13686,
+          "username": "rraut"
+        }
+      ]
+    },
+    {
+      "component_types": [
+        {
+          "name": "HV Divider Boards",
+          "part_type_id": "D00502100009"
+        },
+        {
+          "name": "FC termination board",
+          "part_type_id": "D00502105811"
+        },
+        {
+          "name": "Profile Nut Type 1A",
+          "part_type_id": "D00502200137"
+        },
+        {
+          "name": "C Brackets / Splice Bar",
+          "part_type_id": "D00502205115"
+        },
+        {
+          "name": "Spacer",
+          "part_type_id": "D00502205116"
+        },
+        {
+          "name": "Straight Al Profile 1969 mm",
+          "part_type_id": "D00502205121"
+        },
+        {
+          "name": "Hanging Bars for Top Panel",
+          "part_type_id": "D00502205126"
+        },
+        {
+          "name": "Hanging Bars for Bottom Panel",
+          "part_type_id": "D00502205411"
+        },
+        {
+          "name": "EWFC assembly top",
+          "part_type_id": "D00502205520"
+        },
+        {
+          "name": "Bent Al Profile",
+          "part_type_id": "D00502205522"
+        },
+        {
+          "name": "EWA Box Beam",
+          "part_type_id": "D00502205523"
+        },
+        {
+          "name": "Straight Al Profile 1988 mm",
+          "part_type_id": "D00502205525"
+        },
+        {
+          "name": "EWFC assembly middle",
+          "part_type_id": "D00502205530"
+        },
+        {
+          "name": "Hanging Bars for Middle Panel",
+          "part_type_id": "D00502205531"
+        },
+        {
+          "name": "EWFC assembly bottom",
+          "part_type_id": "D00502205540"
+        },
+        {
+          "name": "EWFC Beam Port Assembly Top",
+          "part_type_id": "D00502205620"
+        },
+        {
+          "name": "Straight Al Profile 2147 mm",
+          "part_type_id": "D00502205621"
+        },
+        {
+          "name": "Ported Bent Al Profile",
+          "part_type_id": "D00502205622"
+        },
+        {
+          "name": "EWA Box Beam Ported",
+          "part_type_id": "D00502205623"
+        },
+        {
+          "name": "Straight Al Profile 1810 mm",
+          "part_type_id": "D00502205625"
+        },
+        {
+          "name": "PD2 Top Ported Long Hanger Bar",
+          "part_type_id": "D00502205626"
+        },
+        {
+          "name": "PD2 Top Ported Short Hanger Bar",
+          "part_type_id": "D00502205627"
+        },
+        {
+          "name": "EWFC Beam Port Assembly Middle",
+          "part_type_id": "D00502205630"
+        },
+        {
+          "name": "PD2 Middle Ported Long Hanger Bar",
+          "part_type_id": "D00502205631"
+        },
+        {
+          "name": "PD2 Middle Ported Short Hanger Bar",
+          "part_type_id": "D00502205632"
+        },
+        {
+          "name": "Roller Bases bottom",
+          "part_type_id": "D00502205710"
+        },
+        {
+          "name": "Roller Bases top/middle",
+          "part_type_id": "D00502205725"
+        },
+        {
+          "name": "Resistive Divider Board low profile",
+          "part_type_id": "D00502205800"
+        },
+        {
+          "name": "EWFC termination board",
+          "part_type_id": "D00502205810"
+        },
+        {
+          "name": "Test_Parts_4",
+          "part_type_id": "Z00100100045"
+        },
+        {
+          "name": "Test_Parts_3",
+          "part_type_id": "Z00100100046"
+        },
+        {
+          "name": "CPA_Parts_FR4_mainbott",
+          "part_type_id": "Z00100100050"
+        },
+        {
+          "name": "EW_Parts_RDB",
+          "part_type_id": "Z00100100131"
+        }
+      ],
+      "id": 32,
+      "name": "HVS-EW",
+      "users": [
+        {
+          "email": "awagner@fnal.gov",
+          "full_name": "Alex Wagner",
+          "user_id": 13615,
+          "username": "awagner"
+        },
+        {
+          "email": "hmuramat@umn.edu",
+          "full_name": "Hajime Muramatsu",
+          "user_id": 12624,
+          "username": "hajime3"
+        },
+        {
+          "email": "tstokes@fnal.gov",
+          "full_name": "Tyler Stokes",
+          "user_id": 12867,
+          "username": "tstokes"
+        }
+      ]
+    },
+    {
+      "component_types": [
+        {
+          "name": "LArPix-v1 ASIC",
+          "part_type_id": "D10100100001"
+        }
+      ],
+      "id": 33,
+      "name": "LArPix-tester",
+      "users": [
+        {
+          "email": "alister1@fnal.gov",
+          "full_name": "Adam Lister",
+          "user_id": 13060,
+          "username": "alister1"
+        },
+        {
+          "email": "mualem@fnal.gov",
+          "full_name": "Leon Mualem",
+          "user_id": 12468,
+          "username": "mualem"
+        },
+        {
+          "email": "podstvkv@fnal.gov",
+          "full_name": "Vladimir Podstavkov",
+          "user_id": 3,
+          "username": "podstvkv"
+        },
+        {
+          "email": "rbpatter@fnal.gov",
+          "full_name": "Ryan Patterson",
+          "user_id": 12461,
+          "username": "rbpatter"
+        }
+      ]
+    },
+    {
+      "component_types": [
+        {
+          "name": "SIPM board",
+          "part_type_id": "D00400300001"
+        },
+        {
+          "name": "CPA_Parts_HVBus",
+          "part_type_id": "Z00100100003"
+        }
+      ],
+      "id": 34,
+      "name": "SiPM_test",
+      "users": [
+        {
+          "email": "aminotti@fnal.gov",
+          "full_name": "Alessandro Minotti",
+          "user_id": 13434,
+          "username": "aminotti"
+        },
+        {
+          "email": "dcasazza@fnal.gov",
+          "full_name": "Denise Casazza",
+          "user_id": 13780,
+          "username": "dcasazza"
+        },
+        {
+          "email": "jdelgadg@fnal.gov",
+          "full_name": "Maritza Delgado",
+          "user_id": 12769,
+          "username": "jdelgadg"
+        },
+        {
+          "email": "jsoto@fnal.gov",
+          "full_name": "Jose alfonso Soto",
+          "user_id": 12789,
+          "username": "jsoto"
+        },
+        {
+          "email": "jurenag@fnal.gov",
+          "full_name": "Julio Urena Gonzalez",
+          "user_id": 13695,
+          "username": "jurenag"
+        },
+        {
+          "email": "moggi@fnal.gov",
+          "full_name": "Niccolo Moggi",
+          "user_id": 13125,
+          "username": "moggi"
+        },
+        {
+          "email": "pslucas@fnal.gov",
+          "full_name": "Patricia Sanchez Lucas",
+          "user_id": 13602,
+          "username": "pslucas"
+        },
+        {
+          "email": "tomas@fnal.gov",
+          "full_name": "Luca Tomassetti",
+          "user_id": 13398,
+          "username": "tomas"
+        },
+        {
+          "email": "zalesak@fnal.gov",
+          "full_name": "Jaroslav Zalesak",
+          "user_id": 12544,
+          "username": "zalesak"
+        }
+      ]
+    }
+  ],
+  "link": {
+    "href": "/cdbdev/api/v1/roles",
+    "rel": "self"
+  },
+  "status": "OK"
+}

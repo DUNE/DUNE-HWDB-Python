@@ -1,0 +1,41 @@
+{
+  "component_type": {
+    "name": "CPA/FC Assembly US",
+    "part_type_id": "D00501341001"
+  },
+  "data": {
+    "comments": "Setting up Test Type",
+    "created": "2023-05-22T13:26:15.593400-05:00",
+    "creator": {
+      "id": 12624,
+      "name": "Hajime Muramatsu",
+      "username": "hajime3"
+    },
+    "id": 465,
+    "name": "CPAFC Cryo Pos QC check",
+    "properties": {
+      "specifications": [
+        {
+          "created": "2023-05-22 13:26:15-05:00",
+          "creator": "Hajime Muramatsu",
+          "datasheet": {
+            "Gap Bot": -1,
+            "Gap Top": -1,
+            "HV Bus Cont Bot NJ": -1,
+            "HV Bus Cont Bot SS": -1,
+            "HV Bus Cont Top NJ": -1,
+            "HV Bus Cont Top SS": -1,
+            "Height 1": -1,
+            "Height 2": -1
+          },
+          "version": 1
+        }
+      ]
+    }
+  },
+  "link": {
+    "href": "/cdbdev/api/v1/component-types/D00501341001/test-types/465",
+    "rel": "self"
+  },
+  "status": "OK"
+}

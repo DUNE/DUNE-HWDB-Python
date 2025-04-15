@@ -1,0 +1,22 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Copyright (c) 2024 Regents of the University of Minnesota
+Author: Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
+"""
+
+from Sisyphus.Configuration import config
+logger = config.getLogger()
+
+import sys
+
+def main(argv):
+    while True:
+        logger.debug("This is a debug message")
+        logger.info("This is an info message")
+        logger.warning("This is a warning message")
+        logger.error("This is an error message")
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))

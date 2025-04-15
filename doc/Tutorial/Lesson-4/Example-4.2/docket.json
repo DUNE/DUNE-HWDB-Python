@@ -1,0 +1,51 @@
+{
+    "Sources": [
+        {
+            "Source Name": "Doodad Tests",
+            "Files": "Items.xlsx",
+            "Encoder": "Doodad Test Encoder"
+        }
+    ],
+    "Encoders": [
+        {
+            "Encoder Name": "Doodad Test Encoder",
+            "Record Type": "Test",
+            "Part Type Name": "Z.Sandbox.HWDBUnitTest.doodad",
+            "Part Type ID": "Z00100300012",
+            "Test Name": "Doodad Test",
+            "Schema": {
+                "Test Results": {
+                    "DATA": {
+                        "type": "group",
+                        "key": [
+                            "Test Date",
+                            "Test Operator"
+                        ],
+                        "members": {
+                            "Test Date": "string",
+                            "Test Operator": "string",
+                            "Overall Status": "string",
+                            "Operator Note": "null,string",
+                            "Subtest": {
+                                "type": "group",
+                                "key": "Subtest Name",
+                                "members": {
+                                    "Subtest Name": "string",
+                                    "Trial": {
+                                        "type": "group",
+                                        "key": "Trial Number",
+                                        "members": {
+                                            "Trial Number": "integer",
+                                            "Trial Description": "null,string",
+                                            "Trial Result": "any"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}
