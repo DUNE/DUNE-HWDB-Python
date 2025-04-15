@@ -6,7 +6,7 @@ Author:
     Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
 """
 
-from Sisyphus.Configuration import config, API_DEV, API_PROD, DEFAULT_API
+from Sisyphus.Configuration import config, RESTAPI_DEV, RESTAPI_PROD, DEFAULT_RESTAPI
 logger = config.getLogger(__name__)
 
 from Sisyphus.Gui import DataModel as dm
@@ -17,6 +17,15 @@ import sys
 
 import json
 dumpjson = lambda d: print(json.dumps(d, indent=4))
+
+STYLE_LARGE_BUTTON = """
+    font-size: 12pt;
+    padding: 5px 15px;
+"""
+
+STYLE_SMALL_BUTTON = """
+    padding: 5px 15px;
+"""
 
 class ConfigDialog(qtw.QDialog):
     def __init__(self, *args, **kwargs):
@@ -31,8 +40,8 @@ class ConfigDialog(qtw.QDialog):
         self.delete_profile = qtw.QPushButton("Delete Profile")
         self.rename_profile = qtw.QPushButton("Rename Profile")
         self.new_profile = qtw.QPushButton("New Profile")
-        self.server_dev = qtw.QRadioButton(f"Development ({API_DEV})")
-        self.server_prod = qtw.QRadioButton(f"Production ({API_PROD})")
+        self.server_dev = qtw.QRadioButton(f"Development ({RESTAPI_DEV})")
+        self.server_prod = qtw.QRadioButton(f"Production ({RESTAPI_PROD})")
         self.server_other = qtw.QRadioButton("Other")
         self.server_other_text = qtw.QLineEdit()
         server_group = qtw.QButtonGroup()
@@ -84,6 +93,8 @@ class ConfigDialog(qtw.QDialog):
         layout.addWidget(self.delete_profile)
         layout.addWidget(self.rename_profile)
         layout.addWidget(self.new_profile)
+        for btn in (self.delete_profile, self.rename_profile, self.new_profile):
+            btn.setStyleSheet(STYLE_SMALL_BUTTON)
         layout.addStretch()
        
         layout = profile_layout = qtw.QVBoxLayout()
@@ -142,6 +153,7 @@ class ConfigDialog(qtw.QDialog):
         layout.setSpacing(10)
         layout.addWidget(self.working_directory)
         layout.addWidget(self.working_directory_select)
+        self.working_directory_select.setStyleSheet(STYLE_SMALL_BUTTON)
        
         #######################
         #
@@ -154,6 +166,8 @@ class ConfigDialog(qtw.QDialog):
         button_layout.addStretch()
         button_layout.addWidget(self.cancel_button)
         button_layout.addWidget(self.save_button)
+        for btn in (self.cancel_button, self.save_button):
+            btn.setStyleSheet(STYLE_LARGE_BUTTON)
 
         #######################
         #
@@ -262,13 +276,13 @@ class ConfigDialog(qtw.QDialog):
 
     def on_server_dev_toggled(self, status):
         if status:
-            self.current_profile['rest api'] = API_DEV
+            self.current_profile['rest api'] = RESTAPI_DEV
             self.server_other_text.setText('')
             self.server_other_text.setEnabled(False)
 
     def on_server_prod_toggled(self, status):
         if status:
-            self.current_profile['rest api'] = API_PROD
+            self.current_profile['rest api'] = RESTAPI_PROD
             self.server_other_text.setText('')
             self.server_other_text.setEnabled(False)
 
@@ -369,10 +383,10 @@ class ConfigDialog(qtw.QDialog):
         current_profile = self.config['profiles'][current_profile_name]
 
         api = current_profile["rest api"]
-        if api == API_DEV:
+        if api == RESTAPI_DEV:
             self.server_dev.setChecked(True)
             self.server_other_text.setEnabled(False)
-        elif api == API_PROD:
+        elif api == RESTAPI_PROD:
             self.server_prod.setChecked(True)
             self.server_other_text.setEnabled(False)
         else:

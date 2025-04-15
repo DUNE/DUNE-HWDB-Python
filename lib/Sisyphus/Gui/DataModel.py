@@ -60,8 +60,6 @@ setattr(parse_part_type_id, 'regex', re.compile(
     $'''))
 #}}}
 
-
-
 class HWDBObject:
     #{{{
     @classmethod
@@ -88,6 +86,9 @@ class HWDBObject:
         cls._statistics['requested'] += 1
 
         constructor_kwargs = {arg: kwargs.get(arg) for arg in cls._constructor_args}
+
+        # It is possible to add 
+
 
         if len(constructor_kwargs) == 0:
             constructor_key = None
@@ -128,7 +129,13 @@ class HWDBObject:
         #{{{
         logger.debug(f"{HLD}{self.__class__.__name__}.__init__({kwargs})")
         
-        self.fwd_kwargs = {k: v for k, v in kwargs.items() if k == 'status_callback'}
+        # fwd_kwargs
+        # Any arguments found here should be passed along to the RestApiV1 
+        # functions. They should also be passed to any other HWDBObject-derived
+        # classes so that *they* can pass it to any RestApiV1 functions
+        # *they* use.
+        self.fwd_kwargs = {k: v for k, v in kwargs.items() 
+                    if k in ('config', 'status_callback')}
 
         with self.__class__._class_lock:
             if not getattr(self, "_instance_lock", None):
@@ -183,8 +190,19 @@ class HWDBObject:
                 self._data[future_name] = self._futures[future_name].result()
                 del self._futures[future_name]
             return self._data.get(future_name)
-    #}}}
 
+    def join(self):
+        '''waits for all 'futures' to finish'''
+
+        logger.info(f"{HLI}{self.__class__.__name__}.join()")
+
+        futures = list(self._futures)
+        for future_name in futures:
+            result = self._get_results(future_name)
+            if isinstance(result, HWDBObject):
+                result.join()
+
+    #}}}
 
 @HWDBObject.caching
 class WhoAmI(HWDBObject):
@@ -316,7 +334,7 @@ class ComponentType(HWDBObject):
 
 @HWDBObject.caching
 class HWItem(HWDBObject):
-
+    #{{{
     _constructor_args = ['part_id']
 
 
@@ -427,10 +445,11 @@ def main():
     #status_callback = lambda msg: Style.debug.print(f"callback: {msg}", flush=True)
     #fwd_kwargs = {"status_callback": status_callback}
     fwd_kwargs = {}
-
     part_id = ''
-    if len(sys.argv) > 1:
-        part_ids = sys.argv[1:]
+    if len(config.remaining_args) > 1:
+        part_ids = config.remaining_args[1:]
+    else:
+        part_ids = []
 
     ###############################
     ##
@@ -439,7 +458,10 @@ def main():
     ###############################
     print()
     title_style.print("Parts List")
-    print('\n'.join(part_ids))
+    if part_ids:
+        print('\n'.join(part_ids))
+    else:
+        print('No part selected.')
 
     ################################################
     ##
@@ -449,6 +471,11 @@ def main():
     whoami_future = _executor.submit(WhoAmI, **fwd_kwargs)
     hwitems_future = [ (part_id, _executor.submit(HWItem, part_id=part_id, **fwd_kwargs))
                         for part_id in part_ids ]
+
+
+    #for future in concurrent.futures.as_completed(???):
+
+
 
     ########################################
     ##
@@ -482,6 +509,8 @@ def main():
         try:
             hwitem = future.result()
             hwitems.append( (part_id, hwitem))
+            #Style.error.print(f"{part_id} -> join")
+            #hwitem.join()
         except Exception as exc:
             hwitems.append( (part_id, exc))
 
@@ -491,7 +520,9 @@ def main():
         title_style.print(part_id)
         
         if isinstance(result, Exception):
-            Style.error.print(f"Exception Type: {type(Exception)}")
+            exc = result
+            Style.error.print(f"Exception Type: {type(exc)}")
+            Style.error.print(f"Exception: {exc}")
             continue
         else:
             hwitem = result
