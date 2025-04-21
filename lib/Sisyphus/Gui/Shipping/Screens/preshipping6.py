@@ -18,6 +18,7 @@ from Sisyphus.Utils.Terminal.Style import Style
 from Sisyphus.Gui.Shipping import Widgets as zw
 from Sisyphus.Gui.Shipping import Model as mdl
 from Sisyphus.Gui.Shipping.ShippingLabel import ShippingLabel
+from Sisyphus.Gui import DataModel as dm
 
 from Sisyphus import RestApiV1 as ra
 from Sisyphus.RestApiV1 import Utilities as ut
@@ -95,7 +96,9 @@ class PreShipping6(zw.PageWidget):
         }
 
         try:
+            logger.debug(f"[bg=#ff0000]Uploading sheet")
             resp = ra.post_hwitem_image(part_id, data, self.pdf_full_filename)
+            logger.debug(f"[bg=#ff0000]Uploading sheet finished")
         except Exception as exc:
             msg = (f"An error occurred in attempting to upload the shipping sheet. "
                     f"part_id: {part_id}, data: {data}, filename: {self.pdf_full_filename}")
@@ -106,8 +109,8 @@ class PreShipping6(zw.PageWidget):
 
 
         ps_checklist = {
-            "POC name": ws['SelectPID']['user_name'],
-            "POC Email": [s.strip() for s in ws['SelectPID']['user_email'].split(',')],
+            "POC name": ws['PreShipping2']['approver_name'],
+            "POC Email": [s.strip() for s in ws['PreShipping2']['approver_email'].split(',')],
             "System Name (ID)": f"{ws['part_info']['system_name']}"
                                f" ({ws['part_info']['system_id']})",
             "Subsystem Name (ID)":  f"{ws['part_info']['subsystem_name']}"
@@ -141,7 +144,8 @@ class PreShipping6(zw.PageWidget):
             })
 
         # Get the current specifications and add to it
-        item_resp = ut.fetch_hwitems(part_id=part_id)[part_id]
+        #item_resp = ut.fetch_hwitems(part_id=part_id)[part_id]
+        item_resp = {'Item': dm.HWItem(part_id=part_id).data}
         logger.info(json.dumps(item_resp, indent=4))
         specs = item_resp['Item']['specifications'][-1]
 
@@ -154,6 +158,7 @@ class PreShipping6(zw.PageWidget):
                     [ {k: v} for k, v in ps_checklist.items() ]
         specs['DATA']['SubPIDs'] = sub_pids
 
+        #if item_resp['Item']['manufacturer'] is not None:
         if item_resp['Item']['manufacturer'] is not None:
             manufacturer_node = {"id": item_resp['Item']['manufacturer']['id']}
         else:
@@ -168,7 +173,9 @@ class PreShipping6(zw.PageWidget):
         }
 
         logger.info(json.dumps(update_data, indent=4))
+        logger.debug(f"[bg=#ff0000]Uploading item")
         resp = ra.patch_hwitem(part_id, update_data)
+        logger.debug(f"[bg=#ff0000]Uploading item finished")
         logger.info(json.dumps(resp, indent=4))
 
 
@@ -177,5 +184,7 @@ class PreShipping6(zw.PageWidget):
     def on_navigate_next(self):
         super().on_navigate_next()
 
-        self.update_hwdb()        
+        with self.wait():
+            self.update_hwdb()        
+
         return True

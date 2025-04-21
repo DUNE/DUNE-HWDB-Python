@@ -27,12 +27,28 @@ class MainWindow(qtw.QMainWindow):
         #self.setMaximumSize(qtc.QSize(1200, 900))
 
         self._create_menu_bar()
+
+        #self.overlay = qtw.QLabel("WAITING")
+        #self.overlay.setMinimumSize(qtc.QSize(200, 200))
+        #self.overlay.setStyleSheet("background-color: #888")
+
         self.tab_widget = TabWidget(owner=self.application)
+        
+        #self.main_layout = qtw.QStackedLayout()
+        #self.main_layout.addWidget(self.overlay)
+        #self.main_layout.addWidget(self.tab_widget)
+        #self.main_layout.setStackingMode(qtw.QStackedLayout.StackAll)
+
+        #self.main_widget = qtw.QWidget()
+        #self.main_widget.setLayout(self.main_layout)
 
         self.setCentralWidget(self.tab_widget)
-        self.status_bar = self.statusBar()
+        #self.setCentralWidget(self.main_widget)
         
-        self.show()
+        self.status_bar = self.statusBar()
+       
+        
+        #self.show()
         #}}}
 
     def _create_menu_bar(self):
@@ -113,7 +129,16 @@ class MainWindow(qtw.QMainWindow):
             debug_test_action.triggered.connect(self.application.debug_test_function)
             debug_test_action.setShortcut('F11')
             debug_menu.addAction(debug_test_action)
-                
+       
+            debug_show_waiting = qtw.QAction("show waiting overlay", self)
+            debug_show_waiting.triggered.connect(self.application.start_waiting)
+            debug_menu.addAction(debug_show_waiting)
+
+            debug_hide_waiting = qtw.QAction("hide waiting overlay", self)
+            debug_hide_waiting.triggered.connect(self.application.stop_waiting)
+            debug_menu.addAction(debug_hide_waiting)
+
+         
         #}}}
 
     def closeEvent(self, event):

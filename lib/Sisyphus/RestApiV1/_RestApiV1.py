@@ -11,11 +11,14 @@ Author:
 from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
+
+from .RestApiSession import SessionManager
+
 from Sisyphus.Utils.Terminal.Style import Style
 from Sisyphus.Utils.Terminal.BoxDraw import MessageBox
 import sys
 
-import Sisyphus.Configuration as Config # for keywords
+import Sisyphus.Configuration as cfg # for keywords
 from .exceptions import *
 from .keywords import *
 
@@ -39,23 +42,16 @@ def func_name():
     return sys._getframe(1).f_code.co_name
 
 
-# Define any key/value pairs here that you wish to add to all session
-# requests by default.
-# Example: to set requests to timeout after 10 seconds, add 
-#     session_kwargs['timeout'] = 10
-# (Don't add it here. Just set it after loading this module.) 
-session_kwargs = {}
-#session_kwargs['log_headers'] = True
-
 # A hack for Requests 2.32
 # If using requests in a multithreaded fashion, the app will sometimes
 # seg fault when using certificates. For some reason, the problem goes
-# away if you disable 'verify' with requests
-# The default behavior right now will be to disable 'verify', even 
-# though this is highly NOT RECOMMENDED. It throws a bunch of warnings
-# when you do this, so we have to use a warning handler to squelch it.
-if config.active_profile.settings.get("disable_host_certificate_verification", True):
-    session_kwargs["verify"] = False
+# away if you disable 'verify' with requests. The Configuration module
+# now automatically inserts {'verify': False} into the settings for 
+# its initial profiles.
+#
+# Anyway, the upshot of this is that Python will spit out really annoying
+# warning messages on every request made with this. But we can disable 
+# the warnings...
 import warnings
 import urllib3
 warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWarning)
@@ -78,14 +74,6 @@ else:
 def sanitize(s, safe=""):
     return urllib.parse.quote(str(s), safe=safe)
 
-# Use this lock to prevent multiple threads from trying to refresh
-# the bearer token at the same time. If multiple threads tried to 
-# refresh, and each one tried to bring up a browser window, that would
-# be a problem. But once one of the threads has come back from the 
-# browser window, the other threads' attempts would succeed without
-# needing to bring up a browser window.
-authentication_lock = threading.Lock()
-
 log_lock = threading.Lock()
 log_request_json = True
 
@@ -96,285 +84,9 @@ log_request_json = True
 # once the thread is done, the session will be garbage collected along with the
 # thread.
 
-thread_local = threading.local()
-
-def get_session(profile=None):
-
-    if profile is None:
-        profile = config.active_profile
-
-    if not hasattr(thread_local, 'profile'):
-        thread_local.profile = profile
-        new_session = True
-    else:
-        if thread_local.profile == profile:
-            new_session = False
-        else:
-            thread_local.profile = profile
-            new_session = True
-
-    if new_session:
-        logger.info(f"CREATING session for thread {threading.current_thread().name}")
-        session = requests.Session()
-        adapter = requests.adapters.HTTPAdapter(pool_connections=100, pool_maxsize=100)
-        session.mount(f'https://{profile.rest_api}', adapter)
-
-        if profile.authentication["type"] == 'certificate':
-            logger.info("authentication for this session will be 'certificate'")
-            profile.cert = profile.authentication["certificate"]
-            thread_local.bearer_header = {}
-            logger.info(f"certificate={session.cert}")
-        else:
-            #session.cert = use_config.certificate
-            logger.info("authentication for this session will be 'htgettoken'") 
-            try:
-                with open(profile.bearer_token_file, 'r') as fp:
-                    contents = fp.read().strip()
-                    thread_local.bearer_header = {'Authorization': f'Bearer {contents}'}
-            except FileNotFoundError as err:
-                _refresh_required = True
-                refresh_token()
-                with open(profile.bearer_token_file, 'r') as fp:
-                    contents = fp.read().strip()
-                    thread_local.bearer_header = {'Authorization': f'Bearer {contents}'}
-
-        thread_local.session = session
-
-    else:
-        logger.info(f"REUSING session for thread {threading.current_thread().name} "
-                    f"using {profile.authentication['type'].upper()}")
 
 #-----------------------------------------------------------------------------
 
-_refresh_required = True
-def refresh_token(profile=None):
-    profile = profile or config.active_profile
-    #{{{
-    #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    def do_refresh():
-        #.....................................................................
-        def create_proc():
-            config_dir = profile.profile_dir
-            vault_token_file = profile.vault_token_file
-            bearer_token_file = profile.bearer_token_file
-
-            tokens = [
-                #'python',
-                #'-u',
-                'hwdb-htgettoken',
-                '-q',
-                f'--configdir={config_dir}',
-                f'--vaulttokenfile={vault_token_file}',
-                f'--outfile={bearer_token_file}',
-                '--vaultserver=htvaultprod.fnal.gov',
-                '--issuer=fermilab',
-                #'--web-open-command=',
-            ]
-
-            tokens.extend(profile.authentication.get('flags', []))
-               
-            try:
-                proc = subprocess.Popen(
-                            tokens,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            )
-            except FileNotFoundError:
-                msg = ("htgettoken not found. Have you installed it? "
-                                "(try 'pip install htgettoken')")
-                logger.error(msg)
-                Style.error.print(msg)
-                raise
-            return proc
-
-        #.....................................................................
-        class output_so_far:
-            def __init__(self, fp):
-                self.fp = fp
-
-                self.buffer = bytes()
-                self.closed = False
-                self.lock = threading.Lock()
-                self.read_thread = threading.Thread(target=self._worker_task, daemon=True)
-                self.read_thread.start()
-
-            def _worker_task(self):
-                while True:
-                    ch = self.fp.readline()
-                    if ch == b'':
-                        break
-                    with self.lock:
-                        self.buffer += ch
-                self.closed = True
-
-            def read(self):
-                with self.lock:
-                    return copy(self.buffer)
-
-            def read_all(self):
-                self.read_thread.join()
-                return copy(self.buffer)
-                failed = False
-                try:
-                    outs, errs = proc.communicate(timeout=120)
-                except subprocess.TimeoutExpired:
-                    outs, errs = proc.communicate()
-        #.....................................................................
-        def display_message(msg, time_elapsed):
-            outer_width = 80
-            inner_width = 78
-
-            if threading.current_thread().name == "MainThread":
-                erase_msg = "".join([
-                        Style.cursor_abs_horizontal(1),
-                        Style.erase_line
-                    ])
-
-                sys.stdout.write(erase_msg)
-                sys.stdout.flush()
-
-            msg = ' \n '.join([Style.info(s) for s in msg.split('\n')])
-            inner = MessageBox(
-                        msg, 
-                        width=inner_width, 
-                        outer_border='normal', 
-                        border_color=Style.info._fg)
-
-            info = ' \n '.join([
-                '',
-                Style.warning(
-                #f'The call to htgettoken is taking longer than expected. ({time_elapsed})'),
-                f'The call to htgettoken is taking longer than expected.'),
-                '',
-                'htgettoken may have attempted to open a browser window. Use this',
-                'window to complete your authentication.',
-                '',
-                'If a browser window has not opened (e.g., if you''re using ssh to',
-                'access a server remotely), the following information outputted from',
-                'htgettoken may contain a URL that can be used to complete the',
-                'authentication.',
-                '',
-            ])
-
-            msg2 = '\n'.join([info, inner])
-
-            outer = MessageBox(
-                        msg2, 
-                        width=outer_width, 
-                        outer_border='strong', 
-                        border_color=Style.warning._fg)
-            print(outer)
-        #.....................................................................
-        
-        #
-        # do_refresh()
-        #
-
-        logger.warning("Refreshing tokens")
-        global _refresh_required
-        
-        proc = create_proc()
-
-        osf_stdout = output_so_far(proc.stdout)
-        osf_stderr = output_so_far(proc.stderr)
-
-        timed_out = None
-        #displayed_response = False
-        interval = 10
-        total_time = 0
-        max_time = 120
-
-        last_stdout = ""
-        last_stderr = ""
-
-        while True:
-            timed_out = False
-            try:
-                proc.wait(interval)
-                timed_out = False
-            except subprocess.TimeoutExpired as err:
-                timed_out = True
-
-            if not timed_out:
-                break
-
-            total_time += interval
-            if total_time >= max_time:
-                break
-
-            current_stdout = osf_stdout.read().decode('utf-8')
-            current_stderr = osf_stderr.read().decode('utf-8')
-
-            if current_stdout != last_stdout:
-                display_message(current_stdout, total_time)
-                last_stdout = current_stdout
-            if current_stderr != last_stderr:
-                display_message(current_stderr, total_time)
-                last_stderr = current_stderr
-
-
-        if timed_out:
-            proc.kill()
-        current_stdout = osf_stdout.read_all().decode('utf-8')
-        current_stderr = osf_stderr.read_all().decode('utf-8')
-        
-        #if current_stdout != last_stdout:
-        #    display_message(current_stdout)
-        #    last_stdout = current_stdout
-        #if current_stderr != last_stderr:
-        #    display_message(current_stderr)
-        #    last_stderr = current_stderr
-
-        if proc.returncode is None:
-            err = "The call to htgettoken timed out."
-            msg = "".join(
-                        [
-                            err, '\n',
-                            f"stdout: {current_stdout} ",
-                            f"stderr: {current_stderr} ",
-                        ])
-            logger.error(msg)
-            raise RuntimeError(err)
-        elif proc.returncode != 0:
-            err = "The call to htgettoken failed."
-            msg = "".join(
-                        [
-                            err, '\n',
-                            f"stdout: {current_stdout} ",
-                            f"stderr: {current_stderr} ",
-                        ])
-            logger.error(msg)
-            raise RuntimeError(err)
-
-        msg = ("The call to htgettoken succeeded. "
-                f"stdout: {current_stdout} "
-                f"stderr: {current_stderr} ")
-        logger.info(msg)
-
-        _refresh_required = False
-
-    #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    
-    #
-    # refresh_token()
-    #
-
-    global thread_local
-    global bearer_header
-
-    logger.debug("Attempting to refresh token")
-    with authentication_lock:
-        if _refresh_required:
-
-            do_refresh()
-            bearer_header = None
-
-            logger.debug("Finished refreshing token")
-        else:
-            logger.debug("Token already refreshed by another thread (?)")
-    #}}}    
-
-#-----------------------------------------------------------------------------
 
 class retry:
     #{{{
@@ -403,10 +115,12 @@ class retry:
 
         @functools.wraps(function)
         def wrapped_function(*args, **kwargs):
-            global _refresh_required
+            #global _refresh_required
 
-            status_callback = kwargs.pop("status_callback", 
-                                    session_kwargs.get("status_callback", None))
+            #status_callback = kwargs.pop("status_callback", 
+            #                        session_kwargs.get("status_callback", None))
+            status_callback = kwargs.pop("status_callback", None)
+
             if status_callback is not None:
                 update_status = lambda msg: status_callback(msg)
             else:
@@ -415,6 +129,7 @@ class retry:
             timeouts = kwargs.pop("timeouts", None)
             retries = kwargs.pop("retries", None)
             timeout = kwargs.pop("timeout", None)
+            profile = kwargs.get("profile", config.active_profile)
 
             if timeouts is not None:
                 retries = len(timeouts)
@@ -430,10 +145,9 @@ class retry:
             logger.debug(f"Wrapper function is assigned {retries} retries")
             for try_num in range(retries):
                 try:
-                    if type(last_err) is ExpiredSignature:
-                        _refresh_required = True
-                        logger.debug("Signature expired. Must refresh.")
-                        refresh_token()
+                    if type(last_err) in (ExpiredSignature, CurrentlyUnavailable):
+                        SessionManager(profile).profile_manager.refresh()                        
+
                 except Exception as exc:
                     logger.error(f"Failed to refresh token: {exc}")
 
@@ -492,6 +206,7 @@ class retry:
                             f"in thread '{threading.current_thread().name}' "
                             f"(attempt #{try_num+1})")
                     logger.warning(msg)
+                    time.sleep(5)
                     last_err = err
                 except Exception as exc:
                     # If we don't recognize the exception, assume that there
@@ -573,6 +288,8 @@ def _request(method, url, *args, return_type="json", **kwargs):
 
     profile = kwargs.pop('profile', None) or config.active_profile
 
+    session_manager = SessionManager(profile)
+
     threadname = threading.current_thread().name
     msg = (f"<_request> [{method.upper()}] "
             f"url='{url}' method='{method.lower()}'")
@@ -587,14 +304,16 @@ def _request(method, url, *args, return_type="json", **kwargs):
         with log_lock:
             logger.debug(msg)
 
-    get_session(profile=profile)
-    session = thread_local.session
-    bearer_header = thread_local.bearer_header
+    #get_session(profile=profile)
+    #session = thread_local.session
+    #bearer_header = thread_local.bearer_header
 
     #
     #  Send the "get" request and handle possible errors
     #
-    augmented_kwargs = {**session_kwargs, **kwargs}
+    #augmented_kwargs = {**session_kwargs, **kwargs}
+    
+    augmented_kwargs = {**profile.settings.get(cfg.KW_EXTRA_KWARGS, {}), **kwargs}
         
     extra_info = \
     [
@@ -632,11 +351,11 @@ def _request(method, url, *args, return_type="json", **kwargs):
 
         else:
             with throttle_lock:
-                augmented_kwargs['headers'] = {
-                        **augmented_kwargs.get('headers', {}),
-                        **bearer_header
-                }
-                resp = session.request(method, url, *args, **augmented_kwargs)
+                #augmented_kwargs['headers'] = {
+                #        **augmented_kwargs.get('headers', {}),
+                #        **bearer_header
+                #}
+                resp = session_manager.session.request(method, url, *args, **augmented_kwargs)
 
 
     except requests.exceptions.ConnectionError as conn_err:

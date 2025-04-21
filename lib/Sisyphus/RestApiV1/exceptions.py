@@ -151,4 +151,9 @@ class CurrentlyUnavailable(RestApiException):
     a lot like a timeout and to try the request again.
     """
 
+class AuthenticationError(RestApiException):
+    """There was a problem with authentication
 
+    Added April 17, 2025
+    Using this when the call to htgettoken fails.
+    """

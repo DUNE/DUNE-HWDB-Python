@@ -36,6 +36,9 @@ class PreShipping1(zw.PageWidget):
         msg = "All necessary QA/QC information for these components " \
                     "has been stored in the HWDB"
         self.confirm_hwdb_updated_checkbox = zw.ZCheckBox(owner=self, text=msg, key="hwdb_updated")
+
+        #self.my_text_box = zw.ZLineEdit(owner=self, key="my_text_box")
+
         
         # Create the actual layout and place the interactive widgets in it
         self._setup_UI()
@@ -87,12 +90,13 @@ class PreShipping1(zw.PageWidget):
 
         ########################################
 
+        #main_layout.addWidget(self.my_text_box)
         main_layout.addStretch()
 
         main_layout.addWidget(self.nav_bar)
 
         self.setLayout(main_layout)
-        #}}}
+        #}}}z
 
     def restore(self):
         super().restore()
@@ -112,8 +116,8 @@ class PreShipping1(zw.PageWidget):
             self.table.setItem(idx, 1, qtw.QTableWidgetItem(subcomp['Component Type Name']))
             self.table.setItem(idx, 2, qtw.QTableWidgetItem(subcomp['Functional Position Name']))
     
-    def update(self):
-        super().update()
+    def refresh(self):
+        super().refresh()
 
         if (self.page_state.get('confirm_list', False) 
                     and self.page_state.get('hwdb_updated', False)):

@@ -40,13 +40,21 @@ class Application(qtw.QApplication):
     
     def __init__(self, argv=[]):
         super().__init__(argv)
-
+        self._argv = argv
         self._debug = ("--debug" in argv)
         self._force_reset = ("--reset" in argv)
+        
+        self.main_window = MainWindow(application=self)
+        self.tab_widget = self.main_window.tab_widget
+        
+        self.startup()
 
+    def startup(self):
+        # Moved this code out of __init__ because I want to be able to 
+        # "restart" the app without calling super().__init__ again.
 
-        self.application_state_path = os.path.normpath(
-                    os.path.join(config.user_settings_dir, "shipping_conf.json"))
+        self.application_state_path = os.path.join(
+                                config.active_profile.profile_dir, "shipping_conf.json")
 
         self._whoami = dm.WhoAmI()
         self.load_state()
@@ -57,9 +65,6 @@ class Application(qtw.QApplication):
             self.setStyleSheet_dark() 
         else:
             self.setStyleSheet_sisyphus()
-
-        self.main_window = MainWindow(application=self)
-        self.tab_widget = self.main_window.tab_widget
 
         self.restore_tabs()
 
@@ -95,6 +100,7 @@ class Application(qtw.QApplication):
             "current_tab": -1,
             "workflows": {},
         }
+        self._force_reset = False
         #self.create_tab()
 
     def validate_state(self):
@@ -257,7 +263,10 @@ class Application(qtw.QApplication):
         
     @property
     def working_directory(self):
-        return self.app_state.get("working_directory", os.path.normpath('.'))
+        #return self.app_state.get("working_directory", os.path.normpath('.'))
+        user_profile = config.active_profile.profile_data['users'].get(self.username, {})
+        return user_profile.get('working_directory', config.active_profile.profile_dir)
+        
 
 
     def update_status(self, message):
@@ -265,9 +274,44 @@ class Application(qtw.QApplication):
         self.main_window.status_bar.showMessage(message)
         #Style.notice.print(f"status bar: {message}")
 
+    @property
+    def username(self):
+        return self.whoami['username']
+
+    @property
+    def user_full_name(self):
+        user_profile = config.active_profile.profile_data['users'].get(self.username, {})
+        return user_profile.get('full_name', None) or self.whoami['full_name']
+        
+    @property
+    def user_email(self):
+        user_profile = config.active_profile.profile_data['users'].get(self.username, {})
+        return user_profile.get('email', None) or self.whoami['email']
+
     def configure(self):
+
+        self.save_state()
+        current_profile = config.active_profile.profile_name
+
         dialog = ConfigDialog(self)
         dialog.exec()
+
+        if config.active_profile.profile_name != current_profile:
+            print("active profile has changed")
+            self.startup()
+
+        print(self.user_full_name)
+        print(self.user_email)
+        print(self.working_directory)
+
+    def start_waiting(self):
+        #self.main_window.overlay.show()
+        self.processEvents()
+
+    def stop_waiting(self):
+        #self.main_window.overlay.hide()
+        self.processEvents()
+
 
     def debug_app_state(self):
         Style.info.print("APP_STATE")

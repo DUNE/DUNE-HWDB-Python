@@ -36,6 +36,7 @@ from warnings import warn
 RESTAPI_DEV = 'dbwebapi2.fnal.gov:8443/cdbdev'
 RESTAPI_PROD = 'dbwebapi2.fnal.gov:8443/cdb'
 DEFAULT_RESTAPI = RESTAPI_DEV
+DEFAULT_RESTAPI_NAME = KW_DEVELOPMENT
 
 MY_PATH = os.path.normpath(os.path.join(os.path.dirname(__file__)))
 USER_SETTINGS_DIR = os.path.normpath(os.path.expanduser("~/.sisyphus"))
@@ -90,6 +91,14 @@ NEW_CONFIG = {
                         # Configuration module alone (e.g., to get a
                         # logger) should not have the overhead of an API 
                         # call.
+            KW_SETTINGS: {
+                KW_EXTRA_KWARGS: { # Extra kwargs for requests
+                    'verify': False,
+                        # There's a bug in Requests 2.32 that causes a 
+                        # segmentation fault when used in a multithreaded
+                        # application. This hack makes it go away.
+                }
+            }
         },
         KW_PRODUCTION: {
             KW_RESTAPI: RESTAPI_PROD,
@@ -100,7 +109,12 @@ NEW_CONFIG = {
                 KW_AUTH_TYPE: KW_AUTH_HTGETTOKEN,
                 KW_HTGETTOKEN_FLAGS: []
             },
-            KW_USERS: {}
+            KW_USERS: {},
+            KW_SETTINGS: {
+                KW_EXTRA_KWARGS: {
+                    'verify': False,
+                }
+            }
         }
     },
     KW_SERVERS: {   # Just a list of available servers.
@@ -112,6 +126,23 @@ NEW_CONFIG = {
                                 # their setups, instead of using 'development',
                                 # which could change at any moment if 
                                 # Fermilab is actively working on the REST API.
+    }
+}
+
+NEW_PROFILE = {
+    KW_RESTAPI_NAME: DEFAULT_RESTAPI_NAME,
+    KW_RESTAPI: DEFAULT_RESTAPI,
+    KW_RESTAPI_EDITABLE: True,
+    KW_DELETABLE: True,
+    KW_AUTHENTICATION: {
+        KW_AUTH_TYPE: KW_AUTH_HTGETTOKEN,
+        KW_HTGETTOKEN_FLAGS: []
+    },
+    KW_USERS: {},
+    KW_SETTINGS: {
+        KW_EXTRA_KWARGS: {
+            'verify': False,
+        }
     }
 }
 
@@ -175,16 +206,17 @@ class Profile:
     @property 
     def authentication(self):
         try:
-            return self.profile_data[KW_AUTHENTICATION]
+            return self.profile_data.get(KW_AUTHENTICATION, None)
         except KeyError:
-            raise ConfigurationError(f"{KW_AUTHENTICATION} not set in profile {self._profile_name}")
+            raise ConfigurationError(f"{KW_AUTHENTICATION!r} not set in profile "
+                            f"{self._profile_name}")
 
     @property
     def rest_api(self):
         try:
             return self.profile_data[KW_RESTAPI]
         except KeyError:
-            raise ConfigurationError("profile_name not set in profile {self._profile_name}")
+            raise ConfigurationError(f"{KW_RESTAPI!r} not set in profile {self._profile_name}")
     
     #@property
     #def certificate(self):
@@ -213,7 +245,6 @@ class Profile:
         os.makedirs(pd, mode=0o700, exist_ok=True)
         return pd
     
-
 class Config:
     def __init__(self, *, 
             user_settings_dir=None, user_config_file=None, log_config_file=None, args=sys.argv):

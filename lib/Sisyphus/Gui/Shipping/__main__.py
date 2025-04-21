@@ -38,10 +38,13 @@ def main(argv):
 
     app = Application(sys.argv)
 
+    app.main_window.show()
+
     print("entering event loop -- window should show in a few seconds")
     print("(On WSL/Ubuntu under Windows, this sometimes takes a minute on the first run.\n"
             "Occasionally, it will not show at all, in which case, you may need to restart\n"
             "WSL. Other Linux setups may have different behaviors.)")
+
     logger.info("Entering event loop")
     rc = app.exec()
     logger.info("Exiting event loop")

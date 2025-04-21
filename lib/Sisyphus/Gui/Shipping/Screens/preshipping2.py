@@ -38,7 +38,6 @@ class PreShipping2(zw.PageWidget):
         main_layout.addWidget(self.title_bar)
         ########################################
 
-
         main_layout.addWidget(
             qtw.QLabel("Provide the person's name and email address who has approved this shipment")
         )
@@ -49,7 +48,7 @@ class PreShipping2(zw.PageWidget):
 
         ################
 
-        contact_info_layout = qtw.QVBoxLayout(self)
+        contact_info_layout = qtw.QVBoxLayout()
 
         name_layout = qtw.QVBoxLayout()
         name_layout.addWidget(qtw.QLabel("Name"))
@@ -57,7 +56,7 @@ class PreShipping2(zw.PageWidget):
         name_layout.addWidget(self.approver_name)
         name_layout_widget = qtw.QWidget(self)
         name_layout_widget.setLayout(name_layout)
-
+        
         email_layout = qtw.QVBoxLayout()
         email_layout.addWidget(qtw.QLabel("Email"))
         email_layout.addWidget(self.approver_email)
@@ -89,9 +88,6 @@ class PreShipping2(zw.PageWidget):
 
         main_layout.addWidget(test_info_widget)
 
-
-
-
         ################
         main_layout.addStretch()
 
@@ -100,8 +96,8 @@ class PreShipping2(zw.PageWidget):
         self.setLayout(main_layout)
         #}}}
 
-    def update(self):
-        super().update()
+    def refresh(self):
+        super().refresh()
 
         if ( len(self.approver_name.text()) > 0 
                 and len(self.approver_email.text()) > 0

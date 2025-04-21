@@ -40,6 +40,7 @@ class ShippingComplete(zw.PageWidget):
         self.setLayout(main_layout)
         #}}}
 
-    def update(self):
+    def refresh(self):
+        super().refresh()
         self.nav_bar.back_button.setEnabled(False)
         self.nav_bar.continue_button.setEnabled(False)

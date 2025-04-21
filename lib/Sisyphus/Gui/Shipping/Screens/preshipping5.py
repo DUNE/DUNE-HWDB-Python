@@ -90,8 +90,8 @@ class PreShipping5(zw.PageWidget):
         self.setLayout(main_layout)
         #}}}
 
-    def update(self):
-        super().update()
+    def refresh(self):
+        super().refresh()
 
         if self.page_state.get('damage_status', None) == 'no damage':
             self.damage_description.setEnabled(False)

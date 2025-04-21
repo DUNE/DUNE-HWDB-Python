@@ -114,9 +114,9 @@ class Shipping4(zw.PageWidget):
         self.setLayout(main_layout)
         #}}}
 
-    def update(self):
+    def refresh(self):
         #{{{
-        super().update()
+        super().refresh()
 
         if not self.received_approval.isChecked():
             self.nav_bar.continue_button.setEnabled(False)

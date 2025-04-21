@@ -36,7 +36,7 @@ class Shipping2(zw.PageWidget):
         self.proforma_file = zw.ZFileSelectWidget(owner=self, key='proforma_filename')
 
         self._setup_UI()
-        #self.update()
+        #self.refresh()
 
     def _setup_UI(self):
         #{{{
@@ -79,8 +79,8 @@ class Shipping2(zw.PageWidget):
         if file_dialog.exec():
             self.bol_text.setText(file_dialog.selectedFiles()[0])
 
-    def update(self):
-        super().update()
+    def refresh(self):
+        super().refresh()
 
         shipping_service_type = self.workflow_state.get('PreShipping3a', {}) \
                     .get('shipping_service_type', 'Domestic')

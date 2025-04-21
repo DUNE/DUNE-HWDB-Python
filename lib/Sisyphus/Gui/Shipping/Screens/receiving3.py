@@ -106,8 +106,8 @@ class Receiving3(zw.PageWidget):
         email_to = (f"{workflow_state['PreShipping2']['approver_name']} "
                     f"&lt;{workflow_state['PreShipping2']['approver_email']}&gt;")
 
-        email_from = (f"{workflow_state['SelectPID']['user_name']} "
-                    f"&lt;{workflow_state['SelectPID']['user_email']}&gt;")
+        email_from = (f"{self.application.user_full_name} "
+                    f"&lt;{self.application.user_email}&gt;")
         
         email_subject = "Final Reciving checklist for shipment {self.pid}"
         
@@ -126,8 +126,8 @@ class Receiving3(zw.PageWidget):
             f"{workflow_state['Receiving2']['arrived']} [TODO: format time].<br/>\n<br/>\n"
 
             f"Sincerely,<br/>\n<br/>\n"
-            f"{workflow_state['SelectPID']['user_name']}<br/>\n"
-            f"{workflow_state['SelectPID']['user_email']}<br/>\n"
+            f"{self.application.user_full_name}<br/>\n"
+            f"{self.application.user_email}<br/>\n"
             
             f"""</td>"""            
             f"""</table>"""
@@ -138,8 +138,8 @@ class Receiving3(zw.PageWidget):
         #}}}
 
 
-    def update(self):
-        super().update()
+    def refresh(self):
+        super().refresh()
 
         if self.confirm_email_contents.isChecked():
             self.nav_bar.continue_button.setEnabled(True)

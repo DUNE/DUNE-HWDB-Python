@@ -112,8 +112,8 @@ class Receiving1(zw.PageWidget):
             self.table.setItem(idx, 1, qtw.QTableWidgetItem(subcomp['Component Type Name']))
             self.table.setItem(idx, 2, qtw.QTableWidgetItem(subcomp['Functional Position Name']))
     
-    def update(self):
-        super().update()
+    def refresh(self):
+        super().refresh()
 
         if (self.page_state.get('confirm_list', False) 
                     and self.page_state.get('hwdb_updated', False)):

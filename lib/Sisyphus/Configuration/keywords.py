@@ -41,3 +41,4 @@ KW_LOGGING = "logging"
 KW_LOGLEVEL = "loglevel"
 
 KW_SETTINGS = "settings"
+KW_EXTRA_KWARGS = "request kwargs"

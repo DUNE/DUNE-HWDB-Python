@@ -116,8 +116,8 @@ class PreShipping4(zw.PageWidget):
         poc_email = (f"{workflow_state['PreShipping2']['approver_name']} "
                     f"&lt;{workflow_state['PreShipping2']['approver_email']}&gt;")
 
-        email_from = (f"{workflow_state['SelectPID']['user_name']} "
-                    f"&lt;{workflow_state['SelectPID']['user_email']}&gt;")
+        email_from = (f"{self.application.user_full_name} "
+                    f"&lt;{self.application.user_email}&gt;")
         email_to = f"FD Logistics Team &lt;sdshipments@fnal.gov&gt;"
         email_subject = "Request an acknowledgement for a new shipment"
         
@@ -137,8 +137,8 @@ class PreShipping4(zw.PageWidget):
             f"shipment, email to:\n"
             f"<ul><li>{poc_email}</li></ul>\n"
             f"Sincerely,<br/>\n<br/>\n"
-            f"{workflow_state['SelectPID']['user_name']}<br/>\n"
-            f"{workflow_state['SelectPID']['user_email']}<br/>\n"
+            f"{self.application.user_full_name}<br/>\n"
+            f"{self.application.user_email}<br/>\n"
             f"Attachment: {self.csv_filename}\n"
 
             f"""</td>"""            
@@ -224,8 +224,8 @@ class PreShipping4(zw.PageWidget):
                 ])
         #}}}
 
-    def update(self):
-        super().update()
+    def refresh(self):
+        super().refresh()
 
         if self.confirm_email_contents.isChecked():
             self.nav_bar.continue_button.setEnabled(True)

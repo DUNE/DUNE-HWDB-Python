@@ -122,8 +122,11 @@ def download_part_info(part_id, status_callback=None):
     else:
         data_node = spec.get("DATA", {})
         psc_raw = data_node.get('Pre-Shipping Checklist', [])
-        psc = preshipping_checklist = {k:v for d in 
-                            psc_raw for k, v in d.items()}
+        if type(psc_raw) is list:
+            psc = preshipping_checklist = {k:v for d in 
+                                psc_raw for k, v in d.items()}
+        else:
+            psc = psc_raw
 
     preshipping_exists = (len(psc) > 0)
 
@@ -189,8 +192,8 @@ def upload_shipping(workflow_state):
     part_id = ws['part_info']['part_id']
 
     shipping_checklist = {
-        "POC name":  ws['SelectPID']['user_name'],
-        "POC Email": [s.strip() for s in ws['SelectPID']['user_email'].split(',')],
+        "POC name":  ws['PreShipping2']['approver_name'],
+        "POC Email": [s.strip() for s in ws['PreShipping2']['approver_email'].split(',')],
         "System Name (ID)": f"{ws['part_info']['system_name']}"
                                f" ({ws['part_info']['system_id']})",
         "Subsystem Name (ID)":  f"{ws['part_info']['subsystem_name']}"
