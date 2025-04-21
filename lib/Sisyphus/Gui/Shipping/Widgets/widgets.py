@@ -292,7 +292,7 @@ class NavBar(qtw.QWidget):
         main_layout.addStretch()
         main_layout.addWidget(self.continue_button)
         main_layout.addWidget(self.close_tab_button)
-        #self.close_tab_button.hide()
+        self.close_tab_button.hide()
 
 
         self.setLayout(main_layout)
