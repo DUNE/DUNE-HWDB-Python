@@ -96,9 +96,7 @@ class PreShipping6(zw.PageWidget):
         }
 
         try:
-            logger.debug(f"[bg=#ff0000]Uploading sheet")
             resp = ra.post_hwitem_image(part_id, data, self.pdf_full_filename)
-            logger.debug(f"[bg=#ff0000]Uploading sheet finished")
         except Exception as exc:
             msg = (f"An error occurred in attempting to upload the shipping sheet. "
                     f"part_id: {part_id}, data: {data}, filename: {self.pdf_full_filename}")
@@ -109,8 +107,10 @@ class PreShipping6(zw.PageWidget):
 
 
         ps_checklist = {
-            "POC name": ws['PreShipping2']['approver_name'],
-            "POC Email": [s.strip() for s in ws['PreShipping2']['approver_email'].split(',')],
+            "QA Rep name": ws['PreShipping2a']['qa_rep_name'],
+            "QA Rep Email": [s.strip() for s in ws['PreShipping2a']['qa_rep_email'].split(',')],
+            "POC name": ws['PreShipping2b']['approver_name'],
+            "POC Email": [s.strip() for s in ws['PreShipping2b']['approver_email'].split(',')],
             "System Name (ID)": f"{ws['part_info']['system_name']}"
                                f" ({ws['part_info']['system_id']})",
             "Subsystem Name (ID)":  f"{ws['part_info']['subsystem_name']}"
@@ -118,7 +118,7 @@ class PreShipping6(zw.PageWidget):
             "Component Type Name (ID)": f"{ws['part_info']['part_type_name']}"
                                 f" ({ws['part_info']['part_type_id']})",
             "DUNE PID": part_id,
-            "QA/QC related info Line 1": ws['PreShipping2']['test_info'],
+            "QA/QC related info Line 1": ws['PreShipping2a']['test_info'],
             "HTS code": ws['PreShipping3a']['hts_code'] 
                                if ws['PreShipping3a']['shipping_service_type'] 
                                     != 'Domestic' else None ,

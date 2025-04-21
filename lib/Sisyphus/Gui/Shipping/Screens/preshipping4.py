@@ -113,8 +113,8 @@ class PreShipping4(zw.PageWidget):
 
 
 
-        poc_email = (f"{workflow_state['PreShipping2']['approver_name']} "
-                    f"&lt;{workflow_state['PreShipping2']['approver_email']}&gt;")
+        poc_email = (f"{workflow_state['PreShipping2b']['approver_name']} "
+                    f"&lt;{workflow_state['PreShipping2b']['approver_email']}&gt;")
 
         email_from = (f"{self.application.user_full_name} "
                     f"&lt;{self.application.user_email}&gt;")
@@ -191,7 +191,7 @@ class PreShipping4(zw.PageWidget):
             csvwriter.writerow([])
             csvwriter.writerow([
                 "QA/QC related information for this shipment can be found here",
-                self.workflow_state['PreShipping2']['test_info']
+                self.workflow_state['PreShipping2a']['test_info']
             ])
             csvwriter.writerow([])
             csvwriter.writerow([

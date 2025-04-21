@@ -174,9 +174,7 @@ class PageWidget(qtw.QWidget):
 
 
     def close_tab(self):
-        logger.debug(f"{self.__class__.__name__}.close_tab()")
         curr_idx = self.application.tab_widget.indexOf(self.workflow)
-        logger.debug(f"{self.__class__.__name__}.close_tab(), I think my index is {curr_idx}")
         self.application.close_tab(curr_idx)
 
 
@@ -269,6 +267,8 @@ class NavBar(qtw.QWidget):
         main_layout.addStretch()
         main_layout.addWidget(self.continue_button)
         main_layout.addWidget(self.close_tab_button)
+        self.close_tab_button.hide()
+
 
         self.setLayout(main_layout)
     #}}}

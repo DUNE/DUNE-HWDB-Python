@@ -36,7 +36,7 @@ HLE = highlight = "[bg=#990000,fg=#ffffff]"
 ###############################################################################
 
 def download_part_info(part_id, status_callback=None):
-    #{{{
+   #{{{
 
     fwd_kwargs = {'status_callback': status_callback} if status_callback is not None else {}
 
@@ -138,14 +138,16 @@ def download_part_info(part_id, status_callback=None):
             "hwdb_updated": preshipping_exists,
         }
 
-
-    workflow_state["PreShipping2"] = {
-            "approver_name": psc.get("POC name", ""),
-            "approver_email": ', '.join(psc.get("POC Email", [])),
+    workflow_state["PreShipping2a"] = {
+            "approver_name": psc.get("QA Rep name", ""),
+            "approver_email": ', '.join(psc.get("QA Rep Email", [])),
             "test_info": psc.get("QA/QC related info Line 1", ""),
         }
-        #"approver_name": "FD Logistics team acknoledgement (name)",
-        #"approver_email": 
+
+    workflow_state["PreShipping2b"] = {
+            "approver_name": psc.get("POC name", ""),
+            "approver_email": ', '.join(psc.get("POC Email", [])),
+        }
     
     workflow_state["PreShipping3a"] = {
             "hts_code": psc.get("HTS code", ""),

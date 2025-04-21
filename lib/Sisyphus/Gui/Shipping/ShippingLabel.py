@@ -293,7 +293,7 @@ class ShippingLabel:
 
         self.draw_label("Responsible Person's Name", 14)
         self.draw_label(
-                self.workflow_state['PreShipping2']['approver_name'], 
+                self.workflow_state['PreShipping2b']['approver_name'], 
                 font_size=14,
                 box=True)
         
@@ -301,7 +301,7 @@ class ShippingLabel:
         
         self.draw_label("Email Address(es)", 14)
         self.draw_label(
-                self.workflow_state['PreShipping2']['approver_email'], 
+                self.workflow_state['PreShipping2b']['approver_email'], 
                 font_size=14,
                 box=True)
 
