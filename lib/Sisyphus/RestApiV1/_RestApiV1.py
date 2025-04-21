@@ -11,11 +11,14 @@ Author:
 from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
+
+from .RestApiSession import SessionManager
+
 from Sisyphus.Utils.Terminal.Style import Style
 from Sisyphus.Utils.Terminal.BoxDraw import MessageBox
 import sys
 
-import Sisyphus.Configuration as Config # for keywords
+import Sisyphus.Configuration as cfg # for keywords
 from .exceptions import *
 from .keywords import *
 
@@ -32,23 +35,23 @@ import os
 #faulthandler.enable()
 from contextlib import nullcontext
 
-# Define any key/value pairs here that you wish to add to all session
-# requests by default.
-# Example: to set requests to timeout after 10 seconds, add 
-#     session_kwargs['timeout'] = 10
-# (Don't add it here. Just set it after loading this module.) 
-session_kwargs = {}
-#session_kwargs['log_headers'] = True
+
+# To help with logging
+def func_name():
+    '''get the name of the function calling this function'''
+    return sys._getframe(1).f_code.co_name
+
 
 # A hack for Requests 2.32
 # If using requests in a multithreaded fashion, the app will sometimes
 # seg fault when using certificates. For some reason, the problem goes
-# away if you disable 'verify' with requests
-# The default behavior right now will be to disable 'verify', even 
-# though this is highly NOT RECOMMENDED. It throws a bunch of warnings
-# when you do this, so we have to use a warning handler to squelch it.
-if config.settings.get("disable_host_certificate_verification", True):
-    session_kwargs["verify"] = False
+# away if you disable 'verify' with requests. The Configuration module
+# now automatically inserts {'verify': False} into the settings for 
+# its initial profiles.
+#
+# Anyway, the upshot of this is that Python will spit out really annoying
+# warning messages on every request made with this. But we can disable 
+# the warnings...
 import warnings
 import urllib3
 warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWarning)
@@ -57,7 +60,7 @@ warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWar
 # A second hack for Requests 2.32
 # A different way to avoid seg faults is to just allow only one thread
 # process requests at a time
-if config.settings.get("use_throttle_lock", False):
+if config.active_profile.settings.get("use_throttle_lock", False):
     throttle_lock = threading.Lock()
 else:
     throttle_lock = nullcontext()
@@ -71,14 +74,6 @@ else:
 def sanitize(s, safe=""):
     return urllib.parse.quote(str(s), safe=safe)
 
-# Use this lock to prevent multiple threads from trying to refresh
-# the bearer token at the same time. If multiple threads tried to 
-# refresh, and each one tried to bring up a browser window, that would
-# be a problem. But once one of the threads has come back from the 
-# browser window, the other threads' attempts would succeed without
-# needing to bring up a browser window.
-authentication_lock = threading.Lock()
-
 log_lock = threading.Lock()
 log_request_json = True
 
@@ -89,277 +84,9 @@ log_request_json = True
 # once the thread is done, the session will be garbage collected along with the
 # thread.
 
-thread_local = threading.local()
-bearer_header = None
-def get_session(use_config=None):
-
-    if use_config is None:
-        use_config = config
-
-    if not hasattr(thread_local, 'config'):
-        thread_local.config = use_config
-        new_session = True
-    else:
-        if thread_local.config == use_config:
-            new_session = False
-        else:
-            thread_local.config = use_config
-            new_session = True
-
-    #if not hasattr(thread_local, "session") or use_config is not None:
-    if new_session:
-        logger.info(f"CREATING session for thread {threading.current_thread().name}")
-        session = requests.Session()
-        adapter = requests.adapters.HTTPAdapter(pool_connections=100, pool_maxsize=100)
-        session.mount(f'https://{config.rest_api}', adapter)
-
-        if use_config.authentication == 'certificate':
-            logger.info("authentication for this session will be 'certificate'")
-            session.cert = use_config.certificate
-            logger.info(f"certificate={session.cert}")
-        else:
-            #session.cert = use_config.certificate
-            logger.info("authentication for this session will be 'token'")
-
-        thread_local.session = session
-        thread_local.authentication = use_config.authentication
-
-    else:
-        logger.info(f"REUSING session for thread {threading.current_thread().name} "
-                    f"using {thread_local.authentication.upper()}")
-
-    return thread_local.session, thread_local.authentication
 
 #-----------------------------------------------------------------------------
 
-_refresh_required = True
-def refresh_token():
-    #{{{
-    #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    def do_refresh():
-        #.....................................................................
-        def create_proc():
-            config_dir = Config.USER_SETTINGS_DIR
-            vault_token_file = Config.VAULT_TOKEN_FILE
-            bearer_token_file = Config.BEARER_TOKEN_FILE
-
-            tokens = [
-                #'python',
-                #'-u',
-                'hwdb-htgettoken',
-                '-q',
-                f'--configdir={config_dir}',
-                f'--vaulttokenfile={vault_token_file}',
-                f'--outfile={bearer_token_file}',
-                '--vaultserver=htvaultprod.fnal.gov',
-                '--issuer=fermilab',
-                #'--web-open-command=',
-            ]
-
-            #tokens = " ".join(tokens)
-
-            try:
-                proc = subprocess.Popen(
-                            tokens,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            )
-            except FileNotFoundError:
-                msg = ("htgettoken not found. Have you installed it? "
-                                "(try 'pip install htgettoken')")
-                logger.error(msg)
-                Style.error.print(msg)
-                raise
-            return proc
-
-        #.....................................................................
-        class output_so_far:
-            def __init__(self, fp):
-                self.fp = fp
-
-                self.buffer = bytes()
-                self.closed = False
-                self.lock = threading.Lock()
-                self.read_thread = threading.Thread(target=self._worker_task, daemon=True)
-                self.read_thread.start()
-
-            def _worker_task(self):
-                while True:
-                    ch = self.fp.readline()
-                    if ch == b'':
-                        break
-                    with self.lock:
-                        self.buffer += ch
-                self.closed = True
-
-            def read(self):
-                with self.lock:
-                    return copy(self.buffer)
-
-            def read_all(self):
-                self.read_thread.join()
-                return copy(self.buffer)
-                failed = False
-                try:
-                    outs, errs = proc.communicate(timeout=120)
-                except subprocess.TimeoutExpired:
-                    outs, errs = proc.communicate()
-        #.....................................................................
-        def display_message(msg, time_elapsed):
-            outer_width = 80
-            inner_width = 78
-
-            if threading.current_thread().name == "MainThread":
-                erase_msg = "".join([
-                        Style.cursor_abs_horizontal(1),
-                        Style.erase_line
-                    ])
-
-                sys.stdout.write(erase_msg)
-                sys.stdout.flush()
-
-            msg = ' \n '.join([Style.info(s) for s in msg.split('\n')])
-            inner = MessageBox(
-                        msg, 
-                        width=inner_width, 
-                        outer_border='normal', 
-                        border_color=Style.info._fg)
-
-            info = ' \n '.join([
-                '',
-                Style.warning(
-                #f'The call to htgettoken is taking longer than expected. ({time_elapsed})'),
-                f'The call to htgettoken is taking longer than expected.'),
-                '',
-                'htgettoken may have attempted to open a browser window. Use this',
-                'window to complete your authentication.',
-                '',
-                'If a browser window has not opened (e.g., if you''re using ssh to',
-                'access a server remotely), the following information outputted from',
-                'htgettoken may contain a URL that can be used to complete the',
-                'authentication.',
-                '',
-            ])
-
-            msg2 = '\n'.join([info, inner])
-
-            outer = MessageBox(
-                        msg2, 
-                        width=outer_width, 
-                        outer_border='strong', 
-                        border_color=Style.warning._fg)
-            print(outer)
-        #.....................................................................
-        
-        #
-        # do_refresh()
-        #
-
-        logger.warning("Refreshing tokens")
-        global _refresh_required
-        
-        proc = create_proc()
-
-        osf_stdout = output_so_far(proc.stdout)
-        osf_stderr = output_so_far(proc.stderr)
-
-        timed_out = None
-        #displayed_response = False
-        interval = 10
-        total_time = 0
-        max_time = 120
-
-        last_stdout = ""
-        last_stderr = ""
-
-        while True:
-            timed_out = False
-            try:
-                proc.wait(interval)
-                timed_out = False
-            except subprocess.TimeoutExpired as err:
-                timed_out = True
-
-            if not timed_out:
-                break
-
-            total_time += interval
-            if total_time >= max_time:
-                break
-
-            current_stdout = osf_stdout.read().decode('utf-8')
-            current_stderr = osf_stderr.read().decode('utf-8')
-
-            if current_stdout != last_stdout:
-                display_message(current_stdout, total_time)
-                last_stdout = current_stdout
-            if current_stderr != last_stderr:
-                display_message(current_stderr, total_time)
-                last_stderr = current_stderr
-
-
-        if timed_out:
-            proc.kill()
-        current_stdout = osf_stdout.read_all().decode('utf-8')
-        current_stderr = osf_stderr.read_all().decode('utf-8')
-        
-        #if current_stdout != last_stdout:
-        #    display_message(current_stdout)
-        #    last_stdout = current_stdout
-        #if current_stderr != last_stderr:
-        #    display_message(current_stderr)
-        #    last_stderr = current_stderr
-
-        if proc.returncode is None:
-            err = "The call to htgettoken timed out."
-            msg = "".join(
-                        [
-                            err, '\n',
-                            f"stdout: {current_stdout} ",
-                            f"stderr: {current_stderr} ",
-                        ])
-            logger.error(msg)
-            raise RuntimeError(err)
-        elif proc.returncode != 0:
-            err = "The call to htgettoken failed."
-            msg = "".join(
-                        [
-                            err, '\n',
-                            f"stdout: {current_stdout} ",
-                            f"stderr: {current_stderr} ",
-                        ])
-            logger.error(msg)
-            raise RuntimeError(err)
-
-        msg = ("The call to htgettoken succeeded. "
-                f"stdout: {current_stdout} "
-                f"stderr: {current_stderr} ")
-        logger.info(msg)
-
-        _refresh_required = False
-
-    #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    
-    #
-    # refresh_token()
-    #
-
-    global thread_local
-    global bearer_header
-
-    logger.debug("Attempting to refresh token")
-    with authentication_lock:
-        if _refresh_required:
-
-            do_refresh()
-            bearer_header = None
-
-            logger.debug("Finished refreshing token")
-        else:
-            logger.debug("Token already refreshed by another thread (?)")
-    #}}}    
-
-#-----------------------------------------------------------------------------
 
 class retry:
     #{{{
@@ -388,10 +115,12 @@ class retry:
 
         @functools.wraps(function)
         def wrapped_function(*args, **kwargs):
-            global _refresh_required
+            #global _refresh_required
 
-            status_callback = kwargs.pop("status_callback", 
-                                    session_kwargs.get("status_callback", None))
+            #status_callback = kwargs.pop("status_callback", 
+            #                        session_kwargs.get("status_callback", None))
+            status_callback = kwargs.pop("status_callback", None)
+
             if status_callback is not None:
                 update_status = lambda msg: status_callback(msg)
             else:
@@ -400,6 +129,7 @@ class retry:
             timeouts = kwargs.pop("timeouts", None)
             retries = kwargs.pop("retries", None)
             timeout = kwargs.pop("timeout", None)
+            profile = kwargs.get("profile", config.active_profile)
 
             if timeouts is not None:
                 retries = len(timeouts)
@@ -415,10 +145,9 @@ class retry:
             logger.debug(f"Wrapper function is assigned {retries} retries")
             for try_num in range(retries):
                 try:
-                    if type(last_err) is ExpiredSignature:
-                        _refresh_required = True
-                        logger.debug("Signature expired. Must refresh.")
-                        refresh_token()
+                    if type(last_err) in (ExpiredSignature, CurrentlyUnavailable):
+                        SessionManager(profile).profile_manager.refresh()                        
+
                 except Exception as exc:
                     logger.error(f"Failed to refresh token: {exc}")
 
@@ -472,8 +201,19 @@ class retry:
                             f"(attempt #{try_num+1})")
                     logger.warning(msg)
                     last_err = err
+                except CurrentlyUnavailable as err:
+                    msg = (f"Server claims this is currently unavailable in {function.__name__} "
+                            f"in thread '{threading.current_thread().name}' "
+                            f"(attempt #{try_num+1})")
+                    logger.warning(msg)
+                    time.sleep(5)
+                    last_err = err
                 except Exception as exc:
-                    msg = (f"Exception: {type(exc)} ""{exc}"" while calling {function.__name__} "
+                    # If we don't recognize the exception, assume that there
+                    # was actually somthing wrong with the request itself and
+                    # not something that trying again would fix. Re-raise
+                    # the exception.
+                    msg = (f"Exception: {type(exc)} \"{exc}\" while calling {function.__name__} "
                             f"in thread '{threading.current_thread().name}' "
                             f"(attempt #{try_num+1})")
                     logger.error(msg)
@@ -545,11 +285,10 @@ def _request(method, url, *args, return_type="json", **kwargs):
             (new authentication system, March 2025)
     
     '''
-    global bearer_header
 
+    profile = kwargs.pop('profile', None) or config.active_profile
 
-    local_config = kwargs.pop('config', None) or config
-
+    session_manager = SessionManager(profile)
 
     threadname = threading.current_thread().name
     msg = (f"<_request> [{method.upper()}] "
@@ -565,28 +304,16 @@ def _request(method, url, *args, return_type="json", **kwargs):
         with log_lock:
             logger.debug(msg)
 
-    
-
-    session, authentication = get_session(use_config=local_config)
-
-    if authentication == 'token' and bearer_header is None:
-        try:
-            with open(config.bearer_token, 'r') as fp:
-                contents = fp.read().strip()
-                bearer_header = {'Authorization': f'Bearer {contents}'}
-        except FileNotFoundError as err:
-            _refresh_required = True
-            refresh_token()
-            with open(config.bearer_token, 'r') as fp:
-                contents = fp.read().strip()
-                bearer_header = {'Authorization': f'Bearer {contents}'}
-    elif authentication != 'token':
-        bearer_header = {}
+    #get_session(profile=profile)
+    #session = thread_local.session
+    #bearer_header = thread_local.bearer_header
 
     #
     #  Send the "get" request and handle possible errors
     #
-    augmented_kwargs = {**session_kwargs, **kwargs}
+    #augmented_kwargs = {**session_kwargs, **kwargs}
+    
+    augmented_kwargs = {**profile.settings.get(cfg.KW_EXTRA_KWARGS, {}), **kwargs}
         
     extra_info = \
     [
@@ -624,11 +351,11 @@ def _request(method, url, *args, return_type="json", **kwargs):
 
         else:
             with throttle_lock:
-                augmented_kwargs['headers'] = {
-                        **augmented_kwargs.get('headers', {}),
-                        **bearer_header
-                }
-                resp = session.request(method, url, *args, **augmented_kwargs)
+                #augmented_kwargs['headers'] = {
+                #        **augmented_kwargs.get('headers', {}),
+                #        **bearer_header
+                #}
+                resp = session_manager.session.request(method, url, *args, **augmented_kwargs)
 
 
     except requests.exceptions.ConnectionError as conn_err:
@@ -699,7 +426,15 @@ def _request(method, url, *args, return_type="json", **kwargs):
                     extra_info.append(f"| exc_type: {exc_type.__name__}")
                     logger.info('\n'.join(extra_info))
                 raise exc_type(msg) from None    
-        
+            if "currently unavailable" in resp.text:
+                msg = "The certificate was not accepted by the server."
+                with log_lock:
+                    exc_type = CurrentlyUnavailable
+                    logger.error(msg)
+                    extra_info.append(f"| exc_type: {exc_type.__name__}")
+                    logger.info('\n'.join(extra_info))
+                raise exc_type(msg) from None       
+ 
             else:
                 msg = "The server response was not valid JSON. Check logs for details."
                 with log_lock:
@@ -825,9 +560,10 @@ def _patch(url, data, *args, **kwargs):
 
 def get_hwitem_image_list(part_id, **kwargs):
     #{{{
-    logger.debug(f"<get_hwitem_images>")
+    logger.debug(f"<{func_name()}>")
+    profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/components/{sanitize(part_id)}/images"
-    url = f"https://{config.rest_api}/{path}"
+    url = f"https://{profile.rest_api}/{path}"
 
     resp = _get(url, **kwargs)
     return resp
@@ -845,9 +581,10 @@ def post_hwitem_image(part_id, data, filename, **kwargs):
     }
     """
     
-    logger.debug(f"<post_hwitem_image> part_id={part_id}, filename={filename}")
+    logger.debug(f"<{func_name()}> part_id={part_id}, filename={filename}")
+    profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/components/{sanitize(part_id)}/images"
-    url = f"https://{config.rest_api}/{path}"
+    url = f"https://{profile.rest_api}/{path}"
 
     with open(filename, 'rb') as fp:
         files = {
@@ -865,9 +602,10 @@ def post_hwitem_image(part_id, data, filename, **kwargs):
 
 def get_component_type_image_list(part_type_id, **kwargs):
     #{{{
-    logger.debug(f"<get_component_images>")
-    path = f"api/v1/component-types/{part_type_id}/images"
-    url = f"https://{config.rest_api}/{path}"
+    logger.debug(f"<{func_name()}>")
+    profile = kwargs.get('profile', config.active_profile)
+    path = f"api/v1/component-types/{sanitize(part_type_id)}/images"
+    url = f"https://{profile.rest_api}/{path}"
     
     resp = _get(url, **kwargs)
     return resp
@@ -890,9 +628,10 @@ def get_test_image_list(part_id, test_id, **kwargs):
 
     The oid represents a test record for a test type for an item.
     """
-    logger.debug(f"<get_test_image_list> part_id={part_id}, test_id={test_id}")
-    path = f"api/v1/components/{part_id}/tests/{test_type_id}/images"
-    url = f"https://{config.rest_api}/{path}"
+    logger.debug(f"<{func_name()}> part_id={part_id}, test_id={test_id}")
+    profile = kwargs.get('profile', config.active_profile)
+    path = f"api/v1/components/{sanitize(part_id)}/tests/{sanitize(test_type_id)}/images"
+    url = f"https://{profile.rest_api}/{path}"
     
     resp = _get(url, **kwargs)
     #}}}
@@ -912,9 +651,10 @@ def post_test_image(test_id, data, filename, **kwargs):
 
 def get_image(image_id, write_to_file=None, **kwargs):
     #{{{
-    logger.debug(f"<get_image>")
+    logger.debug(f"<{func_name()}>")
+    profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/img/{image_id}"
-    url = f"https://{config.rest_api}/{path}"
+    url = f"https://{profile.rest_api}/{path}"
     
     resp = _get(url, return_type="raw", **kwargs)
 
@@ -929,9 +669,10 @@ def get_image(image_id, write_to_file=None, **kwargs):
 
 def get_hwitem_qrcode(part_id, write_to_file=None, **kwargs):
     #{{{
-    logger.debug(f"<get_hwitem_qrcode> part_id={part_id}")
+    logger.debug(f"<{func_name()}> part_id={part_id}")
+    profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/get-qrcode/{sanitize(part_id)}"
-    url = f"https://{config.rest_api}/{path}"
+    url = f"https://{profile.rest_api}/{path}"
     
     resp = _get(url, return_type="raw", **kwargs)
     
@@ -946,9 +687,10 @@ def get_hwitem_qrcode(part_id, write_to_file=None, **kwargs):
 
 def get_hwitem_barcode(part_id, write_to_file=None, **kwargs):
     #{{{
-    logger.debug(f"<get_hwitem_barcode> part_id={part_id}")
+    logger.debug(f"<{func_name()}> part_id={part_id}")
+    profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/get-barcode/{sanitize(part_id)}"
-    url = f"https://{config.rest_api}/{path}"
+    url = f"https://{profile.rest_api}/{path}"
     
     resp = _get(url, return_type="raw", **kwargs)
     
@@ -1015,9 +757,10 @@ def get_hwitem(part_id, **kwargs):
         }
     """
 
-    logger.debug(f"<get_hwitem> part_id={part_id}")
+    logger.debug(f"<{func_name()}> part_id={part_id}")
+    profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/components/{sanitize(part_id)}"
-    url = f"https://{config.rest_api}/{path}"
+    url = f"https://{profile.rest_api}/{path}"
     
     resp = _get(url, **kwargs) 
     return resp
@@ -1028,11 +771,12 @@ def get_hwitem(part_id, **kwargs):
 def get_hwitems(part_type_id, *,
                 page=None, size=None, fields=None, serial_number=None, part_id=None, **kwargs):
     #{{{
-    logger.debug(f"<get_component_types> part_type_id={part_type_id},"
+    logger.debug(f"<{func_name()}> part_type_id={part_type_id},"
                 f"page={page}, size={size}, fields={fields}, "
                 f"serial_number={serial_number}, part_id={part_id}")
+    profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/component-types/{sanitize(part_type_id)}/components"
-    url = f"https://{config.rest_api}/{path}"
+    url = f"https://{profile.rest_api}/{path}"
 
     params = []
     if page is not None:
@@ -1078,9 +822,10 @@ def post_hwitem(part_type_id, data, **kwargs):
         }
     """
 
-    logger.debug(f"<post_hwitem> part_type_id={part_type_id}")
+    logger.debug(f"<{func_name()}> part_type_id={part_type_id}")
+    profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/component-types/{sanitize(part_type_id)}/components" 
-    url = f"https://{config.rest_api}/{path}" 
+    url = f"https://{profile.rest_api}/{path}" 
     
     resp = _post(url, data=data, **kwargs)
     return resp
@@ -1111,9 +856,10 @@ def patch_hwitem(part_id, data, **kwargs):
         }
     """
 
-    logger.debug(f"<patch_hwitem> part_id={part_id}")
+    logger.debug(f"<{func_name()}> part_id={part_id}")
+    profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/components/{sanitize(part_id)}" 
-    url = f"https://{config.rest_api}/{path}"
+    url = f"https://{profile.rest_api}/{path}"
     
     resp = _patch(url, data=data, **kwargs)
     return resp
@@ -1123,9 +869,10 @@ def patch_hwitem(part_id, data, **kwargs):
 
 def post_bulk_hwitems(part_type_id, data, **kwargs):
     #{{{
-    logger.debug(f"<post_bulk_hwitems> part_type_id={part_type_id}")
+    logger.debug(f"<{func_name()}> part_type_id={part_type_id}")
+    profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/component-types/{sanitize(part_type_id)}/bulk-add"
-    url = f"https://{config.rest_api}/{path}"
+    url = f"https://{profile.rest_api}/{path}"
                 
     resp = _post(url, data=data, **kwargs)
     return resp
@@ -1157,9 +904,10 @@ def patch_hwitem_enable(part_id, data, **kwargs):
     Note: at the time of this writing, "comments" overwrites the comment for
     the item itself!
     """
-    logger.debug(f"<patch_hwitem_enable> part_id={part_id}")
+    logger.debug(f"<{func_name()}> part_id={part_id}")
+    profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/components/{sanitize(part_id)}/enable"
-    url = f"https://{config.rest_api}/{path}"
+    url = f"https://{profile.rest_api}/{path}"
 
     resp = _patch(url, data=data, **kwargs)
     return resp
@@ -1194,9 +942,10 @@ def patch_hwitem_status(part_id, data, **kwargs):
     Note: at the time of this writing, "comments" overwrites the comment for
     the item itself!
     """
-    logger.debug(f"<patch_hwitem_enable> part_id={part_id}")
+    logger.debug(f"<{func_name()}> part_id={part_id}")
+    profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/components/{sanitize(part_id)}/status"
-    url = f"https://{config.rest_api}/{path}"
+    url = f"https://{profile.rest_api}/{path}"
 
     resp = _patch(url, data=data, **kwargs)
     return resp
@@ -1206,9 +955,10 @@ def patch_hwitem_status(part_id, data, **kwargs):
  
 def get_subcomponents(part_id, **kwargs):
     #{{{
-    logger.debug(f"<get_subcomponents> part_id={part_id}")
+    logger.debug(f"<{func_name()}> part_id={part_id}")
+    profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/components/{sanitize(part_id)}/subcomponents" 
-    url = f"https://{config.rest_api}/{path}"
+    url = f"https://{profile.rest_api}/{path}"
     
     resp = _get(url, **kwargs)
     return resp
@@ -1218,9 +968,10 @@ def get_subcomponents(part_id, **kwargs):
 
 def patch_subcomponents(part_id, data, **kwargs):
     #{{{
-    logger.debug(f"<patch_subcomponents> part_id={part_id}")
+    logger.debug(f"<{func_name()}> part_id={part_id}")
+    profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/components/{sanitize(part_id)}/subcomponents" 
-    url = f"https://{config.rest_api}/{path}"
+    url = f"https://{profile.rest_api}/{path}"
     
     resp = _patch(url, data=data, **kwargs)
     return resp
@@ -1256,9 +1007,10 @@ def get_hwitem_locations(part_id, **kwargs):
             "status": "OK"
         }    
     """
-    logger.debug(f"<get_hwitem_locations> part_id={part_id}")
+    logger.debug(f"<{func_name()}> part_id={part_id}")
+    profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/components/{sanitize(part_id)}/locations"
-    url = f"https://{config.rest_api}/{path}"
+    url = f"https://{profile.rest_api}/{path}"
     
     resp = _get(url, **kwargs) 
     return resp
@@ -1293,8 +1045,9 @@ def post_hwitem_location(part_id, data, **kwargs):
     """
     
     logger.debug(f"<post_hwitem_location> part_id={part_id}")
+    profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/components/{sanitize(part_id)}/locations"
-    url = f"https://{config.rest_api}/{path}"
+    url = f"https://{profile.rest_api}/{path}"
     
     resp = _post(url, data, **kwargs) 
     return resp
@@ -1339,9 +1092,10 @@ def get_component_type(part_type_id, **kwargs):
         }
     """
 
-    logger.debug(f"<get_component_type> part_type_id={part_type_id}")
+    logger.debug(f"<{func_name()}> part_type_id={part_type_id}")
+    profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/component-types/{sanitize(part_type_id)}"
-    url = f"https://{config.rest_api}/{path}"
+    url = f"https://{profile.rest_api}/{path}"
    
     resp = _get(url, **kwargs) 
     return resp
@@ -1384,10 +1138,11 @@ def patch_component_type(part_type_id, data, **kwargs):
 
     """
 
-    logger.debug(f"<patch_component_type> part_type_id={part_type_id} "
+    logger.debug(f"<{func_name()}> part_type_id={part_type_id} "
                 "data={data}")
+    profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/component-types/{sanitize(part_type_id)}"
-    url = f"https://{config.rest_api}/{path}"
+    url = f"https://{profile.rest_api}/{path}"
 
     resp = _patch(url, data=data, **kwargs)
     return resp
@@ -1397,9 +1152,10 @@ def patch_component_type(part_type_id, data, **kwargs):
 
 def get_component_type_connectors(part_type_id, **kwargs):
     #{{{
-    logger.debug(f"<get_component_type_connectors> part_type_id={part_type_id}")
+    logger.debug(f"<{func_name()}> part_type_id={part_type_id}")
+    profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/component-types/{sanitize(part_type_id)}/connectors"
-    url = f"https://{config.rest_api}/{path}"
+    url = f"https://{profile.rest_api}/{path}"
     
     resp = _get(url, **kwargs) 
     return resp
@@ -1409,9 +1165,10 @@ def get_component_type_connectors(part_type_id, **kwargs):
 
 def get_component_type_specifications(part_type_id, **kwargs):
     #{{{
-    logger.debug(f"<get_component_type_specifications> part_type_id={part_type_id}")
+    logger.debug(f"<{func_name()}> part_type_id={part_type_id}")
+    profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/component-types/{sanitize(part_type_id)}/specifications"
-    url = f"https://{config.rest_api}/{path}"
+    url = f"https://{profile.rest_api}/{path}"
     
     resp = _get(url, **kwargs) 
     return resp
@@ -1424,8 +1181,9 @@ def get_component_types(project_id, system_id, subsystem_id=None, *,
                         #part_type_id=None,
                         page=None, size=None, fields=None, **kwargs):
     #{{{
-    logger.debug(f"<get_component_types> project_id={project_id}, "
+    logger.debug(f"<{func_name()}> project_id={project_id}, "
                     f"system_id={system_id}, subsystem_id={subsystem_id}")
+    profile = kwargs.get('profile', config.active_profile)
     
     # There are actually two different REST API methods for this, one that
     # takes proj/sys/subsys and the other that takes only proj/sys. You 
@@ -1438,7 +1196,7 @@ def get_component_types(project_id, system_id, subsystem_id=None, *,
     else:
         path = (f"api/v1/component-types/{sanitize(project_id)}/"
                 f"{sanitize(system_id)}/{sanitize(subsystem_id)}")
-    url = f"https://{config.rest_api}/{path}"
+    url = f"https://{profile.rest_api}/{path}"
     
     params = []
     if page is not None:
@@ -1460,9 +1218,10 @@ def get_component_types(project_id, system_id, subsystem_id=None, *,
 
 def patch_hwitem_subcomp(part_id, data, **kwargs):
     #{{{
-    logger.debug(f"<patch_hwitem_subcomp> part_id={part_id}")
+    logger.debug(f"<{func_name()}> part_id={part_id}")
+    profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/components/{sanitize(part_id)}/subcomponents" 
-    url = f"https://{config.rest_api}/{path}" 
+    url = f"https://{profile.rest_api}/{path}" 
     
     resp = _patch(url, data=data, **kwargs)
     return resp
@@ -1472,9 +1231,10 @@ def patch_hwitem_subcomp(part_id, data, **kwargs):
 
 def post_hwitems_bulk(part_type_id, data, **kwargs):
     #{{{
-    logger.debug(f"<post_hwitems_bulk> type_id={part_type_id}")
+    logger.debug(f"<{func_name()}> part_type_id={part_type_id}")
+    profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/component-types/{sanitize(part_type_id)}/bulk-add" 
-    url = f"https://{config.rest_api}/{path}" 
+    url = f"https://{profile.rest_api}/{path}" 
     
     resp = _post(url, data=data, **kwargs)
     return resp
@@ -1484,9 +1244,10 @@ def post_hwitems_bulk(part_type_id, data, **kwargs):
 
 def patch_hwitems_bulk(part_type_id, data, **kwargs):
     #{{{
-    logger.debug(f"<patch_hwitems_bulk> type_id={part_type_id}")
+    logger.debug(f"<{func_name()}> type_id={part_type_id}")
+    profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/component-types/{sanitize(part_type_id)}/bulk-update" 
-    url = f"https://{config.rest_api}/{path}" 
+    url = f"https://{profile.rest_api}/{path}" 
     
     resp = _patch(url, data=data, **kwargs)
     return resp
@@ -1496,9 +1257,10 @@ def patch_hwitems_bulk(part_type_id, data, **kwargs):
 
 def patch_hwitems_enable_bulk(data, **kwargs):
     #{{{
-    logger.debug(f"<patch_hwitems_enable_bulk>")
+    logger.debug(f"<{func_name()}>")
+    profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/components/bulk-enable" 
-    url = f"https://{config.rest_api}/{path}" 
+    url = f"https://{profile.rest_api}/{path}" 
     
     resp = _patch(url, data=data, **kwargs)
     return resp
@@ -1521,9 +1283,10 @@ def get_test_types(part_type_id, **kwargs):
     specification.
     """
 
-    logger.debug(f"<get_test_types> part_type_id={part_type_id}")
-    path = f"api/v1/component-types/{part_type_id}/test-types"
-    url = f"https://{config.rest_api}/{path}"
+    logger.debug(f"<{func_name()}> part_type_id={part_type_id}")
+    profile = kwargs.get('profile', config.active_profile)
+    path = f"api/v1/component-types/{sanitize(part_type_id)}/test-types"
+    url = f"https://{profile.rest_api}/{path}"
 
     resp = _get(url, **kwargs)
     return resp
@@ -1544,10 +1307,11 @@ def get_test_type(part_type_id, test_type_id, **kwargs):
     of just the most recent entry.
     """
 
-    logger.debug(f"<get_test_type> part_type_id={part_type_id}, "
+    logger.debug(f"<{func_name()}> part_type_id={part_type_id}, "
                 f"test_type_id={test_type_id}")
-    path = f"api/v1/component-types/{part_type_id}/test-types/{test_type_id}"
-    url = f"https://{config.rest_api}/{path}"
+    profile = kwargs.get('profile', config.active_profile)
+    path = f"api/v1/component-types/{sanitize(part_type_id)}/test-types/{sanitize(test_type_id)}"
+    url = f"https://{profile.rest_api}/{path}"
 
     resp = _get(url, **kwargs)
     return resp
@@ -1565,9 +1329,10 @@ def get_test_type_by_oid(oid, **kwargs):
     to obtain the oid to use here.
     """
 
-    logger.debug(f"<get_test_type_by_oid> oid={oid}")
-    path = f"api/v1/component-test-types/{oid}"
-    url = f"https://{config.rest_api}/{path}"
+    logger.debug(f"<{func_name()}> oid={oid}")
+    profile = kwargs.get('profile', config.active_profile)
+    path = f"api/v1/component-test-types/{sanitize(oid)}"
+    url = f"https://{profile.rest_api}/{path}"
 
     resp = _get(url, **kwargs)
     return resp
@@ -1589,9 +1354,10 @@ def get_hwitem_tests(part_id, history=False, **kwargs):
     instead of the most recent.
     """
 
-    logger.debug(f"<get_hwitem_tests> part_id={part_id}")
-    path = f"api/v1/components/{part_id}/tests"
-    url = f"https://{config.rest_api}/{path}"
+    logger.debug(f"<{func_name()}> part_id={part_id}")
+    profile = kwargs.get('profile', config.active_profile)
+    path = f"api/v1/components/{sanitize(part_id)}/tests"
+    url = f"https://{profile.rest_api}/{path}"
 
     params = [("history", str(history).lower())]
     
@@ -1613,9 +1379,10 @@ def get_hwitem_test(part_id, test_type_id, history=False, **kwargs):
     This appears to be the only way to get the images for a test.
     """
 
-    logger.debug(f"<get_hwitem_test> part_id={part_id}, test_type_id={test_type_id}")
-    path = f"api/v1/components/{part_id}/tests/{test_type_id}"
-    url = f"https://{config.rest_api}/{path}"
+    logger.debug(f"<{func_name()}> part_id={part_id}, test_type_id={test_type_id}")
+    profile = kwargs.get('profile', config.active_profile)
+    path = f"api/v1/components/{sanitize(part_id)}/tests/{sanitize(test_type_id)}"
+    url = f"https://{profile.rest_api}/{path}"
 
     params = [("history", str(history).lower())]
     
@@ -1647,9 +1414,10 @@ def post_test_type(part_type_id, data, **kwargs):
     """
 
 
-    logger.debug(f"<post_test_types> part_type_id={part_type_id}")
-    path = f"api/v1/component-types/{part_type_id}/test-types"
-    url = f"https://{config.rest_api}/{path}"
+    logger.debug(f"<{func_name()}> part_type_id={part_type_id}")
+    profile = kwargs.get('profile', config.active_profile)
+    path = f"api/v1/component-types/{sanitize(part_type_id)}/test-types"
+    url = f"https://{profile.rest_api}/{path}"
 
     resp = _post(url, data=data, **kwargs)
     return resp
@@ -1682,9 +1450,10 @@ def patch_test_type(part_type_id, data, **kwargs):
     """
 
 
-    logger.debug(f"<patch_test_types> part_type_id={part_type_id}")
-    path = f"api/v1/component-types/{part_type_id}/test-types"
-    url = f"https://{config.rest_api}/{path}"
+    logger.debug(f"<{func_name()}> part_type_id={part_type_id}")
+    profile = kwargs.get('profile', config.active_profile)
+    path = f"api/v1/component-types/{sanitize(part_type_id)}/test-types"
+    url = f"https://{profile.rest_api}/{path}"
 
     resp = _patch(url, data=data, **kwargs)
     return resp
@@ -1711,9 +1480,10 @@ def post_test(part_id, data, **kwargs):
             "test_type_id": 563
         }
     '''
-    logger.debug(f"<post_test> part_id={part_id}")
+    logger.debug(f"<{func_name()}> part_id={part_id}")
+    profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/components/{part_id}/tests"
-    url = f"https://{config.rest_api}/{path}"
+    url = f"https://{profile.rest_api}/{path}"
 
     resp = _post(url, data=data, **kwargs)
     return resp
@@ -1753,9 +1523,10 @@ def whoami(**kwargs):
         }
     """
 
-    logger.debug(f"<whoami>")
+    logger.debug(f"<{func_name()}>")
+    profile = kwargs.get('profile', config.active_profile)
     path = "api/v1/users/whoami"
-    url = f"https://{config.rest_api}/{path}"
+    url = f"https://{profile.rest_api}/{path}"
     
     resp = _get(url, **kwargs)
     return resp 
@@ -1765,9 +1536,10 @@ def whoami(**kwargs):
 
 def get_countries(**kwargs):
     #{{{
-    logger.debug(f"<get_countries>")
+    logger.debug(f"<{func_name()}>")
+    profile = kwargs.get('profile', config.active_profile)
     path = "api/v1/countries"
-    url = f"https://{config.rest_api}/{path}"
+    url = f"https://{profile.rest_api}/{path}"
     
     resp = _get(url, **kwargs)
     return resp 
@@ -1777,9 +1549,10 @@ def get_countries(**kwargs):
 
 def get_institutions(**kwargs):
     #{{{
-    logger.debug(f"<get_institutions>")
+    logger.debug(f"<{func_name()}>")
+    profile = kwargs.get('profile', config.active_profile)
     path = "api/v1/institutions"
-    url = f"https://{config.rest_api}/{path}"
+    url = f"https://{profile.rest_api}/{path}"
     
     resp = _get(url, **kwargs)
     return resp 
@@ -1789,9 +1562,10 @@ def get_institutions(**kwargs):
 
 def get_manufacturers(**kwargs):
     #{{{
-    logger.debug(f"<get_manufacturers>")
+    logger.debug(f"<{func_name()}>")
+    profile = kwargs.get('profile', config.active_profile)
     path = "api/v1/manufacturers"
-    url = f"https://{config.rest_api}/{path}"
+    url = f"https://{profile.rest_api}/{path}"
     
     resp = _get(url, **kwargs)
     return resp 
@@ -1801,9 +1575,10 @@ def get_manufacturers(**kwargs):
 
 def get_projects(**kwargs):
     #{{{
-    logger.debug(f"<get_projects>")
+    logger.debug(f"<{func_name()}>")
+    profile = kwargs.get('profile', config.active_profile)
     path = "api/v1/projects"
-    url = f"https://{config.rest_api}/{path}"
+    url = f"https://{profile.rest_api}/{path}"
     
     resp = _get(url, **kwargs)
     return resp 
@@ -1813,9 +1588,10 @@ def get_projects(**kwargs):
 
 def get_roles(**kwargs):
     #{{{
-    logger.debug(f"<get_roles>")
+    logger.debug(f"<{func_name()}>")
+    profile = kwargs.get('profile', config.active_profile)
     path = "api/v1/roles"
-    url = f"https://{config.rest_api}/{path}"
+    url = f"https://{profile.rest_api}/{path}"
     
     resp = _get(url, **kwargs)
     return resp 
@@ -1825,9 +1601,10 @@ def get_roles(**kwargs):
 
 def get_users(**kwargs):
     #{{{
-    logger.debug(f"<get_users>")
+    logger.debug(f"<{func_name()}>")
+    profile = kwargs.get('profile', config.active_profile)
     path = "api/v1/users"
-    url = f"https://{config.rest_api}/{path}"
+    url = f"https://{profile.rest_api}/{path}"
     
     resp = _get(url, **kwargs)
     return resp 
@@ -1837,9 +1614,10 @@ def get_users(**kwargs):
 
 def get_user(user_id, **kwargs):
     #{{{
-    logger.debug(f"<get_user> user_id={user_id}")
-    path = f"api/v1/users/{user_id}"
-    url = f"https://{config.rest_api}/{path}"
+    logger.debug(f"<{func_name()}> user_id={user_id}")
+    profile = kwargs.get('profile', config.active_profile)
+    path = f"api/v1/users/{sanitize(user_id)}"
+    url = f"https://{profile.rest_api}/{path}"
     
     resp = _get(url, **kwargs)
     return resp 
@@ -1849,9 +1627,10 @@ def get_user(user_id, **kwargs):
 
 def get_role(role_id, **kwargs):
     #{{{
-    logger.debug(f"<get_role> role_id={role_id}")
-    path = f"api/v1/roles/{role_id}"
-    url = f"https://{config.rest_api}/{path}"
+    logger.debug(f"<{func_name()}> role_id={role_id}")
+    profile = kwargs.get('profile', config.active_profile)
+    path = f"api/v1/roles/{sanitize(role_id)}"
+    url = f"https://{profile.rest_api}/{path}"
     
     resp = _get(url, **kwargs)
     return resp 
@@ -1861,9 +1640,10 @@ def get_role(role_id, **kwargs):
 
 def get_subsystems(project_id, system_id, **kwargs):
     #{{{
-    logger.debug(f"<get_subsystems> project_id={project_id}, system_id={system_id}")
-    path = f"api/v1/subsystems/{project_id}/{system_id}"
-    url = f"https://{config.rest_api}/{path}"
+    logger.debug(f"<{func_name()}> project_id={project_id}, system_id={system_id}")
+    profile = kwargs.get('profile', config.active_profile)
+    path = f"api/v1/subsystems/{sanitize(project_id)}/{sanitize(system_id)}"
+    url = f"https://{profile.rest_api}/{path}"
     
     resp = _get(url, **kwargs)
     return resp
@@ -1873,10 +1653,11 @@ def get_subsystems(project_id, system_id, **kwargs):
 
 def get_subsystem(project_id, system_id, subsystem_id, **kwargs): 
     #{{{
-    logger.debug(f"<get_subsystem> project_id={project_id}, "
+    logger.debug(f"<{func_name()}> project_id={project_id}, "
                     "system_id={system_id}, subsystem_id={subsystem_id}")
-    path = f"api/v1/subsystems/{project_id}/{system_id}/{subsystem_id}"
-    url = f"https://{config.rest_api}/{path}"
+    profile = kwargs.get('profile', config.active_profile)
+    path = f"api/v1/subsystems/{sanitize(project_id)}/{sanitize(system_id)}/{sanitize(subsystem_id)}"
+    url = f"https://{profile.rest_api}/{path}"
     
     resp = _get(url, **kwargs)
     return resp
@@ -1886,9 +1667,10 @@ def get_subsystem(project_id, system_id, subsystem_id, **kwargs):
 
 def get_systems(project_id, **kwargs):
     #{{{
-    logger.debug(f"<get_systems> project_id={project_id}")
-    path = f"api/v1/systems/{project_id}"
-    url = f"https://{config.rest_api}/{path}"
+    logger.debug(f"<{func_name()}> project_id={project_id}")
+    profile = kwargs.get('profile', config.active_profile)
+    path = f"api/v1/systems/{sanitize(project_id)}"
+    url = f"https://{profile.rest_api}/{path}"
     
     resp = _get(url, **kwargs)
     return resp 
@@ -1898,9 +1680,10 @@ def get_systems(project_id, **kwargs):
 
 def get_system(project_id, system_id, **kwargs):
     #{{{
-    logger.debug(f"<get_system> project_id={project_id}, system_id={system_id}")
-    path = f"api/v1/systems/{project_id}/{system_id}"
-    url = f"https://{config.rest_api}/{path}"
+    logger.debug(f"<{func_name()}> project_id={project_id}, system_id={system_id}")
+    profile = kwargs.get('profile', config.active_profile)
+    path = f"api/v1/systems/{sanitize(project_id)}/{sanitize(system_id)}"
+    url = f"https://{profile.rest_api}/{path}"
     
     resp = _get(url, **kwargs)
     return resp 

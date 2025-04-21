@@ -19,7 +19,7 @@ from PyQt5 import QtWidgets as qtw
 class PreShipping3b(zw.PageWidget):
     page_name = "Pre-Shipping Workflow (3b)"
     page_short_name = "Pre-Shipping (3b)"
-    #{{{
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -86,8 +86,8 @@ class PreShipping3b(zw.PageWidget):
         self.setLayout(main_layout)
         #}}}
 
-    def update(self):
-        super().update()
+    def refresh(self):
+        super().refresh()
         
         if (
                 len(self.freight_forwarder.text()) > 0
@@ -96,5 +96,3 @@ class PreShipping3b(zw.PageWidget):
         else:
             self.nav_bar.continue_button.setEnabled(False)
 
-
-    #}}}

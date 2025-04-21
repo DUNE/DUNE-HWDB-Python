@@ -15,6 +15,7 @@ if LOG_ON_CREATION:
 
 
 class RestApiException(Exception):
+    """Base class for RestApi exceptions."""
     def __init__(self, *args, **kwargs):
         if LOG_ON_CREATION:
             msg = [f"'{type(self).__name__}' exception was created."]
@@ -28,9 +29,6 @@ class RestApiException(Exception):
                     "before this message.")
             logger.warning(" ".join(msg))
         super().__init__(*args, **kwargs)
-
-    """Base class for RestApi exceptions."""
-    pass
 
 class MissingArguments(RestApiException):
     """The function or method expected one or more parameters that were 
@@ -115,7 +113,6 @@ class BadDataFormat(DatabaseError):
     Typically, this means there are missing or extra fields.
     """
 
-
 class NameResolutionFailure(RestApiException):
     """The URL of the server could not be resolved"""
 
@@ -128,4 +125,35 @@ class NotFound(RestApiException):
 class MaxRecordsExceeded(RestApiException):
     """The query returned more records than is permitted in this context"""
 
+class CurrentlyUnavailable(RestApiException):
+    """The server replied that the resource was currently unavailable
 
+    Added April 11, 2025
+
+    The server returns code 502 and an HTML page stating:
+
+    ---------    
+    An error occurred.
+
+    Sorry, the page you are looking for is currently unavailable.
+    Please try again later.
+
+    If you are the system administrator of this resource then you should check
+    the error log for details.
+
+    Faithfully yours, nginx.
+    ---------
+
+    This appeared to happen frequently when uploading images. Subsequent 
+    requests often appear to be successful. 
+    
+    Use this new exception type to allow the "retry" wrapper to treat this
+    a lot like a timeout and to try the request again.
+    """
+
+class AuthenticationError(RestApiException):
+    """There was a problem with authentication
+
+    Added April 17, 2025
+    Using this when the call to htgettoken fails.
+    """

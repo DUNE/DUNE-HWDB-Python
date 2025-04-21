@@ -54,6 +54,41 @@ class PageWidget(qtw.QWidget):
         self.title_bar = TitleBar(owner = self)
         self.nav_bar = NavBar(owner = self)
 
+        self.master_layout = qtw.QStackedLayout()
+        self.master_layout.setStackingMode(qtw.QStackedLayout.StackAll)
+        super().setLayout(self.master_layout)
+        
+        self.main_widget = qtw.QWidget()
+
+        self.overlay = WaitOverlay()
+
+        self.master_layout.addWidget(self.overlay)
+        self.master_layout.addWidget(self.main_widget)
+        self.master_layout.setCurrentWidget(self.main_widget)
+
+    def setLayout(self, layout):
+        self.main_widget.setLayout(layout)
+
+    def wait(self):
+        page = self
+        class wait_mgr:
+            def __enter__(self):
+                page.start_waiting()
+            def __exit__(self, type, value, traceback):
+                page.stop_waiting()
+        return wait_mgr()
+                
+
+    def start_waiting(self):
+        self.master_layout.setCurrentWidget(self.overlay)
+        self.application.processEvents()
+    
+    def stop_waiting(self):
+        self.master_layout.setCurrentWidget(self.main_widget)
+        self.application.processEvents()
+    
+
+
     @property
     def page_name(self):
         try:
@@ -114,17 +149,17 @@ class PageWidget(qtw.QWidget):
         logger.info(f"{HLD}{self.__class__.__name__}.activate()")
         logger.info(f"(workflow init: {self.workflow._finished_init})")
         self.restore()
-        self.update()
+        self.refresh()
         self.application.update_status(self.page_name)
 
     def restore(self):
         for linked_widget in self.findChildren(LinkedWidget):
             linked_widget.restore()
 
-    def update(self):
+    def refresh(self):
         # overload this method to add an action when the content of the page
         # has changed, e.g., to enable/disable nav buttons
-        logger.info(f"{HLI}{self.__class__.__name__}.update()")
+        logger.info(f"{HLI}{self.__class__.__name__}.refresh()")
         self.title_bar.page_subtitle.restore()
 
     def on_navigate_next(self):
@@ -137,16 +172,40 @@ class PageWidget(qtw.QWidget):
         self.save()
         return True
 
-    #@property
-    #def working_directory(self):
-    #    if self.part_id is None:
-    #        retval = self.application.working_directory
-    #    else:
-    #        retval = os.path.normpath(
-    #                        os.path.join(self.application.working_directory, self.part_id))
-    #    os.makedirs(retval, exist_ok=True)
-    #    return retval
+
+    def close_tab(self):
+        curr_idx = self.application.tab_widget.indexOf(self.workflow)
+        self.application.close_tab(curr_idx)
+
+
     #}}}
+
+class WaitOverlay(qtw.QWidget):
+    #{{{
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.vertical_layout = qtw.QVBoxLayout()
+        self.horizontal_layout = qtw.QHBoxLayout()
+
+        self.overlay_widget = qtw.QLabel("Please Wait...")
+        self.overlay_widget.setStyleSheet(
+                "font-size: 20pt; "
+                "background-color: rgba(0, 0, 0, 64); ")
+        self.overlay_widget.setAlignment(qtc.Qt.AlignCenter)
+        self.overlay_widget.setMinimumSize(qtc.QSize(400, 300))
+        
+        self.horizontal_layout.addStretch()
+        self.horizontal_layout.addWidget(self.overlay_widget)
+        self.horizontal_layout.addStretch()
+
+        self.vertical_layout.addStretch()
+        self.vertical_layout.addLayout(self.horizontal_layout)
+        self.vertical_layout.addStretch()
+
+        self.setLayout(self.vertical_layout)
+    #}}}
+
 
 class TitleBar(qtw.QWidget):
     #{{{
@@ -200,9 +259,16 @@ class NavBar(qtw.QWidget):
         self.continue_button.setStyleSheet(STYLE_LARGE_BUTTON)
         self.continue_button.clicked.connect(self.owner.workflow.navigate_next)
 
+        self.close_tab_button = qtw.QPushButton("Close Tab")
+        self.close_tab_button.setStyleSheet(STYLE_LARGE_BUTTON)
+        self.close_tab_button.clicked.connect(self.owner.close_tab)
+
         main_layout.addWidget(self.back_button)
         main_layout.addStretch()
         main_layout.addWidget(self.continue_button)
+        main_layout.addWidget(self.close_tab_button)
+        self.close_tab_button.hide()
+
 
         self.setLayout(main_layout)
     #}}}
@@ -272,7 +338,7 @@ class ZCheckBox(qtw.QCheckBox, LinkedWidget):
 
     def handle_changed(self, status):
         self.page_state[self.page_state_key] = status
-        self.owner.update()
+        self.owner.refresh()
 
     def restore_state(self):
         super().restore_state()
@@ -290,7 +356,7 @@ class ZDateTimeEdit(qtw.QDateTimeEdit, LinkedWidget):
 
     def handle_changed(self):
         self.page_state[self.page_state_key] = self.dateTime().toString(qtc.Qt.DateFormat.ISODate)
-        self.owner.update()
+        self.owner.refresh()
 
     def restore_state(self):
         super().restore_state()
@@ -311,7 +377,7 @@ class ZLabel(qtw.QLabel, LinkedWidget):
     def setText(self, txt):
         self.page_state[self.page_state_key] = txt
         super().setText(txt)
-        #self.owner.update()
+        #self.owner.refresh()
 
     def restore_state(self):
         super().restore_state()
@@ -336,7 +402,7 @@ class ZLineEdit(qtw.QLineEdit, LinkedWidget):
     
     def handle_changed(self):
         self.page_state[self.page_state_key] = self.text()
-        self.owner.update()
+        self.owner.refresh()
 
     def restore_state(self):
         super().restore_state()
@@ -359,7 +425,7 @@ class ZTextEdit(qtw.QTextEdit, LinkedWidget):
 
     def handle_editingFinished(self):
         self.page_state[self.page_state_key] = self.document().toPlainText()
-        self.owner.update()
+        self.owner.refresh()
 
     def restore_state(self):
         super().restore_state()
@@ -391,7 +457,7 @@ class ZRadioButton(qtw.QRadioButton, LinkedWidget):
         if self.isChecked():
             logger.debug(f"{self.page_state_key}/{self.page_state_value}: checked")
             self.page_state[self.page_state_key] = self.page_state_value
-            self.owner.update()
+            self.owner.refresh()
             
     def restore_state(self):
         super().restore_state()
@@ -411,6 +477,7 @@ class ZRadioButtonGroup(qtw.QButtonGroup, LinkedWidget):
     def button(self, value):
         if value in self.buttons.keys():
             return self.buttons[value]
+        raise KeyError(f"button {value!r} does not exist in ZRadioButtonGroup")
 
     def create_button(self, value, caption=None):
         if value in self.buttons.keys():
@@ -468,7 +535,7 @@ class ZFileSelectWidget(qtw.QWidget, LinkedWidget):
 
     def handle_changed(self):
         self.page_state[self.page_state_key] = self.filename_lineedit.text()
-        self.owner.update()
+        self.owner.refresh()
 
     def restore_state(self):
         super().restore_state()
@@ -527,7 +594,7 @@ class ZInstitutionWidget(qtw.QWidget, LinkedWidget):
     def on_selectInstitution(self):
         self.institution_id = str(self.inst_widget.currentData())
         self.page_state[self.page_state_key] = str(self.institution_id)
-        self.owner.update()
+        self.owner.refresh()
 
     def restore_state(self):
         self.country_widget.blockSignals(True)

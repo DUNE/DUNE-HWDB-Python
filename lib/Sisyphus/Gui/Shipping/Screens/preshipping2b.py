@@ -18,17 +18,16 @@ from PyQt5 import QtWidgets as qtw
 import json
 
 
-class PreShipping2(zw.PageWidget):
-    page_name = "Pre-Shipping Workflow (2)"
-    page_short_name = "Pre-Shipping (2)"
+class PreShipping2b(zw.PageWidget):
+    page_name = "Pre-Shipping Workflow (2b)"
+    page_short_name = "Pre-Shipping (2b)"
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.page_name = "Pre-Shipping (2)"
 
         self.approver_name = zw.ZLineEdit(owner=self, key='approver_name')
         self.approver_email = zw.ZLineEdit(owner=self, key='approver_email')
-        self.test_info = zw.ZTextEdit(owner=self, key='test_info')
+        #self.test_info = zw.ZTextEdit(owner=self, key='test_info')
 
         self._setup_UI()
 
@@ -37,7 +36,6 @@ class PreShipping2(zw.PageWidget):
         main_layout = qtw.QVBoxLayout()
         main_layout.addWidget(self.title_bar)
         ########################################
-
 
         main_layout.addWidget(
             qtw.QLabel("Provide the person's name and email address who has approved this shipment")
@@ -49,7 +47,7 @@ class PreShipping2(zw.PageWidget):
 
         ################
 
-        contact_info_layout = qtw.QVBoxLayout(self)
+        contact_info_layout = qtw.QVBoxLayout()
 
         name_layout = qtw.QVBoxLayout()
         name_layout.addWidget(qtw.QLabel("Name"))
@@ -57,7 +55,7 @@ class PreShipping2(zw.PageWidget):
         name_layout.addWidget(self.approver_name)
         name_layout_widget = qtw.QWidget(self)
         name_layout_widget.setLayout(name_layout)
-
+        
         email_layout = qtw.QVBoxLayout()
         email_layout.addWidget(qtw.QLabel("Email"))
         email_layout.addWidget(self.approver_email)
@@ -75,6 +73,7 @@ class PreShipping2(zw.PageWidget):
 
         ################
 
+        '''
         test_info_label = qtw.QLabel("Provide information on where the corresponding QA/QC test results "
                 "can be found (e.g., link(s) to test results in the HWDB) and a EDMS or "
                 "doc-DB # of the corresponding documentation.")
@@ -88,9 +87,7 @@ class PreShipping2(zw.PageWidget):
         test_info_widget.setLayout(test_info_layout)
 
         main_layout.addWidget(test_info_widget)
-
-
-
+        '''
 
         ################
         main_layout.addStretch()
@@ -100,12 +97,12 @@ class PreShipping2(zw.PageWidget):
         self.setLayout(main_layout)
         #}}}
 
-    def update(self):
-        super().update()
+    def refresh(self):
+        super().refresh()
 
         if ( len(self.approver_name.text()) > 0 
-                and len(self.approver_email.text()) > 0
-                and len(self.test_info.toPlainText()) > 0 ):
+                and len(self.approver_email.text()) > 0):
+                #and len(self.test_info.toPlainText()) > 0 ):
             self.nav_bar.continue_button.setEnabled(True)
         else:
             self.nav_bar.continue_button.setEnabled(False)

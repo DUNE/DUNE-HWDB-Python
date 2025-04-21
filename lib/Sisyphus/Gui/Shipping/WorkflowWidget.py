@@ -22,8 +22,8 @@ import os
 from Sisyphus.Gui.Shipping.Screens import (
         SelectPID, SelectWorkflow,
         Packing1, PackingComplete,
-        PreShipping1, PreShipping2, PreShipping3a, PreShipping3b, PreShipping4,
-            PreShipping5, PreShipping6, PreShippingComplete,
+        PreShipping1, PreShipping2a, PreShipping2b, PreShipping3a, PreShipping3b,
+            PreShipping4, PreShipping5, PreShipping6, PreShippingComplete,
         Shipping1, Shipping2, Shipping3, Shipping4, Shipping5, 
             Shipping6, ShippingComplete,
         Transit1, TransitComplete,
@@ -122,7 +122,8 @@ class WorkflowWidget(qtw.QWidget):
             "PackingComplete": PackingComplete(owner=self),
 
             "PreShipping1": PreShipping1(owner=self),
-            "PreShipping2": PreShipping2(owner=self),
+            "PreShipping2a": PreShipping2a(owner=self),
+            "PreShipping2b": PreShipping2b(owner=self),
             "PreShipping3a": PreShipping3a(owner=self),
             "PreShipping3b": PreShipping3b(owner=self),
             "PreShipping4": PreShipping4(owner=self),
@@ -158,8 +159,9 @@ class WorkflowWidget(qtw.QWidget):
             "Packing1": "PackingComplete",
             "PackingComplete": None,
 
-            "PreShipping1": "PreShipping2",
-            "PreShipping2": "PreShipping3a",
+            "PreShipping1": "PreShipping2a",
+            "PreShipping2a": "PreShipping2b",
+            "PreShipping2b": "PreShipping3a",
             "PreShipping3a": "PreShipping3b",
             "PreShipping3b": "PreShipping4",
             "PreShipping4": "PreShipping5",
@@ -193,7 +195,8 @@ class WorkflowWidget(qtw.QWidget):
             "PackingComplete": None,
 
             "PreShipping1": "SelectWorkflow",
-            "PreShipping2": "PreShipping1",
+            "PreShipping2a": "PreShipping1",
+            "PreShipping2b": "PreShipping2a",
             "PreShipping3a": "PreShipping2",
             "PreShipping3b": "PreShipping3a",
             "PreShipping4": "PreShipping3b",

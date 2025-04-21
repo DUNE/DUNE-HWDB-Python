@@ -60,9 +60,8 @@ setattr(parse_part_type_id, 'regex', re.compile(
     $'''))
 #}}}
 
-
-
 class HWDBObject:
+    '''base class for HWDB objects'''
     #{{{
     @classmethod
     def caching(cls, dec_cls):
@@ -89,6 +88,9 @@ class HWDBObject:
 
         constructor_kwargs = {arg: kwargs.get(arg) for arg in cls._constructor_args}
 
+        profile = kwargs.pop('profile', None) or config.active_profile
+
+
         if len(constructor_kwargs) == 0:
             constructor_key = None
         elif len(constructor_kwargs) == 1:
@@ -108,19 +110,20 @@ class HWDBObject:
         # and the other will get a reference to the same object from
         # the cache.
         with cls._class_lock:
-            if constructor_key in cls._cache:
+            profile_cache = cls._cache.setdefault(profile.profile_name, {})
+            if constructor_key in profile_cache:
                 logger.debug(f"{HLD}returning object from cache")
                 cls._statistics['served_from_cache'] += 1
                 # NOTE: just because we're returning an object from the
                 # cache, it doesn't mean it won't try to call __init__!
                 # So, __init__ has to keep track of whether it has 
                 # already been initialized!
-                return cls._cache[constructor_key]
+                return profile_cache[constructor_key]
             else:
                 logger.debug(f"{HLD}creating new {cls.__name__} object")
                 cls._statistics['created'] += 1
                 new_obj = super().__new__(cls)
-                cls._cache[constructor_key] = new_obj
+                profile_cache[constructor_key] = new_obj
                 return new_obj
         #}}}
     
@@ -128,7 +131,13 @@ class HWDBObject:
         #{{{
         logger.debug(f"{HLD}{self.__class__.__name__}.__init__({kwargs})")
         
-        self.fwd_kwargs = {k: v for k, v in kwargs.items() if k == 'status_callback'}
+        # fwd_kwargs
+        # Any arguments found here should be passed along to the RestApiV1 
+        # functions. They should also be passed to any other HWDBObject-derived
+        # classes so that *they* can pass it to any RestApiV1 functions
+        # *they* use.
+        self.fwd_kwargs = {k: v for k, v in kwargs.items() 
+                    if k in ('profile', 'status_callback')}
 
         with self.__class__._class_lock:
             if not getattr(self, "_instance_lock", None):
@@ -183,11 +192,23 @@ class HWDBObject:
                 self._data[future_name] = self._futures[future_name].result()
                 del self._futures[future_name]
             return self._data.get(future_name)
-    #}}}
 
+    def join(self):
+        '''waits for all 'futures' to finish'''
+
+        logger.info(f"{HLI}{self.__class__.__name__}.join()")
+
+        futures = list(self._futures)
+        for future_name in futures:
+            result = self._get_results(future_name)
+            if isinstance(result, HWDBObject):
+                result.join()
+
+    #}}}
 
 @HWDBObject.caching
 class WhoAmI(HWDBObject):
+    '''represents the current authenticated user'''
     #{{{
     _constructor_args = [] # No args. Just get the whole list.
     
@@ -206,6 +227,7 @@ class WhoAmI(HWDBObject):
 
 @HWDBObject.caching
 class Institutions(HWDBObject):
+    '''represents a list of institutions'''
     #{{{
     _constructor_args = [] # No args. Just get the whole list.
     
@@ -224,6 +246,7 @@ class Institutions(HWDBObject):
 
 @HWDBObject.caching
 class System(HWDBObject):
+    '''represents a system'''
     #{{{
     _constructor_args = ['project_id', 'system_id']
     
@@ -254,6 +277,7 @@ class System(HWDBObject):
 
 @HWDBObject.caching
 class Subsystem(HWDBObject):
+    '''represents a subsystem'''
     #{{{
     _constructor_args = ['project_id', 'system_id', 'subsystem_id']
     
@@ -284,6 +308,7 @@ class Subsystem(HWDBObject):
 
 @HWDBObject.caching
 class ComponentType(HWDBObject):
+    '''represents the component type information for items/parts'''
     #{{{
     _constructor_args = ['part_type_id']   
 
@@ -316,7 +341,8 @@ class ComponentType(HWDBObject):
 
 @HWDBObject.caching
 class HWItem(HWDBObject):
-
+    '''represents an item (or part) in the HWDB'''
+    #{{{
     _constructor_args = ['part_id']
 
 
@@ -427,10 +453,11 @@ def main():
     #status_callback = lambda msg: Style.debug.print(f"callback: {msg}", flush=True)
     #fwd_kwargs = {"status_callback": status_callback}
     fwd_kwargs = {}
-
     part_id = ''
-    if len(sys.argv) > 1:
-        part_ids = sys.argv[1:]
+    if len(config.remaining_args) > 1:
+        part_ids = config.remaining_args[1:]
+    else:
+        part_ids = []
 
     ###############################
     ##
@@ -439,7 +466,10 @@ def main():
     ###############################
     print()
     title_style.print("Parts List")
-    print('\n'.join(part_ids))
+    if part_ids:
+        print('\n'.join(part_ids))
+    else:
+        print('No part selected.')
 
     ################################################
     ##
@@ -449,6 +479,11 @@ def main():
     whoami_future = _executor.submit(WhoAmI, **fwd_kwargs)
     hwitems_future = [ (part_id, _executor.submit(HWItem, part_id=part_id, **fwd_kwargs))
                         for part_id in part_ids ]
+
+
+    #for future in concurrent.futures.as_completed(???):
+
+
 
     ########################################
     ##
@@ -482,6 +517,8 @@ def main():
         try:
             hwitem = future.result()
             hwitems.append( (part_id, hwitem))
+            #Style.error.print(f"{part_id} -> join")
+            #hwitem.join()
         except Exception as exc:
             hwitems.append( (part_id, exc))
 
@@ -491,7 +528,9 @@ def main():
         title_style.print(part_id)
         
         if isinstance(result, Exception):
-            Style.error.print(f"Exception Type: {type(Exception)}")
+            exc = result
+            Style.error.print(f"Exception Type: {type(exc)}")
+            Style.error.print(f"Exception: {exc}")
             continue
         else:
             hwitem = result
@@ -527,12 +566,13 @@ def main():
         obj_type_name = obj_type.__name__
         print()
         Style.debug.print(f"{obj_type_name} cache keys:")
-        Style.debug.print(list(obj_type._cache.keys()))
+        for profile_name, cache in obj_type._cache.items():
+            Style.debug.print(f"{profile_name}: {list(cache.keys())}")
         print()
         Style.debug.print(f"{obj_type_name} statistics:")
         Style.debug.print(json.dumps(obj_type._statistics, indent=4))
 
-    if False:
+    if True:
         print()
         debug_title_style.print(f"Execution Statistics")
 

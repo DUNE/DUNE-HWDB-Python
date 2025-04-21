@@ -31,7 +31,7 @@ class SelectWorkflow(zw.PageWidget):
         self.workflow_type = zw.ZRadioButtonGroup(
                         owner=self, key='workflow_type', default='preshipping')
 
-        self.workflow_type.create_button("packing", "Packing")
+        #self.workflow_type.create_button("packing", "Packing")
         self.workflow_type.create_button("preshipping", "Pre-Shipping")
         self.workflow_type.create_button("shipping", "Shipping")
         self.workflow_type.create_button("transit", "Transit")
@@ -55,7 +55,7 @@ class SelectWorkflow(zw.PageWidget):
 
         main_layout.addSpacing(20)
 
-        main_layout.addWidget(self.workflow_type.button("packing"))
+        #main_layout.addWidget(self.workflow_type.button("packing"))
         main_layout.addWidget(self.workflow_type.button("preshipping"))
         main_layout.addWidget(self.workflow_type.button("shipping"))
         main_layout.addWidget(self.workflow_type.button("transit"))
@@ -73,8 +73,8 @@ class SelectWorkflow(zw.PageWidget):
     def save(self):
         super().save()
 
-    def update(self):
-        super().update()
+    def refresh(self):
+        super().refresh()
         if self.page_state.get('workflow_type', None) is not None:
             self.nav_bar.continue_button.setEnabled(True)
         else:

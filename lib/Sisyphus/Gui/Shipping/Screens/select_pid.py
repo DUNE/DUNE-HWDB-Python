@@ -25,20 +25,21 @@ class SelectPID(zw.PageWidget):
         #{{{
         super().__init__(*args, **kwargs)
         
-        default_name = self.app_state.setdefault('default_name')
-        default_email = self.app_state.setdefault('default_email')
+        #default_name = self.app_state.setdefault('default_name')
+        #default_email = self.app_state.setdefault('default_email')
+
         default_result_msg = "<i>(Enter a PID and click 'find')</i>"
 
-        self.name_text_box = zw.ZLineEdit(owner=self, key='user_name', default=default_name)
-        self.email_text_box = zw.ZLineEdit(owner=self, key='user_email', default=default_email)
+        #self.name_text_box = zw.ZLineEdit(owner=self, key='user_name', default=default_name)
+        #self.email_text_box = zw.ZLineEdit(owner=self, key='user_email', default=default_email)
         
         self.pid_search_result_label = zw.ZLabel(
                     owner=self, key='search_result_message', default=default_result_msg)
         
         self.pid_text_box = zw.ZLineEdit(owner=self, key='search_part_id')
 
-        #self.completer = QCompleter(['D00599800007-00085', 'D00599800007-00084', 'D00599800007-00083'])
-        #self.pid_text_box.setCompleter(self.completer)
+        self.completer = qtw.QCompleter(sorted(self.app_state.setdefault('recent_searches', [])))
+        self.pid_text_box.setCompleter(self.completer)
 
 
         self.find_button = qtw.QPushButton("find")
@@ -56,6 +57,8 @@ class SelectPID(zw.PageWidget):
         main_layout.addWidget(self.title_bar)
 
         ############
+
+        '''
         frame = qtw.QFrame()
         frame.setFrameStyle(qtw.QFrame.Box | qtw.QFrame.Sunken)
         frame.setLineWidth(2)
@@ -74,6 +77,8 @@ class SelectPID(zw.PageWidget):
         ############
         main_layout.addWidget(qtw.QLabel("Your email:"))
         main_layout.addWidget(self.email_text_box)
+        '''
+
         main_layout.addSpacing(10)
 
         ##########
@@ -111,12 +116,14 @@ class SelectPID(zw.PageWidget):
         #{{{
         part_id = self.page_state['search_part_id']
 
-        workflow_state = mdl.download_part_info(part_id,
+        with self.wait():
+            workflow_state = mdl.download_part_info(part_id,
                             status_callback=self.application.update_status)
         
         if workflow_state is None:
             msg = f'''<div style="color: #990000">{part_id} not found!</div>'''
         else:
+            self.append_recent_search(part_id)
             part_info = workflow_state['part_info']
             subcomponent_info = part_info['subcomponents'].values()
             msg = ''.join([
@@ -132,17 +139,32 @@ class SelectPID(zw.PageWidget):
                 f"</td></tr>",
                 "</table>",
             ]) 
+            self.workflow_state.update(workflow_state)
+        
         self.pid_search_result_label.setText(msg)
         
-        self.workflow_state.update(workflow_state)
-        self.update() 
+        self.refresh() 
         #}}}
     
+    def append_recent_search(self, part_id):
+        rs = self.app_state['recent_searches']
+
+        if part_id in rs:
+            rs.remove(part_id)
+        
+        rs.insert(0, part_id)
+        rs = rs[:25]
+
+        self.completer = qtw.QCompleter(rs)
+        self.pid_text_box.setCompleter(self.completer)
+
     def save(self):
         #{{{
         super().save()
         
         self.workflow_state['search_part_id'] = self.pid_text_box.text().strip()
+
+        '''
         self.workflow_state['user_name'] = self.name_text_box.text().strip()
         self.workflow_state['user_email'] = self.email_text_box.text().strip()
 
@@ -151,6 +173,8 @@ class SelectPID(zw.PageWidget):
 
         if self.workflow_state['user_email'] != "":
             self.app_state['default_email'] = self.workflow_state['user_email']
+        '''
+
 
         self.parent().save()
 
@@ -160,10 +184,10 @@ class SelectPID(zw.PageWidget):
         #{{{
         super().restore()
 
-    def update(self):
+    def refresh(self):
         #{{{
-        logger.debug(f"{self.__class__.__name__}.update()")
-        super().update()
+        logger.debug(f"{self.__class__.__name__}.refresh()")
+        super().refresh()
         
         self.nav_bar.back_button.setEnabled(False)
         self.nav_bar.back_button.setVisible(False)

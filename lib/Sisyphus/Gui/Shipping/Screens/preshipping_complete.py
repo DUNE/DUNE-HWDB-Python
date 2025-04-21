@@ -15,7 +15,6 @@ from PyQt5 import QtWidgets as qtw
 ###############################################################################
 
 class PreShippingComplete(zw.PageWidget):
-    #{{{
     page_name = "Pre-Shipping Workflow Complete"
     page_short_name = "Pre-Shipping Complete"
 
@@ -23,7 +22,7 @@ class PreShippingComplete(zw.PageWidget):
         super().__init__(*args, **kwargs)
 
         self._setup_UI()
-        self.update()
+        self.refresh()
         
 
     def _setup_UI(self):
@@ -45,12 +44,8 @@ class PreShippingComplete(zw.PageWidget):
         self.setLayout(main_layout)
 
 
-    def update(self):
+    def refresh(self):
+        super().refresh()
         self.nav_bar.back_button.setEnabled(False)
         self.nav_bar.continue_button.setEnabled(False)
-
-
-    #}}}
-
-
 

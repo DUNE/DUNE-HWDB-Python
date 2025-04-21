@@ -74,9 +74,9 @@ class Transit1(zw.PageWidget):
         self.setLayout(main_layout)
         #}}}
 
-    def update(self):
+    def refresh(self):
         #{{{
-        super().update()
+        super().refresh()
 
         if not self.new_location.institution_id:
             self.nav_bar.continue_button.setEnabled(False)

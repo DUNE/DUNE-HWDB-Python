@@ -13,7 +13,8 @@ from .packing1 import Packing1
 from .packing_complete import PackingComplete
 
 from .preshipping1 import PreShipping1
-from .preshipping2 import PreShipping2
+from .preshipping2a import PreShipping2a
+from .preshipping2b import PreShipping2b
 from .preshipping3a import PreShipping3a
 from .preshipping3b import PreShipping3b
 from .preshipping4 import PreShipping4

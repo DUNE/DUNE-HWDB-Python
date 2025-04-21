@@ -131,13 +131,13 @@ class PreShipping3a(zw.PageWidget):
         self.setLayout(main_layout)
         #}}}
 
-    def update(self):
+    def refresh(self):
         #{{{
-        super().update()
+        super().refresh()
 
         if self.page_state.get('shipping_service_type', None) == 'International':
             self.hts_code.setEnabled(True)
-            if len(self.hts_code.text()) > 0:
+            if len(self.hts_code.text()) == 0:
                 self.nav_bar.continue_button.setEnabled(False)
                 return
         else:
