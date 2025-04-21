@@ -16,9 +16,9 @@ from PyQt5 import QtWidgets as qtw
 
 ###############################################################################
 
-class PreShipping3b(zw.PageWidget):
-    page_name = "Pre-Shipping Workflow (3b)"
-    page_short_name = "Pre-Shipping (3b)"
+class PreShipping4b(zw.PageWidget):
+    page_name = "Pre-Shipping Workflow (4b)"
+    page_short_name = "Pre-Shipping (4b)"
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -20,6 +20,7 @@ class TransitComplete(zw.PageWidget):
 
     page_name = "Transit Workflow Complete"
     page_short_name = "Transit Complete"
+    _warn_before_closing = False
     
     def __init__(self, *args, **kwargs):
         #{{{

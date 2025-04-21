@@ -16,10 +16,10 @@ from PyQt5 import QtWidgets as qtw
 
 ###############################################################################
 
-class PreShipping3a(zw.PageWidget):
+class PreShipping4a(zw.PageWidget):
     
-    page_name = "Pre-Shipping Workflow (3a)"
-    page_short_name = "Pre-Shipping (3a)"
+    page_name = "Pre-Shipping Workflow (4a)"
+    page_short_name = "Pre-Shipping (4a)"
 
     def __init__(self, *args, **kwargs):
         #{{{

@@ -248,15 +248,27 @@ class Application(qtw.QApplication):
         self.tab_widget.setCurrentIndex(idx)
 
     def close_tab(self, tab_index):
-        current_widget = self.tab_widget.widget(tab_index)
+        # Either the user clicked the [X] on a tab, or they clicked
+        # the 'Close' button.
 
-        if isinstance(current_widget, WorkflowWidget):
-            workflow_uuid = current_widget.uuid
+        tab_content_widget = self.tab_widget.widget(tab_index)
+
+        # Ask the tab_content_widget if it's okay to close. 
+        if hasattr(tab_content_widget, "close_tab_requested"):
+            retval = tab_content_widget.close_tab_requested()
+            if not retval:
+                return False
+
+        if isinstance(tab_content_widget, WorkflowWidget):
+            workflow_uuid = tab_content_widget.uuid
             self.app_state['tabs'].remove(workflow_uuid)
             del self.app_state['workflows'][workflow_uuid]
 
-        current_widget.deleteLater()
+        tab_content_widget.deleteLater()
         self.tab_widget.removeTab(tab_index)
+
+        return True
+
 
     def on_currentChanged(self, tab_index):
         self.app_state['current_tab'] = tab_index
@@ -305,11 +317,19 @@ class Application(qtw.QApplication):
         print(self.working_directory)
 
     def start_waiting(self):
-        #self.main_window.overlay.show()
+        cw = self.tab_widget.currentWidget()
+        if cw is not None:
+            cpw = cw.current_page_widget
+            if cpw is not None:
+                cpw.start_waiting()
         self.processEvents()
 
     def stop_waiting(self):
-        #self.main_window.overlay.hide()
+        cw = self.tab_widget.currentWidget()
+        if cw is not None:
+            cpw = cw.current_page_widget
+            if cpw is not None:
+                cpw.stop_waiting()
         self.processEvents()
 
 

@@ -36,6 +36,11 @@ STYLE_SMALL_BUTTON = """
 
 class PageWidget(qtw.QWidget):
     #{{{
+
+    # Override this on pages where a workflow is complete and there's no
+    # sense in asking the user if they are sure before closing.
+    _warn_before_closing = True
+
     def __init__(self, *args, **kwargs):
         logger.debug(f"[{self.__class__.__name__}].__init__()")
 
@@ -173,10 +178,30 @@ class PageWidget(qtw.QWidget):
         return True
 
 
-    def close_tab(self):
-        curr_idx = self.application.tab_widget.indexOf(self.workflow)
-        self.application.close_tab(curr_idx)
+    def close_tab_requested(self):
+        # The user is trying to close this tab. Ask them if they are sure.
+        # Return True if it's okay to close, or False if they changed their mind.
 
+        if self._warn_before_closing:
+ 
+            retval = qtw.QMessageBox().warning(
+                        self,
+                        "Warning",
+                        "If you remove this workflow, you will not be able to return to it. "
+                                "Are you sure you want to remove this workflow?",
+                        qtw.QMessageBox.Ok | qtw.QMessageBox.Cancel)
+
+            confirm_remove_tab = retval == qtw.QMessageBox.Ok
+
+            if confirm_remove_tab:
+                logger.info("The user elected to close this tab.")
+            else:
+                logger.info("The user decided to keep the tab.")
+        else:
+            logger.info("This tab will close. No confirmation required.")
+            confirm_remove_tab = True
+
+        return confirm_remove_tab
 
     #}}}
 
@@ -261,13 +286,13 @@ class NavBar(qtw.QWidget):
 
         self.close_tab_button = qtw.QPushButton("Close Tab")
         self.close_tab_button.setStyleSheet(STYLE_LARGE_BUTTON)
-        self.close_tab_button.clicked.connect(self.owner.close_tab)
+        self.close_tab_button.clicked.connect(self.owner.application.close_tab)
 
         main_layout.addWidget(self.back_button)
         main_layout.addStretch()
         main_layout.addWidget(self.continue_button)
         main_layout.addWidget(self.close_tab_button)
-        self.close_tab_button.hide()
+        #self.close_tab_button.hide()
 
 
         self.setLayout(main_layout)

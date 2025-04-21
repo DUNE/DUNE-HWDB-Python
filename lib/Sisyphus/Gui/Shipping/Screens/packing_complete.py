@@ -20,6 +20,7 @@ class PackingComplete(zw.PageWidget):
 
     page_name = "Packing Workflow Complete"
     page_short_name = "Packing Complete"
+    _warn_before_closing = False
     
     def __init__(self, *args, **kwargs):
         #{{{

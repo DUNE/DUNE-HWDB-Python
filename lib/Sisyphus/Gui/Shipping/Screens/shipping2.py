@@ -82,7 +82,7 @@ class Shipping2(zw.PageWidget):
     def refresh(self):
         super().refresh()
 
-        shipping_service_type = self.workflow_state.get('PreShipping3a', {}) \
+        shipping_service_type = self.workflow_state.get('PreShipping4a', {}) \
                     .get('shipping_service_type', 'Domestic')
 
         if shipping_service_type != "International":

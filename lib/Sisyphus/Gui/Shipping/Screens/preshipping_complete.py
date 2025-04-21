@@ -17,6 +17,7 @@ from PyQt5 import QtWidgets as qtw
 class PreShippingComplete(zw.PageWidget):
     page_name = "Pre-Shipping Workflow Complete"
     page_short_name = "Pre-Shipping Complete"
+    _warn_before_closing = False
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -22,8 +22,8 @@ import os
 from Sisyphus.Gui.Shipping.Screens import (
         SelectPID, SelectWorkflow,
         Packing1, PackingComplete,
-        PreShipping1, PreShipping2a, PreShipping2b, PreShipping3a, PreShipping3b,
-            PreShipping4, PreShipping5, PreShipping6, PreShippingComplete,
+        PreShipping1, PreShipping2, PreShipping3, PreShipping4a, PreShipping4b,
+            PreShipping5, PreShipping6, PreShipping7, PreShippingComplete,
         Shipping1, Shipping2, Shipping3, Shipping4, Shipping5, 
             Shipping6, ShippingComplete,
         Transit1, TransitComplete,
@@ -71,9 +71,6 @@ class WorkflowWidget(qtw.QWidget):
         if self.workflow_state['current_page_id'] != new_page_id:
             self.workflow_state['current_page_id'] = new_page_id
             self.activate()
-            #current_page_widget = self._page_lookup[page_id]
-            #self.page_stack.setCurrentWidget(current_page_widget)
-            #current_page_widget.restore()
         return new_page_id
 
     def activate(self):
@@ -89,24 +86,13 @@ class WorkflowWidget(qtw.QWidget):
     def save(self):
         self.application.save_state()
 
-    #def restore(self):
-    #    self.page_stack.currentWidget().restore()
-
-    #def update_tab_title(self, title):
-    #    logger.info(f"{HLI}{self.__class__.__name__}.update_tab_title")
-    #    self.title = title
-    #    idx = self.application.tab_widget.indexOf(self)
-    #    self.application.tab_widget.setTabText(idx, title)
-
     def update_tab_title(self):
          logger.debug(f"{HLD}{self.__class__.__name__}.update_tab_title()")
          tab_index = self.application.tab_widget.indexOf(self)
          logger.debug(f"{HLD}(finished_init: {self._finished_init}, "
                     f" tab_index: {tab_index}, "
                     f" current_page_id: {self.current_page_widget.__class__.__name__}")
-         #self.application.tab_widget.setTabText(tab_index, self.current_page_widget.page_short_name)
          self.application.tab_widget.setTabText(tab_index, self.current_page_widget.tab_title)
-
 
     def create_page_stack(self):
         #{{{
@@ -122,13 +108,13 @@ class WorkflowWidget(qtw.QWidget):
             "PackingComplete": PackingComplete(owner=self),
 
             "PreShipping1": PreShipping1(owner=self),
-            "PreShipping2a": PreShipping2a(owner=self),
-            "PreShipping2b": PreShipping2b(owner=self),
-            "PreShipping3a": PreShipping3a(owner=self),
-            "PreShipping3b": PreShipping3b(owner=self),
-            "PreShipping4": PreShipping4(owner=self),
+            "PreShipping2": PreShipping2(owner=self),
+            "PreShipping3": PreShipping3(owner=self),
+            "PreShipping4a": PreShipping4a(owner=self),
+            "PreShipping4b": PreShipping4b(owner=self),
             "PreShipping5": PreShipping5(owner=self),
             "PreShipping6": PreShipping6(owner=self),
+            "PreShipping7": PreShipping7(owner=self),
             "PreShippingComplete": PreShippingComplete(owner=self),
 
             "Shipping1": Shipping1(owner=self),
@@ -159,14 +145,14 @@ class WorkflowWidget(qtw.QWidget):
             "Packing1": "PackingComplete",
             "PackingComplete": None,
 
-            "PreShipping1": "PreShipping2a",
-            "PreShipping2a": "PreShipping2b",
-            "PreShipping2b": "PreShipping3a",
-            "PreShipping3a": "PreShipping3b",
-            "PreShipping3b": "PreShipping4",
-            "PreShipping4": "PreShipping5",
+            "PreShipping1": "PreShipping2",
+            "PreShipping2": "PreShipping3",
+            "PreShipping3": "PreShipping4a",
+            "PreShipping4a": "PreShipping4b",
+            "PreShipping4b": "PreShipping5",
             "PreShipping5": "PreShipping6",
-            "PreShipping6": "PreShippingComplete",
+            "PreShipping6": "PreShipping7",
+            "PreShipping7": "PreShippingComplete",
             "PreShippingComplete": None,
 
             "Shipping1": "Shipping2",
@@ -195,16 +181,16 @@ class WorkflowWidget(qtw.QWidget):
             "PackingComplete": None,
 
             "PreShipping1": "SelectWorkflow",
-            "PreShipping2a": "PreShipping1",
-            "PreShipping2b": "PreShipping2a",
-            "PreShipping3a": "PreShipping2",
-            "PreShipping3b": "PreShipping3a",
-            "PreShipping4": "PreShipping3b",
-            "PreShipping5": "PreShipping4",
+            "PreShipping2": "PreShipping1",
+            "PreShipping3": "PreShipping2",
+            "PreShipping4a": "PreShipping2",
+            "PreShipping4b": "PreShipping4a",
+            "PreShipping5": "PreShipping4b",
             "PreShipping6": "PreShipping5",
+            "PreShipping7": "PreShipping6",
+            #"PreShippingComplete": "PreShipping7
             "PreShippingComplete": None,
-            #"PreShippingComplete": "PreShipping6",
-
+            
             "Shipping1": "SelectWorkflow",
             "Shipping2": "Shipping1",
             "Shipping3": "Shipping2",
@@ -274,10 +260,8 @@ class WorkflowWidget(qtw.QWidget):
 
         prev_page_id = self._prev_page[self.current_page_id]
         if prev_page_id is not None:
-            #self.set_page(prev_page)
             self.set_current_page(prev_page_id)
             return
-        #print("special handling code")
 
     @property
     def part_id(self):
@@ -293,6 +277,12 @@ class WorkflowWidget(qtw.QWidget):
         os.makedirs(retval, exist_ok=True)
         return retval
 
+
+    def close_tab_requested(self):
+        # The application is asking to close this tab. Return True if it's okay
+        # to close it, otherwise return False
+        # Delegate this to the page that's currently showing.
+        return self.current_page_widget.close_tab_requested()
 
     #}}}
 

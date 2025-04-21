@@ -18,9 +18,9 @@ from PyQt5 import QtWidgets as qtw
 import json
 
 
-class PreShipping2b(zw.PageWidget):
-    page_name = "Pre-Shipping Workflow (2b)"
-    page_short_name = "Pre-Shipping (2b)"
+class PreShipping3(zw.PageWidget):
+    page_name = "Pre-Shipping Workflow (3)"
+    page_short_name = "Pre-Shipping (3)"
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

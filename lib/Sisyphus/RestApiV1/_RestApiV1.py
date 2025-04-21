@@ -115,10 +115,7 @@ class retry:
 
         @functools.wraps(function)
         def wrapped_function(*args, **kwargs):
-            #global _refresh_required
 
-            #status_callback = kwargs.pop("status_callback", 
-            #                        session_kwargs.get("status_callback", None))
             status_callback = kwargs.pop("status_callback", None)
 
             if status_callback is not None:
@@ -328,6 +325,11 @@ def _request(method, url, *args, return_type="json", **kwargs):
 
     # Pop this, but don't do anything with it. "retry" handles it.
     status_callback = augmented_kwargs.pop("status_callback", None)    
+
+    # Pop this, but don't do anything with it. It's for signaling further
+    # up the chain whether or not to look in the cache for this. But, at
+    # this point, it has already been decided to actually do the request.
+    refresh = augmented_kwargs.pop("refresh", None)    
 
     try:
         if log_headers:
@@ -843,8 +845,15 @@ def patch_hwitem(part_id, data, **kwargs):
             "comments": <str>,
             "manufacturer": {"id": <int>},
             "serial_number": <str>,
+            "status": {"id": <status_id>},
             "specifications": {...},
         }
+
+    (True as of 2025-04-21, but is subject to change!!)
+    status_id:
+        'available' = 1
+        'not available' = 2
+        'permanently not available' = 3
 
     Structure of returned response:
         {
@@ -968,6 +977,32 @@ def get_subcomponents(part_id, **kwargs):
 
 def patch_subcomponents(part_id, data, **kwargs):
     #{{{
+    '''Attach subcomponents to a component
+
+    Structure for "data":
+        {
+            "component":
+            {
+                "part_id": <part_id>,
+            },
+            "subcomponents":
+            {
+                <func pos name>: <part_id>,
+                <func pos name>: <part_id>,
+                <func pos name>: <part_id>
+            }
+        }
+
+    Structure of returned response:
+        {
+            "component_id": 181869,
+            "data": "Updated",
+            "part_id": "D00599800007-00087",
+            "status": "OK"
+        }
+
+    '''
+
     logger.debug(f"<{func_name()}> part_id={part_id}")
     profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/components/{sanitize(part_id)}/subcomponents" 

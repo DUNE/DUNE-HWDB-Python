@@ -20,6 +20,7 @@ class ReceivingComplete(zw.PageWidget):
     
     page_name = "Receiving Workflow Complete"
     page_short_name = "Receiving Complete"
+    _warn_before_closing = False
 
     def __init__(self, *args, **kwargs):
         #{{{

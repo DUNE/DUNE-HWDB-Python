@@ -128,7 +128,7 @@ class ShippingLabel:
  
         img_bytes = base64.b85decode(self.workflow_state['part_info']['qr_code'].encode())
         img_obj = PIL.Image.open(io.BytesIO(img_bytes))
-        cropped_obj = img_obj.crop((40, 40, 410, 410))
+        #cropped_obj = img_obj.crop((40, 40, 410, 410))
         
         if size is None:
             image_width, image_height = 3.0 * units.inch, 3.0 * units.inch
@@ -145,7 +145,8 @@ class ShippingLabel:
                 fill=0xccffcc) 
 
         with tempfile.NamedTemporaryFile() as tf:
-            cropped_obj.save(tf, 'png')
+            #cropped_obj.save(tf, 'png')
+            img_obj.save(tf, 'png')
             cvs.drawImage(
                 tf.name,
                 (self.page_width - image_width) * 0.5,
@@ -293,7 +294,7 @@ class ShippingLabel:
 
         self.draw_label("Responsible Person's Name", 14)
         self.draw_label(
-                self.workflow_state['PreShipping2b']['approver_name'], 
+                self.workflow_state['PreShipping3']['approver_name'], 
                 font_size=14,
                 box=True)
         
@@ -301,7 +302,7 @@ class ShippingLabel:
         
         self.draw_label("Email Address(es)", 14)
         self.draw_label(
-                self.workflow_state['PreShipping2b']['approver_email'], 
+                self.workflow_state['PreShipping3']['approver_email'], 
                 font_size=14,
                 box=True)
 

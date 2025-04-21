@@ -138,18 +138,18 @@ def download_part_info(part_id, status_callback=None):
             "hwdb_updated": preshipping_exists,
         }
 
-    workflow_state["PreShipping2a"] = {
-            "approver_name": psc.get("QA Rep name", ""),
-            "approver_email": ', '.join(psc.get("QA Rep Email", [])),
+    workflow_state["PreShipping2"] = {
+            "qa_rep_name": psc.get("QA Rep name", ""),
+            "qa_rep_email": ', '.join(psc.get("QA Rep Email", [])),
             "test_info": psc.get("QA/QC related info Line 1", ""),
         }
 
-    workflow_state["PreShipping2b"] = {
+    workflow_state["PreShipping3"] = {
             "approver_name": psc.get("POC name", ""),
             "approver_email": ', '.join(psc.get("POC Email", [])),
         }
     
-    workflow_state["PreShipping3a"] = {
+    workflow_state["PreShipping4a"] = {
             "hts_code": psc.get("HTS code", ""),
             "shipment_origin": psc.get("Origin of this shipment", ""),
             "dimension": psc.get("Dimension of this shipment",""),
@@ -158,18 +158,18 @@ def download_part_info(part_id, status_callback=None):
                                                 else "International",
         }
 
-    workflow_state["PreShipping3b"] = {
+    workflow_state["PreShipping4b"] = {
             "freight_forwarder": psc.get("Freight Forwarder name", ""),
             "mode_of_transportation": psc.get("Mode of Transportation", ""),
             "expected_arrival_time": psc.get("Expected Arrival Date (CT)", ""),
         }
 
-    workflow_state["PreShipping4"] = {
+    workflow_state["PreShipping5"] = {
             "email_contents": "",
             "confirm_email_contents": preshipping_exists
         }
 
-    workflow_state["PreShipping5"] = {
+    workflow_state["PreShipping6"] = {
             "received_acknowledgement": preshipping_exists,
             "acknowledged_by": psc.get("FD Logistics team acknoledgement (name)", ""),
             "acknowledged_time": psc.get("FD Logistics team acknoledgement (date in CT)", ""),
@@ -280,6 +280,7 @@ def update_location(part_id, location, arrived, comments):
 
     resp = ra.post_hwitem_location(part_id, data)
     return True
+    #}}}
 
 def update_locations_and_detach(part_id, location, arrived, comments):
     #{{{
@@ -298,6 +299,9 @@ def update_locations_and_detach(part_id, location, arrived, comments):
     }
     
     resp = ra.patch_subcomponents(part_id, payload)
+
+    # Refresh the cache
+    hwitem = dm.HWItem(part_id=part_id, refresh=True)
 
     return True
     #}}}

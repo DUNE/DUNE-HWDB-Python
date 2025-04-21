@@ -84,8 +84,8 @@ class Shipping3(zw.PageWidget):
 
 
 
-        poc_email = (f"{workflow_state['PreShipping2b']['approver_name']} "
-                    f"&lt;{workflow_state['PreShipping2b']['approver_email']}&gt;")
+        poc_email = (f"{workflow_state['PreShipping3']['approver_name']} "
+                    f"&lt;{workflow_state['PreShipping3']['approver_email']}&gt;")
 
         email_from = (f"{self.application.user_full_name} "
                     f"&lt;{self.application.user_email}&gt;")
