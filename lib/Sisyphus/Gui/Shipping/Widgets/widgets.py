@@ -468,6 +468,7 @@ class ZPartDetails(qtw.QWidget, LinkedWidget):
         self.show_empty_slots = qtw.QCheckBox("show vacant slots")
         self.show_empty_slots.toggled.connect(self.on_show_empty_slots_checked)
 
+        print(self.geometry())
         self._setup_UI()
 
     def on_show_empty_slots_checked(self, status):
@@ -563,6 +564,8 @@ class ZPartDetails(qtw.QWidget, LinkedWidget):
         self.show_empty_slots.blockSignals(True)
         self.show_empty_slots.setChecked(show_empty_slots_status)
         self.show_empty_slots.blockSignals(False)
+
+        self.table.setEditTriggers(qtw.QAbstractItemView.NoEditTriggers)
 
         source = self.source() or {}
         self.pid_label.setText(source.get('part_id', 'N/A'))

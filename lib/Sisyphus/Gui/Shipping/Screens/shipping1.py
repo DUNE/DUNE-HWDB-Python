@@ -25,8 +25,14 @@ class Shipping1(zw.PageWidget):
 
         self.subcomp_caption = qtw.QLabel("Contents")
 
-        self.table = qtw.QTableWidget(0, 3)
-        self.table.verticalHeader().setVisible(False)
+        self.part_details = zw.ZPartDetails(
+                                    owner=self, 
+                                    key='part_details',
+                                    source='workflow:part_info')
+        self.part_details.setMinimumSize(600, 400)
+        
+        #self.table = qtw.QTableWidget(0, 3)
+        #self.table.verticalHeader().setVisible(False)
 
         msg = "The list of components for this shipment is correct"
         self.confirm_list_checkbox = zw.ZCheckBox(owner=self, text=msg, key="confirm_list")
@@ -47,16 +53,18 @@ class Shipping1(zw.PageWidget):
         subcomp_list_layout = qtw.QVBoxLayout()
         subcomp_list_layout.addWidget( self.subcomp_caption )
         subcomp_list_layout.addSpacing(5)
-        horizontal_header = self.table.horizontalHeader()
-        horizontal_header.resizeSection(0, 200)
-        horizontal_header.resizeSection(1, 275)
-        horizontal_header.resizeSection(2, 275)
-        self.table.setHorizontalHeaderLabels(['Sub-component PID',
-                            'Component Type Name', 'Functional Position Name'])
-        subcomp_list_layout.addWidget(self.table)
-        subcomp_list_widget = qtw.QWidget()
-        subcomp_list_widget.setLayout(subcomp_list_layout)
-        main_layout.addWidget(subcomp_list_widget)
+        
+        #horizontal_header = self.table.horizontalHeader()
+        #horizontal_header.resizeSection(0, 200)
+        #horizontal_header.resizeSection(1, 275)
+        #horizontal_header.resizeSection(2, 275)
+        #self.table.setHorizontalHeaderLabels(['Sub-component PID',
+        #                    'Component Type Name', 'Functional Position Name'])
+        #subcomp_list_layout.addWidget(self.table)
+        #subcomp_list_widget = qtw.QWidget()
+        #subcomp_list_widget.setLayout(subcomp_list_layout)
+        #main_layout.addWidget(subcomp_list_widget)
+        main_layout.addWidget(self.part_details)
         main_layout.addSpacing(10)
 
         main_layout.addWidget(qtw.QLabel("Please affirm the following:"))
@@ -89,21 +97,21 @@ class Shipping1(zw.PageWidget):
 
     def restore(self):
         super().restore()
-        self.populate_subcomps()
+        #self.populate_subcomps()
 
-    def populate_subcomps(self):
-
-        if self.workflow_state.get('part_info', None) is None:
-            subcomps = {}
-
-        else:
-            subcomps = self.workflow_state['part_info'].setdefault('subcomponents', {})
-
-        self.table.setRowCount(len(subcomps))
-        for idx, subcomp in enumerate(subcomps.values()):
-            self.table.setItem(idx, 0, qtw.QTableWidgetItem(subcomp['Sub-component PID']))
-            self.table.setItem(idx, 1, qtw.QTableWidgetItem(subcomp['Component Type Name']))
-            self.table.setItem(idx, 2, qtw.QTableWidgetItem(subcomp['Functional Position Name']))
+    #def populate_subcomps(self):
+    #
+    #    if self.workflow_state.get('part_info', None) is None:
+    #        subcomps = {}
+    #
+    #    else:
+    #        subcomps = self.workflow_state['part_info'].setdefault('subcomponents', {})
+    #
+    #    self.table.setRowCount(len(subcomps))
+    #    for idx, subcomp in enumerate(subcomps.values()):
+    #        self.table.setItem(idx, 0, qtw.QTableWidgetItem(subcomp['Sub-component PID']))
+    #        self.table.setItem(idx, 1, qtw.QTableWidgetItem(subcomp['Component Type Name']))
+    #        self.table.setItem(idx, 2, qtw.QTableWidgetItem(subcomp['Functional Position Name']))
 
     def refresh(self):
         super().refresh()

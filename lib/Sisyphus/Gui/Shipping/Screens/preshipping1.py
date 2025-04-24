@@ -33,7 +33,7 @@ class PreShipping1(zw.PageWidget):
                                     owner=self, 
                                     key='part_details', 
                                     source='workflow:part_info')
-        
+        self.part_details.setMinimumSize(600, 400)        
 
         msg = "The list of components for this shipment is correct"
         self.confirm_list_checkbox = zw.ZCheckBox(owner=self, text=msg, key="confirm_list")

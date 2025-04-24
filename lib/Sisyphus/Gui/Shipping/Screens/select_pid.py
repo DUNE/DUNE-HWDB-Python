@@ -39,6 +39,7 @@ class SelectPID(zw.PageWidget):
                                     owner=self, 
                                     key='part_details',
                                     source='workflow:part_info')
+        self.part_details.setMinimumSize(600, 400)
 
         self.find_button.setStyleSheet(zw.STYLE_SMALL_BUTTON)
         self.find_button.clicked.connect(self.lookup_pid)
