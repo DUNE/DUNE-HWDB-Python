@@ -468,7 +468,6 @@ class ZPartDetails(qtw.QWidget, LinkedWidget):
         self.show_empty_slots = qtw.QCheckBox("show vacant slots")
         self.show_empty_slots.toggled.connect(self.on_show_empty_slots_checked)
 
-        print(self.geometry())
         self._setup_UI()
 
     def on_show_empty_slots_checked(self, status):
