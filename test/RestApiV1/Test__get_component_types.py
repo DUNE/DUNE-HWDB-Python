@@ -15,6 +15,10 @@ import unittest
 import os
 import json
 
+import warnings
+import urllib3
+warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWarning)
+
 #from Sisyphus.RestApiV1._RestApiV1 import _get
 from Sisyphus.RestApiV1 import get_component_type
 from Sisyphus.RestApiV1 import get_hwitems

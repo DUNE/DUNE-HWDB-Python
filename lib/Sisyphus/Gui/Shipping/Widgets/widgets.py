@@ -22,6 +22,7 @@ import os
 
 from PyQt5 import QtCore as qtc
 from PyQt5 import QtWidgets as qtw
+from PyQt5 import QtGui as qtg
 
 ###############################################################################
 
@@ -59,22 +60,31 @@ class PageWidget(qtw.QWidget):
         self.title_bar = TitleBar(owner = self)
         self.nav_bar = NavBar(owner = self)
 
+        # Make the PageWidget's layout be a stacked layout that contains
+        # the "real" widget containing the actual page contents, and
+        # a hidden overlay that only shows up when the application is 
+        # waiting for something from the database.
         self.master_layout = qtw.QStackedLayout()
         self.master_layout.setStackingMode(qtw.QStackedLayout.StackAll)
         super().setLayout(self.master_layout)
-        
         self.main_widget = qtw.QWidget()
-
         self.overlay = WaitOverlay()
-
         self.master_layout.addWidget(self.overlay)
         self.master_layout.addWidget(self.main_widget)
         self.master_layout.setCurrentWidget(self.main_widget)
 
     def setLayout(self, layout):
+        # Re-interpret "setLayout" to mean for the main_widget instead
+        # of for the entire PageWidget.
         self.main_widget.setLayout(layout)
 
     def wait(self):
+        # Returns a very simple context manager that shows and
+        # hides the overlay. It's better to use this than to use
+        # the "start_waiting" and "stop_waiting" methods because
+        # the context manager guarantees that the overlay will be
+        # hidden when the task is finished, even if an exception
+        # is raised.
         page = self
         class wait_mgr:
             def __enter__(self):
@@ -85,10 +95,12 @@ class PageWidget(qtw.QWidget):
                 
 
     def start_waiting(self):
+        # Show the overlay
         self.master_layout.setCurrentWidget(self.overlay)
         self.application.processEvents()
     
     def stop_waiting(self):
+        # Hide the overlay
         self.master_layout.setCurrentWidget(self.main_widget)
         self.application.processEvents()
     
@@ -184,8 +196,8 @@ class PageWidget(qtw.QWidget):
 
         if self._warn_before_closing:
  
-            retval = qtw.QMessageBox().warning(
-                        self,
+            retval = qtw.QMessageBox.warning(
+                        self.application.main_window,
                         "Warning",
                         "If you remove this workflow, you will not be able to return to it. "
                                 "Are you sure you want to remove this workflow?",
@@ -255,7 +267,11 @@ class TitleBar(qtw.QWidget):
 
         main_layout.addWidget(self.page_title)
 
-        self.page_subtitle = ZLabel(owner=self.owner, key='attr:part_id', default='[no part_id yet]')
+        self.page_subtitle = ZLabel(
+                        owner=self.owner, 
+                        key='subtitle', 
+                        source='attr:part_id',
+                        default='[no part_id yet]')
         self.page_subtitle.setAlignment(qtc.Qt.AlignCenter)
         
         main_layout.addWidget(self.page_subtitle)
@@ -301,36 +317,117 @@ class NavBar(qtw.QWidget):
 class LinkedWidget:
     #{{{
     def __init__(self, *args, **kwargs):
+        #{{{
         #logger.debug(f"{self.__class__.__name__}.__init__()")
  
         # owner = the page that this widget belongs to, which is not 
         #           necessarily the parent. (The parent could be a 
         #           different container widget that we don't care
         #           about except for how it makes the page look.)
-        self.owner = kwargs.pop('owner', None)
+        self.page = self.owner = kwargs.pop('owner', None)
+        self.workflow = self.page.workflow
+        self.application = self.page.application
 
-        # page_state_key = the key to store/retrieve data to/from in
+        # state_key = the key to store/retrieve data to/from in
         #           the page's dictionary
-        self.page_state_key = kwargs.pop('key', None)
+        self.state_key = kwargs.pop('key', None)
 
-        # page_state_value = for sets of widgets that all share the same
+        # state_value_when_selected = for sets of widgets that all share the same
         #           key (e.g., radio buttons), what value to use if this
         #           particular widget is selected
-        self.page_state_value = kwargs.pop('value', None)
+        self.state_value_when_selected = kwargs.pop('value', None)
 
         # default_value = if there is no value for this widget's key, 
         #           use this value
         self.default_value = kwargs.pop('default', '')
+
+        # source_key = a place to look for additional data outside of the
+        #           page state
+        self.source_key = kwargs.pop('source', None)
         
         if self.owner is None:
             raise ValueError("required parameter: owner")
-        if self.page_state_key is None:
+        if self.state_key is None:
             raise ValueError("required parameter: key")
 
         # This should call the 'other' inherited class' __init__, 
         # whatever it happens to be
         super().__init__(*args, **kwargs)
         self.setObjectName(__class__.__name__)       
+        #}}}
+
+    def source(self):
+        if self.source_key is None:
+            return None
+
+        parts = self.source_key.split(':')
+
+        if len(parts) == 1:
+            # If there's only one part, treat it pretty much the same
+            # as a state_key, i.e., something stored on this page
+            return self.page_state[parts[0]]
+
+        if parts[0] == 'attr':
+            if len(parts) != 2:
+                raise KeyError("attr key has too many parts")
+            # If the format is "attr:<key>", get the value of an 
+            # attribute in the page object itself, and not the 
+            # page state. E.g., "attr:part_id" would look for
+            # self.page.part_id
+            return getattr(self.page, parts[1], None)
+
+        if parts[0] == 'workflow':
+            if parts[1] == 'attr':
+                if len(parts) == 2:
+                    raise KeyError(f"{key!r} workflow:attr key missing 3rd part")
+                elif len(parts) > 3:
+                    raise KeyError(f"{key!r} workflow:attr key has too many parts")
+                # If the format is "workflow:attr:<key>", get the value
+                # of the attribute in the workflow object, e.g., 
+                # "workflow:attr:part_info" would look for
+                # self.workflow.part_info
+                return getattr(self.workflow, parts[2], None)
+            else:
+                # Determine if the part after "workflow" refers to a page_id
+                # or not.
+                other_page = self.page.workflow.get_page_by_id(parts[1])
+
+                if other_page is None:
+                    if len(parts) != 2:
+                        raise KeyError(f"{key!r} workflow:<key> has too many parts")
+                    # If the format is "workflow:<key>" and <key> does NOT
+                    # refer to a page_id, then get <key> from the workflow
+                    # state
+                    return self.workflow_state.get(parts[1], None)
+
+                if len(parts) < 3:
+                    raise KeyError(f"{key!r} workflow:<page> key needs at least 3 parts")
+                if parts[2] == "attr":
+                    if len(parts) != 4:
+                        raise KeyError(f"{key!r} workflow:<page>:attr key needs 4 parts")
+                    # If the format is "workflow:<page_id>:attr:<key>", 
+                    # return the attribute from the page it's referring to.
+                    return getattr(other_page, parts[3], None)
+                else:
+                    if len(parts) != 3:
+                        raise KeyError(f"{key!r} workflow:<page>:<key> key needs 3 parts")
+                    # If the format is "workflow:<page_id>:<key>", get the
+                    # value from the page_state of the page it's referring to.
+                    return other_page.page_state[parts[2]]
+
+        if parts[0] == 'application':
+            if parts[1] == 'attr':
+                if len(parts) != 3:
+                    raise KeyError(f"{key!r} application:attr key needs 3 parts")
+                # If the format is "application:<attr>:<key>, get the value
+                # from the application object
+                return getattr(self.application, parts[2], None)
+            else:
+                if len(parts) != 2:
+                    raise KeyError(f"{key!r} application:<key> key has too many parts")
+                # If the format is "application:<key>", get the value from
+                # the application_state
+                return self.application_state.get(parts[1], None)
 
     @property
     def page_state(self):
@@ -340,6 +437,9 @@ class LinkedWidget:
     def workflow_state(self):
         return self.owner.workflow_state
 
+    @property
+    def application_state(self):
+        return self.owner.application_state
 
     def restore(self):
         # This is the method that the page should call to restore a widget
@@ -355,6 +455,170 @@ class LinkedWidget:
         logger.debug(f"{self.__class__.__name__}.restore_state()")
     #}}}
 
+class ZPartDetails(qtw.QWidget, LinkedWidget):
+    #{{{
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.pid_label = qtw.QLabel("<not set>")
+        self.part_name_label = qtw.QLabel("<not set>")
+        self.system_label = qtw.QLabel("<not set>")
+        self.subsystem_label = qtw.QLabel("<not set>")
+
+        self.show_empty_slots = qtw.QCheckBox("show vacant slots")
+        self.show_empty_slots.toggled.connect(self.on_show_empty_slots_checked)
+
+        self._setup_UI()
+
+    def on_show_empty_slots_checked(self, status):
+        self.page_state[self.state_key] = status
+        self.restore_state()
+        self.owner.refresh()
+
+    def _setup_UI(self):
+        #{{{
+        # The "more obvious" way of doing this is to just make this widget
+        # inherit from QFrame instead of QWidget, but for some reason, it
+        # refuses to draw the border in the dark or light style (though it
+        # does work in other styles). So, we'll make this a QWidget that
+        # contains a QFrame that contains the rest. >:-@
+
+        self.main_layout = qtw.QVBoxLayout()
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(self.main_layout)
+
+        self.frame = qtw.QFrame()
+        self.frame.setFrameStyle(qtw.QFrame.Box | qtw.QFrame.Sunken)
+        self.frame.setLineWidth(1)
+
+        self.main_layout.addWidget(self.frame)
+
+        grid_layout = qtw.QGridLayout()
+        self.frame.setLayout(grid_layout)
+
+        grid_layout.setContentsMargins(5, 5, 5, 5)
+        grid_layout.setColumnStretch(0, 1)
+        grid_layout.setColumnStretch(1, 2)
+        grid_layout.setColumnStretch(2, 1)
+        grid_layout.setHorizontalSpacing(10)
+        grid_layout.setVerticalSpacing(0)
+
+        top_right = qtc.Qt.AlignTop | qtc.Qt.AlignRight
+        top_left = qtc.Qt.AlignTop | qtc.Qt.AlignLeft
+        center_right = qtc.Qt.AlignVCenter | qtc.Qt.AlignRight
+        center_left = qtc.Qt.AlignVCenter | qtc.Qt.AlignLeft
+        top_center = qtc.Qt.AlignTop | qtc.Qt.AlignHCenter
+
+        self.table = qtw.QTableWidget(0, 3)
+        self.table.verticalHeader().setVisible(False)
+        self.table.setHorizontalHeaderLabels(['Sub-component PID',
+                            'Component Type Name', 'Functional Position Name'])
+        horizontal_header = self.table.horizontalHeader()
+        horizontal_header.resizeSection(0, 200)
+        horizontal_header.resizeSection(1, 260)
+        horizontal_header.resizeSection(2, 260)
+
+
+        current_row = 0
+
+        grid_layout.addWidget(qtw.QLabel("PID"),
+                            current_row, 0, 1, 1)
+        grid_layout.addWidget(self.pid_label,
+                            current_row, 1, 1, 1)
+        current_row += 1
+
+        grid_layout.addWidget(qtw.QLabel("Part Type Name"),
+                            current_row, 0, 1, 1)
+        grid_layout.addWidget(self.part_name_label,
+                            current_row, 1, 1, 1)
+        current_row += 1
+
+        grid_layout.addWidget(qtw.QLabel("System"),
+                            current_row, 0, 1, 1)
+        grid_layout.addWidget(self.system_label,
+                            current_row, 1, 1, 1)
+        current_row += 1
+
+        grid_layout.addWidget(qtw.QLabel("Subsystem"),
+                            current_row, 0, 1, 1)
+        grid_layout.addWidget(self.subsystem_label,
+                            current_row, 1, 1, 1)
+        grid_layout.addWidget(self.show_empty_slots,
+                            current_row, 2, 1, 1)
+        current_row += 1
+
+
+        grid_layout.setRowMinimumHeight(current_row, 10)
+        current_row += 1
+
+
+        grid_layout.addWidget(self.table,
+                            current_row, 0, 1, 3)
+        current_row += 1
+        #}}}
+
+    def restore_state(self):
+        super().restore_state()
+        show_empty_slots_status = self.page_state.setdefault(self.state_key, False)
+        self.show_empty_slots.blockSignals(True)
+        self.show_empty_slots.setChecked(show_empty_slots_status)
+        self.show_empty_slots.blockSignals(False)
+
+        source = self.source() or {}
+        self.pid_label.setText(source.get('part_id', 'N/A'))
+        self.part_name_label.setText(source.get('part_type_name', 'N/A'))
+        self.system_label.setText(source.get('system', 'N/A'))
+        self.subsystem_label.setText(source.get('subsystem', 'N/A'))
+
+        subcomps = source.get('subcomponents', {})
+
+        if show_empty_slots_status:
+            connectors = source.get('connector_data', {})
+            subcomps_by_func_pos = { v['Functional Position Name']: v
+                            for v in subcomps.values() }
+
+            self.table.setRowCount(len(connectors))
+            for idx, (func_pos, connector_def) in enumerate(connectors.items()):
+                part_type_id = connector_def['part_type_id']
+                part_type_name = connector_def['part_type_name']
+
+                if func_pos in subcomps_by_func_pos:
+                    subcomp_is_empty = False
+                    subcomp = subcomps_by_func_pos[func_pos]
+                else:
+                    subcomp_is_empty = True
+                    subcomp = {
+                        "Sub-component PID": "<empty>",
+                        "Component Type Name": part_type_name,
+                        "Functional Position Name": func_pos
+                    }
+
+                subcomp_pid_widget = qtw.QTableWidgetItem(subcomp['Sub-component PID'])
+                subcomp_type_widget = qtw.QTableWidgetItem(subcomp['Component Type Name'])
+                subcomp_func_pos_widget = qtw.QTableWidgetItem(subcomp['Functional Position Name'])
+
+
+                if subcomp_is_empty:
+                    #subcomp_pid_widget.setStyleSheet("color: #ff0000")
+                    brush = qtg.QBrush()
+                    color = qtg.QColor(255, 0, 0, 255)
+                    brush.setColor(color)
+                    subcomp_pid_widget.setForeground(brush)
+                    subcomp_pid_widget.setBackground(brush)
+
+                self.table.setItem(idx, 0, subcomp_pid_widget)
+                self.table.setItem(idx, 1, subcomp_type_widget)
+                self.table.setItem(idx, 2, subcomp_func_pos_widget)
+
+        else:
+            self.table.setRowCount(len(subcomps))
+            for idx, subcomp in enumerate(subcomps.values()):
+                self.table.setItem(idx, 0, qtw.QTableWidgetItem(subcomp['Sub-component PID']))
+                self.table.setItem(idx, 1, qtw.QTableWidgetItem(subcomp['Component Type Name']))
+                self.table.setItem(idx, 2, qtw.QTableWidgetItem(subcomp['Functional Position Name']))
+
+    #}}}
+
 class ZCheckBox(qtw.QCheckBox, LinkedWidget):
     #{{{
     def __init__(self, *args, **kwargs):
@@ -362,12 +626,12 @@ class ZCheckBox(qtw.QCheckBox, LinkedWidget):
         self.toggled.connect(self.handle_changed)
 
     def handle_changed(self, status):
-        self.page_state[self.page_state_key] = status
+        self.page_state[self.state_key] = status
         self.owner.refresh()
 
     def restore_state(self):
         super().restore_state()
-        status = self.page_state.setdefault(self.page_state_key, False)
+        status = self.page_state.setdefault(self.state_key, False)
         self.setChecked(status)
     #}}}
 
@@ -380,14 +644,14 @@ class ZDateTimeEdit(qtw.QDateTimeEdit, LinkedWidget):
         self.dateTimeChanged.connect(self.handle_changed)
 
     def handle_changed(self):
-        self.page_state[self.page_state_key] = self.dateTime().toString(qtc.Qt.DateFormat.ISODate)
+        self.page_state[self.state_key] = self.dateTime().toString(qtc.Qt.DateFormat.ISODate)
         self.owner.refresh()
 
     def restore_state(self):
         super().restore_state()
         now = qtc.QDateTime.currentDateTime().toString(qtc.Qt.DateFormat.ISODate)
 
-        datetime = self.page_state.setdefault(self.page_state_key, now)
+        datetime = self.page_state.setdefault(self.state_key, now)
 
         self.setDateTime(
             qtc.QDateTime.fromString(datetime, qtc.Qt.DateFormat.ISODate)
@@ -400,21 +664,22 @@ class ZLabel(qtw.QLabel, LinkedWidget):
         super().__init__(*args, **kwargs)
 
     def setText(self, txt):
-        self.page_state[self.page_state_key] = txt
+        self.page_state[self.state_key] = txt
         super().setText(txt)
         #self.owner.refresh()
 
     def restore_state(self):
         super().restore_state()
 
-        if self.page_state_key.startswith('attr:'):
-            attr_key = self.page_state_key[5:]
-            if hasattr(self.owner, attr_key):
-                txt = getattr(self.owner, attr_key) or self.default_value
-            else:
-                txt = self.default_value
-        else:
-            txt = self.page_state.get(self.page_state_key, self.default_value)
+        #if self.state_key.startswith('attr:'):
+        #    attr_key = self.state_key[5:]
+        #    if hasattr(self.owner, attr_key):
+        #        txt = getattr(self.owner, attr_key) or self.default_value
+        #    else:
+        #        txt = self.default_value
+        #else:
+        #    txt = self.page_state.get(self.state_key, self.default_value)
+        txt = self.source()
         super().setText(txt)
 
     #}}}
@@ -426,12 +691,12 @@ class ZLineEdit(qtw.QLineEdit, LinkedWidget):
         self.textChanged.connect(self.handle_changed)
     
     def handle_changed(self):
-        self.page_state[self.page_state_key] = self.text()
+        self.page_state[self.state_key] = self.text()
         self.owner.refresh()
 
     def restore_state(self):
         super().restore_state()
-        self.setText(self.page_state.setdefault(self.page_state_key, self.default_value))
+        self.setText(self.page_state.setdefault(self.state_key, self.default_value))
     #}}}
 
 class ZTextEdit(qtw.QTextEdit, LinkedWidget):
@@ -449,12 +714,12 @@ class ZTextEdit(qtw.QTextEdit, LinkedWidget):
         self.textChanged.connect(self.handle_editingFinished)
 
     def handle_editingFinished(self):
-        self.page_state[self.page_state_key] = self.document().toPlainText()
+        self.page_state[self.state_key] = self.document().toPlainText()
         self.owner.refresh()
 
     def restore_state(self):
         super().restore_state()
-        self.setText(self.page_state.setdefault(self.page_state_key, ""))
+        self.setText(self.page_state.setdefault(self.state_key, ""))
 
     def focusInEvent(self, event):
         super().focusInEvent(event)
@@ -480,13 +745,13 @@ class ZRadioButton(qtw.QRadioButton, LinkedWidget):
 
     def handle_selected(self):
         if self.isChecked():
-            logger.debug(f"{self.page_state_key}/{self.page_state_value}: checked")
-            self.page_state[self.page_state_key] = self.page_state_value
+            logger.debug(f"{self.state_key}/{self.state_value_when_selected}: checked")
+            self.page_state[self.state_key] = self.state_value_when_selected
             self.owner.refresh()
             
     def restore_state(self):
         super().restore_state()
-        if self.page_state.get(self.page_state_key, None) == self.page_state_value:
+        if self.page_state.get(self.state_key, None) == self.state_value_when_selected:
             self.setChecked(True)
         else:
             self.setChecked(False)
@@ -509,7 +774,7 @@ class ZRadioButtonGroup(qtw.QButtonGroup, LinkedWidget):
             return self.buttons[value]
 
         new_button = ZRadioButton(owner=self.owner, 
-                                    key=self.page_state_key, 
+                                    key=self.state_key, 
                                     value=value)
         if caption is not None:
             new_button.setText(caption)
@@ -559,12 +824,12 @@ class ZFileSelectWidget(qtw.QWidget, LinkedWidget):
         self.handle_changed()
 
     def handle_changed(self):
-        self.page_state[self.page_state_key] = self.filename_lineedit.text()
+        self.page_state[self.state_key] = self.filename_lineedit.text()
         self.owner.refresh()
 
     def restore_state(self):
         super().restore_state()
-        self.filename_lineedit.setText(self.page_state.get(self.page_state_key, ''))
+        self.filename_lineedit.setText(self.page_state.get(self.state_key, ''))
     #}}}
 
 class ZInstitutionWidget(qtw.QWidget, LinkedWidget):
@@ -618,7 +883,7 @@ class ZInstitutionWidget(qtw.QWidget, LinkedWidget):
 
     def on_selectInstitution(self):
         self.institution_id = str(self.inst_widget.currentData())
-        self.page_state[self.page_state_key] = str(self.institution_id)
+        self.page_state[self.state_key] = str(self.institution_id)
         self.owner.refresh()
 
     def restore_state(self):
@@ -626,7 +891,7 @@ class ZInstitutionWidget(qtw.QWidget, LinkedWidget):
         self.inst_widget.blockSignals(True)
         
         self.institution_id = str(self.page_state.setdefault(
-                                            self.page_state_key, self.default_value))
+                                            self.state_key, self.default_value))
         self.country_code = self.get_country_of_inst(self.institution_id)
         
         if self.country_code:

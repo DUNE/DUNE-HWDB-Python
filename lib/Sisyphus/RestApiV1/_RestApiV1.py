@@ -409,8 +409,58 @@ def _request(method, url, *args, return_type="json", **kwargs):
         extra_info.append(f"| response: [binary] {resp.text}")
     #logger.debug('\n'.join(extra_info))
 
+    database_errors = [
+        {
+            "signature": "The test specifications do not match the "
+                           "test type definition!",
+            "message": "The Test Results format does not match the "
+                         "test type definition",
+            "exc_type": BadSpecificationFormat,
+        },
+        {
+            "signature": "A 'specifications' object matching the "
+                            "ComponentType difinition is required!",
+            "message": "The specifications format does not match the "
+                         "definition for the component type",
+            "exc_type": BadSpecificationFormat,
+        },
+        {
+            "signature": "The input specifications do not match the "
+                            "component type definition",
+            "message": "The specifications format does not match the "
+                         "definition for the component type",
+            "exc_type": BadSpecificationFormat,
+        },
+        {
+            "signature": "Not authorized",
+            "message": "The user does not have the authority for this request",
+            "exc_type": InsufficientPermissions,
+        },
+        {
+            "signature": "Verification failed: JWT decode failed "
+                        "ExpiredSignatureError('Signature has expired')",
+            "message": "The user's token has expired",
+            "exc_type": ExpiredSignature,
+        },
+    ]
+
+    # At this point, we don't know if the response is valid JSON, normal
+    # text, or binary data, but we'll scan it as if it's text and look
+    # for the kinds of errors that the REST API spits out (as HTML)
+    if KW_DATA in resp.text:
+        for database_error in database_errors:
+            if (database_error["signature"] in resp.text):
+                msg = database_error["message"]
+                exc_type = database_error["exc_type"]
+                with log_lock:
+                    logger.error(msg)
+                    extra_info.append(f"| exc_type: {exc_type.__name__}")
+                    logger.info('\n'.join(extra_info))
+                raise exc_type(msg)
+
 
     if return_type.lower() == "json":
+        #{{{
         #  Convert the response to JSON and return.
         #  If the response cannot be converted to JSON, raise an exception
         try:
@@ -462,53 +512,6 @@ def _request(method, url, *args, return_type="json", **kwargs):
                 logger.info('\n'.join(extra_info))
             raise exc_type(msg) from None
 
-        if KW_DATA in resp_json:
-            database_errors = \
-            [
-                {
-                    "signature": "The test specifications do not match the "
-                                   "test type definition!",
-                    "message": "The Test Results format does not match the "
-                                 "test type definition",
-                    "exc_type": BadSpecificationFormat,
-                },
-                {
-                    "signature": "A 'specifications' object matching the "
-                                    "ComponentType difinition is required!",
-                    "message": "The specifications format does not match the "
-                                 "definition for the component type",
-                    "exc_type": BadSpecificationFormat,
-                },
-                {
-                    "signature": "The input specifications do not match the "
-                                    "component type definition",
-                    "message": "The specifications format does not match the "
-                                 "definition for the component type",
-                    "exc_type": BadSpecificationFormat,
-                },
-                {
-                    "signature": "Not authorized",
-                    "message": "The user does not have the authority for this request",
-                    "exc_type": InsufficientPermissions,
-                },
-                {
-                    "signature": "Verification failed: JWT decode failed "
-                                "ExpiredSignatureError('Signature has expired')",
-                    "message": "The user's token has expired",
-                    "exc_type": ExpiredSignature,
-                },
-            ]
-            
-            for database_error in database_errors:
-                if (database_error["signature"] in resp_json['data']):
-                    msg = database_error["message"]
-                    exc_type = database_error["exc_type"]
-                    with log_lock:
-                        logger.error(msg)
-                        extra_info.append(f"| exc_type: {exc_type.__name__}")
-                        logger.info('\n'.join(extra_info))
-                    raise exc_type(msg)
-
         if KW_ERRORS in resp_json and type(resp_json[KW_ERRORS]) is list:
             msg_parts = []
             for error in resp_json[KW_ERRORS]:
@@ -533,7 +536,10 @@ def _request(method, url, *args, return_type="json", **kwargs):
             logger.error(msg)
             logger.info('\n'.join(extra_info))
         raise exc_type(msg, resp_json) from None
+        #}}}
     else:
+        # The data isn't supposed to be JSON, so there's not much we can
+        # do to validate it further.
         with log_lock:
             logger.debug("returning raw response object")
         return resp

@@ -284,6 +284,10 @@ class WorkflowWidget(qtw.QWidget):
         # Delegate this to the page that's currently showing.
         return self.current_page_widget.close_tab_requested()
 
+    def get_page_by_id(self, page_id):
+        return self._page_lookup.get(page_id, None) 
+
+
     #}}}
 
 

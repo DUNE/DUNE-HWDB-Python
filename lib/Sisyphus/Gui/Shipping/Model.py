@@ -35,88 +35,77 @@ HLE = highlight = "[bg=#990000,fg=#ffffff]"
 
 ###############################################################################
 
-def download_part_info(part_id, status_callback=None):
-   #{{{
+def download_part_info(part_id, refresh=False, status_callback=None):
+    #{{{
 
-    fwd_kwargs = {'status_callback': status_callback} if status_callback is not None else {}
+    fwd_kwargs = {}
+    if status_callback is not None:
+        fwd_kwargs['status_callback'] = status_callback
+    if refresh:
+        fwd_kwargs['refresh'] = True
 
     workflow_state = {}
 
     try:
         hwitem = dm.HWItem(part_id=part_id, **fwd_kwargs)
-        #print(hwitem)
-
-        #item_resp = ut.fetch_hwitems(part_id=part_id)[part_id]
-
-        #item_info = item_resp['Item']
         item_info = hwitem.data
 
+    except (ra.DatabaseError, ValueError) as exc:
+        logger.error(f"{HLE}{type(exc)}:{exc}")
+        hwitem = None
+
+    if hwitem:
         part_type_id = item_info['component_type']['part_type_id']
         part_type_name = item_info['component_type']['name']
 
-        #project_id, system_id, subsystem_id = (
-        #                part_type_id[:1], part_type_id[1:4], part_type_id[4:7])
-
-
-        #sys_info = ra.get_system(project_id, system_id)['data']
-
-        #subsys_info = ra.get_subsystem(project_id, system_id, subsystem_id)['data']
-
-        #resp_qr = ra.get_hwitem_qrcode(part_id=part_id).content
-        #part_qr = base64.b85encode(resp_qr).decode('utf-8')
-
-    except (ra.DatabaseError, ValueError) as exc:
-        logger.error(f"{HLE}exc")
-        return None
-    
-        msg = f'''<div style="color: #990000">{part_id} not found!</div>'''
-        self.pid_search_result_label.setText(msg)
-
-        self.workflow_state['part_info'] = None
-
-        self.update()
-        return
-
-    #system_name = sys_info['name']
-    #subsystem_name = subsys_info['subsystem_name']
-    #system_name = hwitem.system.system
-    #subsystem_name = hwitem.subsystem.subsystem
-
-    part_info = {
-        "part_id": part_id,
-        "part_type_id": part_type_id,
-        "part_type_name": part_type_name,
-        'system_id': hwitem.system.system_id,
-        'system_name': hwitem.system.system_name,
-        'subsystem_id': hwitem.subsystem.subsystem_id,
-        'subsystem_name': hwitem.subsystem.subsystem_name,
-        'qr_code': hwitem.qr_code,
-        'subcomponents': {}
-    }
-
-    # Set Subcomponents in tab state
-    #subcomponent_info = item_resp['Subcomponents']
-    subcomponent_info = hwitem.subcomponents
-    for subcomp in subcomponent_info:
-        part_info['subcomponents'][subcomp['part_id']] = {
-            "Sub-component PID": subcomp['part_id'],
-            "Component Type Name": subcomp['type_name'],
-            "Functional Position Name": subcomp["functional_position"]
+        part_info = {
+            "part_id": part_id,
+            "part_type_id": part_type_id,
+            "part_type_name": part_type_name,
+            'system_id': hwitem.system.system_id,
+            'system_name': hwitem.system.system_name,
+            'system': f"{hwitem.system.system_name} ({hwitem.system.system_id})",
+            'subsystem_id': hwitem.subsystem.subsystem_id,
+            'subsystem_name': hwitem.subsystem.subsystem_name,
+            'subsystem': f"{hwitem.subsystem.subsystem_name} ({hwitem.subsystem.subsystem_id})",
+            'qr_code': hwitem.qr_code,
+            'connectors': hwitem.component_type.data['connectors'],
+            'subcomponents': {}
         }
 
-    workflow_state['part_info'] = part_info
+        connector_data = {}
+        for k, v in hwitem.component_type.data['connectors'].items():
+            subcomp_type = dm.ComponentType(part_type_id=v).data
+            subcomp_type_name = subcomp_type['full_name'].split('.')[-1]
+            connector_data[k] = {
+                "part_type_id": v,
+                "part_type_name": subcomp_type_name
+            }
+        part_info['connector_data'] = connector_data
 
+        # Set Subcomponents in tab state
+        subcomponent_info = hwitem.subcomponents
+        for subcomp in subcomponent_info:
+            part_info['subcomponents'][subcomp['part_id']] = {
+                "Sub-component PID": subcomp['part_id'],
+                "Component Type Name": subcomp['type_name'],
+                "Functional Position Name": subcomp["functional_position"]
+            }
 
-                
+        workflow_state['part_info'] = part_info
+        spec = item_info['specifications'][0]
+    else:
+        workflow_state['part_info'] = {}
+        spec = {}
 
+    workflow_state.update(populate_preshipping_from_hwdb(spec))
+    workflow_state.update(populate_shipping_from_hwdb(spec))
 
-    ###########################
-    #
-    # Populate pre-shipping
-    #
-    ###########################
+    return workflow_state
+
+def populate_preshipping_from_hwdb(spec):
+    workflow_state = {}
    
-    spec = item_info['specifications'][0]
     if type(spec.get("DATA")) is not dict:
         psc = {}
     else:
@@ -179,13 +168,16 @@ def download_part_info(part_id, status_callback=None):
             "damage_description": psc.get("Visual Inspection Damage", ""),
         }
 
-
-    #print(json.dumps(preshipping_checklist, indent=4))
-
-    #print(json.dumps(workflow_state, indent=4))
-
     return workflow_state
     #}}}
+
+def populate_shipping_from_hwdb(part_id):
+    workflow_state = {}
+
+    #TODO: populate shipping
+
+    return workflow_state
+
 
 def upload_shipping(workflow_state):
     #{{{
@@ -247,11 +239,6 @@ def upload_shipping(workflow_state):
     return True
     #}}}
 
-def populate_preshipping_from_hwdb(part_id):
-    ...
-
-def populate_shipping_from_hwdb(part_id):
-    ...
 
 
 def upload_image(part_id, filename):

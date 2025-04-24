@@ -130,13 +130,6 @@ class HWDBObject:
                 logger.debug(f"{HLD}{self.__class__.__name__}.__init__({kwargs})"
                                     " - initializing")
 
-            # I don't see a problem with setting _initialized at the beginning
-            # since it's only used here in __init__, and any thread that wants
-            # to check this will be locked out until we exit this 'with' block.
-            # The reason I want to set it here is in case this function exits
-            # abnormally. If that happens, there's no sense in other threads
-            # trying to initialize every time they try to get this hwitem.
-            self._initialized = True
 
             constructor_kwargs = {arg: kwargs.get(arg) for arg in self.__class__._constructor_args}
             for k, v in constructor_kwargs.items():
@@ -149,6 +142,8 @@ class HWDBObject:
                 return
 
             self._start_queries(constructor_kwargs)
+            
+            self._initialized = True
 
             logger.debug(f"{HLD}{self.__class__.__name__}.__init__({kwargs})"
                                 " - finished initializing")
@@ -409,7 +404,7 @@ class HWItem(HWDBObject):
     
     @property
     def data(self):
-        return self._get_results("hwitem")['data']
+        return self._get_results("hwitem").get('data', None)
 
     @property
     def component_type(self):
@@ -423,7 +418,7 @@ class HWItem(HWDBObject):
 
     @property
     def subcomponents(self):
-        return self._get_results("subcomp")['data']
+        return self._get_results("subcomp").get('data', None)
 
     @property
     def locations(self):
@@ -455,6 +450,7 @@ class HWItem(HWDBObject):
 
 
 def main():
+    #{{{
     from Sisyphus.Utils.Terminal.Style import Style
     from Sisyphus.Utils.Terminal.Image import image2text
     
@@ -594,6 +590,7 @@ def main():
         object_statistics(System)
         object_statistics(Subsystem)
         object_statistics(WhoAmI)
+    #}}}
 
 if __name__ == '__main__':
     sys.exit(main())

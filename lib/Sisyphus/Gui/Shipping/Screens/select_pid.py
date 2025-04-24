@@ -14,6 +14,7 @@ from Sisyphus.Gui.Shipping import Widgets as zw
 from Sisyphus.Gui.Shipping import Model as mdl
 
 from PyQt5 import QtWidgets as qtw
+from PyQt5 import QtCore as qtc
 
 ###############################################################################
 
@@ -25,24 +26,20 @@ class SelectPID(zw.PageWidget):
         #{{{
         super().__init__(*args, **kwargs)
         
-        #default_name = self.app_state.setdefault('default_name')
-        #default_email = self.app_state.setdefault('default_email')
-
         default_result_msg = "<i>(Enter a PID and click 'find')</i>"
 
-        #self.name_text_box = zw.ZLineEdit(owner=self, key='user_name', default=default_name)
-        #self.email_text_box = zw.ZLineEdit(owner=self, key='user_email', default=default_email)
-        
-        self.pid_search_result_label = zw.ZLabel(
-                    owner=self, key='search_result_message', default=default_result_msg)
-        
         self.pid_text_box = zw.ZLineEdit(owner=self, key='search_part_id')
 
         self.completer = qtw.QCompleter(sorted(self.app_state.setdefault('recent_searches', [])))
         self.pid_text_box.setCompleter(self.completer)
-
-
         self.find_button = qtw.QPushButton("find")
+
+
+        self.part_details = zw.ZPartDetails(
+                                    owner=self, 
+                                    key='part_details',
+                                    source='workflow:part_info')
+
         self.find_button.setStyleSheet(zw.STYLE_SMALL_BUTTON)
         self.find_button.clicked.connect(self.lookup_pid)
         
@@ -55,29 +52,6 @@ class SelectPID(zw.PageWidget):
 
         main_layout = qtw.QVBoxLayout()
         main_layout.addWidget(self.title_bar)
-
-        ############
-
-        '''
-        frame = qtw.QFrame()
-        frame.setFrameStyle(qtw.QFrame.Box | qtw.QFrame.Sunken)
-        frame.setLineWidth(2)
-
-        frame_layout = qtw.QVBoxLayout()
-        frame_layout.setContentsMargins(5, 5, 5, 5)
-
-        #main_layout.addWidget(qtw.QLabel("Your name:"))
-        #main_layout.addWidget(self.name_text_box)
-        #main_layout.addSpacing(10)
-        frame_layout.addWidget(qtw.QLabel("Your name:"))
-        frame_layout.addWidget(self.name_text_box)
-        frame.setLayout(frame_layout)
-        main_layout.addWidget(frame)
-
-        ############
-        main_layout.addWidget(qtw.QLabel("Your email:"))
-        main_layout.addWidget(self.email_text_box)
-        '''
 
         main_layout.addSpacing(10)
 
@@ -92,21 +66,18 @@ class SelectPID(zw.PageWidget):
 
         search_layout.addWidget(self.pid_text_box)
         search_layout.addWidget(self.find_button)
-        #search_widget = qtw.QWidget()
-        #search_widget.setLayout(search_layout)
 
-        #get_pid_layout.addWidget(search_widget)
         get_pid_layout.addLayout(search_layout)
-
-        get_pid_layout.addWidget(self.pid_search_result_label)
+        get_pid_layout.addWidget(qtw.QLabel("<i>(Enter a PID and click 'find')</i>"))
 
         main_layout.addLayout(get_pid_layout)
         main_layout.addSpacing(10)
         ############
 
+        main_layout.addWidget(self.part_details)
+
 
         main_layout.addStretch()
-        #self.nav_bar = NavBar(self.workflow)
         main_layout.addWidget(self.nav_bar)
         self.setLayout(main_layout)
 
@@ -114,39 +85,66 @@ class SelectPID(zw.PageWidget):
 
     def lookup_pid(self):
         #{{{
+
+        '''
+        def better_message_box(title, icon, text, buttons):
+            # QT's stupid QMessageBox().warning(...) puts the freaking
+            # dialog box in a random place on the screen. So we have
+            # to make our own. Thanks, jerks.
+            mw = self.application.main_window
+            msgbox = qtw.QMessageBox(mw)
+            msgbox.setWindowTitle(title)
+            msgbox.setText(text)
+            msgbox.setIcon(icon)
+            msgbox.setStandardButtons(qtw.QMessageBox.Ok)
+            
+            mw_geo = mw.frameGeometry()
+            msgbox.setGeometry(0, 0, 400, 150)
+            msg_geo = msgbox.frameGeometry()
+
+            new_x = mw_geo.x() + (mw_geo.width() - msg_geo.width()) // 2
+            new_y = mw_geo.y() + (mw_geo.height() - msg_geo.height()) // 2
+
+            msgbox.move(new_x, new_y)
+            return msgbox.exec()
+        '''
+
         part_id = self.page_state['search_part_id']
 
         with self.wait():
-            workflow_state = mdl.download_part_info(part_id,
-                            status_callback=self.application.update_status)
-        
-        if workflow_state is None:
-            msg = f'''<div style="color: #990000">{part_id} not found!</div>'''
-        else:
-            self.append_recent_search(part_id)
-            part_info = workflow_state['part_info']
-            subcomponent_info = part_info['subcomponents'].values()
-            msg = ''.join([
-                "<table>",
-                f"<tr><td>Selected PID:</td><td>{part_info['part_id']}</td></tr>",
-                f"<tr><td>Part Type Name:</td><td>{part_info['part_type_name']}</td></tr>",
-                f"<tr><td>System:</td><td>{part_info['system_name']} ({part_info['system_id']})"
-                        "</td></tr>",
-                f"<tr><td>Subystem:</td><td>{part_info['subsystem_name']} "
-                        f"({part_info['subsystem_id']})</td></tr>",
-                f"<tr><td>Subcomponents:</td><td>",
-                ', '.join([sc['Sub-component PID'] for sc in subcomponent_info]),
-                f"</td></tr>",
-                "</table>",
-            ]) 
-            self.workflow_state.update(workflow_state)
-        
-        self.pid_search_result_label.setText(msg)
-        
-        self.refresh() 
+            workflow_state = mdl.download_part_info(
+                                    part_id,
+                                    refresh=True, # don't use the cache
+                                    status_callback=self.application.update_status)
+
+        self.workflow_state.update(workflow_state)
+
+        if not self.part_id:
+            
+            #better_message_box("Not Found", 
+            #                qtw.QMessageBox.Warning,
+            #                f"{part_id} was not found.",
+            #                qtw.QMessageBox.Ok)
+
+            qtw.QMessageBox.warning(
+                            self.application.main_window, 
+                            "Not Found", 
+                            f"{part_id} was not found.",
+                            qtw.QMessageBox.Ok)
+
+            #self.messagebox(
+            #            qtw.QMessageBox.warning, 
+            #            'Not Found', 
+            #            f"{part_id} was not found.", 
+            #            qtw.QMessageBox.Ok) # | qtw.QMessageBox.Cancel)
+
+        self.restore() # update dynamic widgets with new data
+        self.refresh() # update navigation bar
+ 
         #}}}
     
     def append_recent_search(self, part_id):
+        #{{{
         rs = self.app_state['recent_searches']
 
         if part_id in rs:
@@ -157,6 +155,7 @@ class SelectPID(zw.PageWidget):
 
         self.completer = qtw.QCompleter(rs)
         self.pid_text_box.setCompleter(self.completer)
+        #}}}
 
     def save(self):
         #{{{
@@ -181,7 +180,6 @@ class SelectPID(zw.PageWidget):
         #}}}
 
     def restore(self):
-        #{{{
         super().restore()
 
     def refresh(self):
@@ -191,11 +189,6 @@ class SelectPID(zw.PageWidget):
         
         self.nav_bar.back_button.setEnabled(False)
         self.nav_bar.back_button.setVisible(False)
-
-        #if self.workflow_state.get('part_info', None) is not None:
-        #    self.nav_bar.continue_button.setEnabled(True)
-        #else:
-        #    self.nav_bar.continue_button.setEnabled(False)
 
         if self.part_id:
             self.nav_bar.continue_button.setEnabled(True)

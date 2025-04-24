@@ -24,10 +24,16 @@ class PreShipping1(zw.PageWidget):
 
         # Create the interactive widgets on this page
 
-        self.subcomp_caption = qtw.QLabel("Contents")
+        #self.subcomp_caption = qtw.QLabel("Contents")
 
-        self.table = qtw.QTableWidget(0, 3)
-        self.table.verticalHeader().setVisible(False)
+        #self.table = qtw.QTableWidget(0, 3)
+        #self.table.verticalHeader().setVisible(False)
+
+        self.part_details = zw.ZPartDetails(
+                                    owner=self, 
+                                    key='part_details', 
+                                    source='workflow:part_info')
+        
 
         msg = "The list of components for this shipment is correct"
         self.confirm_list_checkbox = zw.ZCheckBox(owner=self, text=msg, key="confirm_list")
@@ -55,13 +61,14 @@ class PreShipping1(zw.PageWidget):
         main_layout.addWidget(self.title_bar)
         ########################################
 
+        '''
         subcomp_list_layout = qtw.QVBoxLayout()
         subcomp_list_layout.addWidget( self.subcomp_caption )
         subcomp_list_layout.addSpacing(5)
         horizontal_header = self.table.horizontalHeader()
         horizontal_header.resizeSection(0, 200)
-        horizontal_header.resizeSection(1, 275)
-        horizontal_header.resizeSection(2, 275)
+        horizontal_header.resizeSection(1, 260)
+        horizontal_header.resizeSection(2, 260)
         self.table.setHorizontalHeaderLabels(['Sub-component PID',
                             'Component Type Name', 'Functional Position Name'])
         subcomp_list_layout.addWidget(self.table)
@@ -69,14 +76,19 @@ class PreShipping1(zw.PageWidget):
         subcomp_list_widget.setLayout(subcomp_list_layout)
         main_layout.addWidget(subcomp_list_widget)
         main_layout.addSpacing(10)
+        '''
 
         ########################################
 
+        main_layout.addWidget(self.part_details)
+        main_layout.addSpacing(10)
+
+        ########################################
 
         main_layout.addWidget(qtw.QLabel("Please affirm the following:"))
 
         affirm_layout = qtw.QHBoxLayout()
-        affirm_layout.addSpacing(10)
+        #affirm_layout.addSpacing(10)
 
         indented_layout = qtw.QVBoxLayout()
         indented_layout.addWidget(self.confirm_list_checkbox)
@@ -100,8 +112,9 @@ class PreShipping1(zw.PageWidget):
 
     def restore(self):
         super().restore()
-        self.populate_subcomps()
+        #self.populate_subcomps()
 
+    '''
     def populate_subcomps(self):
 
         if self.workflow_state.get('part_info', None) is None:
@@ -115,7 +128,8 @@ class PreShipping1(zw.PageWidget):
             self.table.setItem(idx, 0, qtw.QTableWidgetItem(subcomp['Sub-component PID']))
             self.table.setItem(idx, 1, qtw.QTableWidgetItem(subcomp['Component Type Name']))
             self.table.setItem(idx, 2, qtw.QTableWidgetItem(subcomp['Functional Position Name']))
-    
+    '''    
+
     def refresh(self):
         super().refresh()
 
