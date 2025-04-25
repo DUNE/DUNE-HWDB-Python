@@ -186,8 +186,8 @@ def upload_shipping(workflow_state):
     part_id = ws['part_info']['part_id']
 
     shipping_checklist = {
-        "POC name":  ws['PreShipping2']['approver_name'],
-        "POC Email": [s.strip() for s in ws['PreShipping2']['approver_email'].split(',')],
+        "POC name":  ws['PreShipping3']['approver_name'],
+        "POC Email": [s.strip() for s in ws['PreShipping3']['approver_email'].split(',')],
         "System Name (ID)": f"{ws['part_info']['system_name']}"
                                f" ({ws['part_info']['system_id']})",
         "Subsystem Name (ID)":  f"{ws['part_info']['subsystem_name']}"
@@ -204,7 +204,7 @@ def upload_shipping(workflow_state):
         "This shipment has been adequately insured for transit": ws['Shipping4']['confirm_insured']
     }
 
-    print(json.dumps(shipping_checklist, indent=4))
+    #print(json.dumps(shipping_checklist, indent=4))
 
     # Get the current specifications and add to it
     item_resp = ut.fetch_hwitems(part_id=part_id)[part_id]

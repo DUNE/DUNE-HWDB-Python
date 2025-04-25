@@ -23,7 +23,7 @@ import concurrent.futures
 NUM_THREADS = 50
 _executor = concurrent.futures.ThreadPoolExecutor(
                     max_workers=NUM_THREADS,
-                    thread_name_prefix='DataModel_')
+                    thread_name_prefix='DataModel')
 
 
 HLD = highlight = "[bg=#999999,fg=#ffffff]"

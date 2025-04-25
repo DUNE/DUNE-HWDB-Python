@@ -153,7 +153,7 @@ class WorkflowWidget(qtw.QWidget):
             "PreShipping5": "PreShipping6",
             "PreShipping6": "PreShipping7",
             "PreShipping7": "PreShippingComplete",
-            "PreShippingComplete": None,
+            "PreShippingComplete": "Shipping1",
 
             "Shipping1": "Shipping2",
             "Shipping2": "Shipping3",
@@ -183,7 +183,7 @@ class WorkflowWidget(qtw.QWidget):
             "PreShipping1": "SelectWorkflow",
             "PreShipping2": "PreShipping1",
             "PreShipping3": "PreShipping2",
-            "PreShipping4a": "PreShipping2",
+            "PreShipping4a": "PreShipping3",
             "PreShipping4b": "PreShipping4a",
             "PreShipping5": "PreShipping4b",
             "PreShipping6": "PreShipping5",

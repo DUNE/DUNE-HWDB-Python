@@ -80,6 +80,8 @@ class SelectPID(zw.PageWidget):
 
         main_layout.addStretch()
         main_layout.addWidget(self.nav_bar)
+        self.nav_bar.set_buttons(['continue'])
+
         self.setLayout(main_layout)
 
         #}}}
@@ -188,9 +190,6 @@ class SelectPID(zw.PageWidget):
         logger.debug(f"{self.__class__.__name__}.refresh()")
         super().refresh()
         
-        self.nav_bar.back_button.setEnabled(False)
-        self.nav_bar.back_button.setVisible(False)
-
         if self.part_id:
             self.nav_bar.continue_button.setEnabled(True)
         else:

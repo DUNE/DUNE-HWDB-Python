@@ -247,7 +247,11 @@ class Application(qtw.QApplication):
         idx = self.tab_widget.indexOf(new_workflow)
         self.tab_widget.setCurrentIndex(idx)
 
-    def close_tab(self, tab_index):
+    def close_tab_by_obj(self, page_widget):
+        index = self.tab_widget.indexOf(page_widget)
+        self.close_tab_by_index(index)
+
+    def close_tab_by_index(self, tab_index):
         # Either the user clicked the [X] on a tab, or they clicked
         # the 'Close' button.
 

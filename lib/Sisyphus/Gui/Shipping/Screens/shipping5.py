@@ -99,7 +99,8 @@ class Shipping5(zw.PageWidget):
 
     def on_navigate_next(self):
         super().on_navigate_next()
-        ok = self.update_location()
+        with self.wait():
+            ok = self.update_location()
         return ok
 
 

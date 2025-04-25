@@ -41,12 +41,16 @@ class PreShippingComplete(zw.PageWidget):
         main_layout.addStretch()
 
         main_layout.addWidget(self.nav_bar)
+        self.nav_bar.set_buttons(['close', 'continue'])
+        self.nav_bar.continue_button.setText('Continue to Shipping')
 
         self.setLayout(main_layout)
+
+    def on_navigate_next(self):
+        self.workflow.get_page_by_id("Shipping1").page_state['from_preshipping'] = True
+        return super().on_navigate_next()
 
 
     def refresh(self):
         super().refresh()
-        self.nav_bar.back_button.setEnabled(False)
-        self.nav_bar.continue_button.setEnabled(False)
 

@@ -39,6 +39,7 @@ class ReceivingComplete(zw.PageWidget):
         main_layout.addStretch()
 
         main_layout.addWidget(self.nav_bar)
+        self.nav_bar.set_buttons(['close'])
 
         self.setLayout(main_layout)
         #}}}

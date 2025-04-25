@@ -103,8 +103,8 @@ class Receiving3(zw.PageWidget):
                     "shipment has arrived.")
         self.instructions.setText(instructions) 
 
-        email_to = (f"{workflow_state['PreShipping2']['approver_name']} "
-                    f"&lt;{workflow_state['PreShipping2']['approver_email']}&gt;")
+        email_to = (f"{workflow_state['PreShipping3']['approver_name']} "
+                    f"&lt;{workflow_state['PreShipping3']['approver_email']}&gt;")
 
         email_from = (f"{self.application.user_full_name} "
                     f"&lt;{self.application.user_email}&gt;")
@@ -120,7 +120,7 @@ class Receiving3(zw.PageWidget):
             f"""<tr><td colspan="2">"""
 
 
-            f"Dear {workflow_state['PreShipping2']['approver_name']},<br/>\n<br/>\n"
+            f"Dear {workflow_state['PreShipping3']['approver_name']},<br/>\n<br/>\n"
             f"Your shipment, {self.part_id}, has arrived at "
             f"{workflow_state['Receiving2']['location']} [TODO: lookup inst] at "
             f"{workflow_state['Receiving2']['arrived']} [TODO: format time].<br/>\n<br/>\n"

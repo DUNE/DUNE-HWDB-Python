@@ -101,6 +101,7 @@ class Shipping2(zw.PageWidget):
 
     def upload_files(self):
         #{{{
+        logger.info(f"{self.__class__.__name__}: uploading files")
         import shutil, os
         
         def rename(filename, prefix):
@@ -121,13 +122,12 @@ class Shipping2(zw.PageWidget):
                 "image_id": image_id,
                 "checksum": checksum
             }
+        with self.wait():
+            upload_file(self.page_state['bol_filename'], "BoL", "bol_info")
 
-        upload_file(self.page_state['bol_filename'], "BoL", "bol_info")
+            if self.page_state['proforma_filename']:
+                upload_file(self.page_state['proforma_filename'], "ProformaInvoice", "proforma_info")
 
-        if self.page_state['proforma_filename']:
-            upload_file(page_state['proforma_filename'], "ProformaInvoice", "proforma_info")
-
-        logger.warning(f"files uploaded (presumably!)")
         return True       
         #}}}
 

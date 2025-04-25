@@ -19,6 +19,8 @@ from Sisyphus.Gui import DataModel as dm
 from Sisyphus.Utils.Terminal.Style import Style
 import json
 import os
+from copy import copy
+import time
 
 from PyQt5 import QtCore as qtc
 from PyQt5 import QtWidgets as qtw
@@ -90,6 +92,7 @@ class PageWidget(qtw.QWidget):
             def __enter__(self):
                 page.start_waiting()
             def __exit__(self, type, value, traceback):
+                time.sleep(3)
                 page.stop_waiting()
         return wait_mgr()
                 
@@ -194,7 +197,9 @@ class PageWidget(qtw.QWidget):
         # The user is trying to close this tab. Ask them if they are sure.
         # Return True if it's okay to close, or False if they changed their mind.
 
-        if self._warn_before_closing:
+        logger.error(f"close_tab_requested, _warn_berfore_closing: {self._warn_before_closing}")
+        logger.error(f"my class is: {self.__class__.__name__}")
+        if self.__class__._warn_before_closing:
  
             retval = qtw.QMessageBox.warning(
                         self.application.main_window,
@@ -283,9 +288,11 @@ class NavBar(qtw.QWidget):
     #{{{
     def __init__(self, *args, **kwargs):
 
-        self.owner = kwargs.pop('owner', None)
+        self.page = self.owner = kwargs.pop('owner', None)
         if self.owner is None:
             raise ValueError("required parameter: owner")
+        self.workflow = self.page.workflow
+        self.application = self.page.application
 
         super().__init__(*args, **kwargs)
 
@@ -302,17 +309,41 @@ class NavBar(qtw.QWidget):
 
         self.close_tab_button = qtw.QPushButton("Close Tab")
         self.close_tab_button.setStyleSheet(STYLE_LARGE_BUTTON)
-        self.close_tab_button.clicked.connect(self.owner.application.close_tab)
+        #self.close_tab_button.clicked.connect(self.application.close_tab)
+        self.close_tab_button.clicked.connect(
+                        lambda: self.application.close_tab_by_obj(self.workflow))
 
         main_layout.addWidget(self.back_button)
         main_layout.addStretch()
-        main_layout.addWidget(self.continue_button)
         main_layout.addWidget(self.close_tab_button)
-        self.close_tab_button.hide()
+        main_layout.addWidget(self.continue_button)
+        self.close_tab_button.setVisible(False)
 
 
         self.setLayout(main_layout)
+
+    def set_buttons(self, button_list):
+        button_list = copy(button_list)
+
+        if 'back' in button_list:
+            self.back_button.setVisible(True)
+        else:
+            self.back_button.setVisible(False)
+
+        if 'continue' in button_list:
+            self.continue_button.setVisible(True)
+        else:
+            self.continue_button.setVisible(False)
+
+        if 'close' in button_list:
+            self.close_tab_button.setVisible(True)
+        else:
+            self.close_tab_button.setVisible(False)
+
+
     #}}}
+
+
 
 class LinkedWidget:
     #{{{
@@ -653,7 +684,13 @@ class ZDateTimeEdit(qtw.QDateTimeEdit, LinkedWidget):
         super().restore_state()
         now = qtc.QDateTime.currentDateTime().toString(qtc.Qt.DateFormat.ISODate)
 
-        datetime = self.page_state.setdefault(self.state_key, now)
+        # Note that it should already exist and has an initial value of
+        # an empty string, so we have to actually look at it and decide
+        # what to do, instead of doing a setdefault or something
+        datetime = self.page_state.get(self.state_key, '')
+        if datetime == '':
+            datetime = now
+            self.page_state[self.state_key] = datetime
 
         self.setDateTime(
             qtc.QDateTime.fromString(datetime, qtc.Qt.DateFormat.ISODate)
@@ -673,14 +710,9 @@ class ZLabel(qtw.QLabel, LinkedWidget):
     def restore_state(self):
         super().restore_state()
 
-        #if self.state_key.startswith('attr:'):
-        #    attr_key = self.state_key[5:]
-        #    if hasattr(self.owner, attr_key):
-        #        txt = getattr(self.owner, attr_key) or self.default_value
-        #    else:
-        #        txt = self.default_value
-        #else:
-        #    txt = self.page_state.get(self.state_key, self.default_value)
+        # Note: if you ever need this to work off the state_key like
+        # every other LinkedWidget, you can put the desired state_key
+        # into the source_key, and it will pull from there.
         txt = self.source()
         super().setText(txt)
 

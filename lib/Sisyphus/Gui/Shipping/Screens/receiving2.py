@@ -90,11 +90,12 @@ class Receiving2(zw.PageWidget):
         #}}}
 
     def update_location(self):
-        ok = mdl.update_locations_and_detach(
-                        part_id=self.part_id, 
-                        location=self.page_state["location"],
-                        arrived=self.page_state["arrived"],
-                        comments=self.page_state["comments"])
+        with self.wait():
+            ok = mdl.update_locations_and_detach(
+                            part_id=self.part_id, 
+                            location=self.page_state["location"],
+                            arrived=self.page_state["arrived"],
+                            comments=self.page_state["comments"])
         return True
 
     def on_navigate_next(self):

@@ -47,4 +47,3 @@ class Shipping6(zw.PageWidget):
 
     def refresh(self):
         super().refresh()
-        self.nav_bar.continue_button.setText("Finish")

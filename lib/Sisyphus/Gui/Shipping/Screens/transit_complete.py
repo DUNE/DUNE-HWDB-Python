@@ -35,10 +35,13 @@ class TransitComplete(zw.PageWidget):
         main_layout.addWidget(self.title_bar)
 
         ########################################
+
+        main_layout.addWidget(qtw.QLabel(f"{self.__class__.__name__}"))
         
         main_layout.addStretch()
 
         main_layout.addWidget(self.nav_bar)
+        self.nav_bar.set_buttons(['close'])
 
         self.setLayout(main_layout)
         #}}}

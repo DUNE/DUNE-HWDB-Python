@@ -129,11 +129,17 @@ class ShippingLabel:
         img_bytes = base64.b85decode(self.workflow_state['part_info']['qr_code'].encode())
         img_obj = PIL.Image.open(io.BytesIO(img_bytes))
         #cropped_obj = img_obj.crop((40, 40, 410, 410))
-        
-        if size is None:
-            image_width, image_height = 3.0 * units.inch, 3.0 * units.inch
-        else:
-            image_width, image_height = size, size
+       
+        size = size or 3.0 * units.inch
+ 
+        image_width, image_height = size, size
+
+        if self.current_top - image_height < 0.5 * units.inch:
+            # There is less than half an inch remaining on the page, so we
+            # should start a new page.
+            cvs.showPage()
+            self.current_top = self.page_height - self.top_margin
+
 
         if self.debug:
             self.draw_rectangle(
@@ -166,6 +172,12 @@ class ShippingLabel:
         aspect_ratio = logo_pil.size[0]/logo_pil.size[1]
         image_width = self.page_usable_width
         image_height = image_width / aspect_ratio
+        
+        if self.current_top - image_height < 0.5 * units.inch:
+            # There is less than half an inch remaining on the page, so we
+            # should start a new page.
+            cvs.showPage()
+            self.current_top = self.page_height - self.top_margin
 
         if self.debug:
             self.draw_rectangle(
@@ -190,6 +202,10 @@ class ShippingLabel:
     def blank_space(self, space): #{{{
         cvs = self.cvs
 
+        # Don't worry about going to a new page here. Let the next non-blank
+        # item figure it out. Otherwise, we would end up going to a new page
+        # only to put the blank space right at the top.
+
         if self.debug:
             self.draw_rectangle(
                     self.left_margin,
@@ -198,6 +214,7 @@ class ShippingLabel:
                     space,
                     stroke=0x888888,
                     fill=0xcccccc)
+
         self.current_top -= space                    
         #}}}
 
@@ -208,6 +225,12 @@ class ShippingLabel:
         if height is None:
             height = font_size * 4/3
         v_off = (height - font_size * 4/3) / 2
+        
+        if self.current_top - height < 0.5 * units.inch:
+            # There is less than half an inch remaining on the page, so we
+            # should start a new page.
+            cvs.showPage()
+            self.current_top = self.page_height - self.top_margin
 
         cvs.saveState()
 

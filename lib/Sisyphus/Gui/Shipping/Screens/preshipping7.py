@@ -107,8 +107,8 @@ class PreShipping7(zw.PageWidget):
 
 
         ps_checklist = {
-            "QA Rep name": ws['PreShipping2a']['qa_rep_name'],
-            "QA Rep Email": [s.strip() for s in ws['PreShipping2a']['qa_rep_email'].split(',')],
+            "QA Rep name": ws['PreShipping2']['qa_rep_name'],
+            "QA Rep Email": [s.strip() for s in ws['PreShipping2']['qa_rep_email'].split(',')],
             "POC name": ws['PreShipping3']['approver_name'],
             "POC Email": [s.strip() for s in ws['PreShipping3']['approver_email'].split(',')],
             "System Name (ID)": f"{ws['part_info']['system_name']}"
@@ -118,7 +118,7 @@ class PreShipping7(zw.PageWidget):
             "Component Type Name (ID)": f"{ws['part_info']['part_type_name']}"
                                 f" ({ws['part_info']['part_type_id']})",
             "DUNE PID": part_id,
-            "QA/QC related info Line 1": ws['PreShipping2a']['test_info'],
+            "QA/QC related info Line 1": ws['PreShipping2']['test_info'],
             "HTS code": ws['PreShipping4a']['hts_code'] 
                                if ws['PreShipping4a']['shipping_service_type'] 
                                     != 'Domestic' else None ,

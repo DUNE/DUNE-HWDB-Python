@@ -25,7 +25,7 @@ class TabWidget(qtw.QTabWidget):
                 max-height: 40px;
             """)
         self.setTabsClosable(True)
-
-        self.tabCloseRequested.connect(self.application.close_tab)
+        self.setTabBarAutoHide(False)
+        self.tabCloseRequested.connect(self.application.close_tab_by_index)
         self.currentChanged.connect(self.application.on_currentChanged)
 

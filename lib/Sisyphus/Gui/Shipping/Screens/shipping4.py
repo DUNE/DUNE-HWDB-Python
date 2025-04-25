@@ -170,7 +170,8 @@ class Shipping4(zw.PageWidget):
         #}}}
     
     def update_hwdb(self):
-        return mdl.upload_shipping(self.workflow_state)
+        with self.wait():
+            return mdl.upload_shipping(self.workflow_state)
 
     def on_navigate_next(self):
         #{{{

@@ -33,9 +33,9 @@ class Receiving1(zw.PageWidget):
         self.confirm_list_checkbox = zw.ZCheckBox(owner=self, text=msg, key="confirm_list")
         
 
-        msg = "All necessary QA/QC information for these components " \
-                    "has been stored in the HWDB"
-        self.confirm_hwdb_updated_checkbox = zw.ZCheckBox(owner=self, text=msg, key="hwdb_updated")
+        #msg = "All necessary QA/QC information for these components " \
+        #            "has been stored in the HWDB"
+        #self.confirm_hwdb_updated_checkbox = zw.ZCheckBox(owner=self, text=msg, key="hwdb_updated")
         
         # Create the actual layout and place the interactive widgets in it
         self._setup_UI()
@@ -77,7 +77,7 @@ class Receiving1(zw.PageWidget):
 
         indented_layout = qtw.QVBoxLayout()
         indented_layout.addWidget(self.confirm_list_checkbox)
-        indented_layout.addWidget(self.confirm_hwdb_updated_checkbox)
+        #indented_layout.addWidget(self.confirm_hwdb_updated_checkbox)
         indented_widget = qtw.QWidget()
         indented_widget.setLayout(indented_layout)
         affirm_layout.addWidget(indented_widget)
@@ -115,8 +115,7 @@ class Receiving1(zw.PageWidget):
     def refresh(self):
         super().refresh()
 
-        if (self.page_state.get('confirm_list', False) 
-                    and self.page_state.get('hwdb_updated', False)):
+        if self.page_state.get('confirm_list', False):
             self.nav_bar.continue_button.setEnabled(True)
         else:
             self.nav_bar.continue_button.setEnabled(False)
