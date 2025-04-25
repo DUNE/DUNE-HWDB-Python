@@ -10,7 +10,7 @@ from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
 from Sisyphus.Gui.Shipping import Widgets as zw
-from Sisyphus.Gui.Shipping import Model as mdl
+from Sisyphus.Gui.Shipping.Tasks import Database as dbt
 from PyQt5 import QtCore as qtc
 from PyQt5 import QtWidgets as qtw
 
@@ -28,10 +28,10 @@ class Shipping5(zw.PageWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.shipping_location = zw.ZInstitutionWidget(owner=self, key='location')        
-        self.shipping_time = zw.ZDateTimeEdit(owner=self, key='shipment_time')
-        self.comments = zw.ZLineEdit(owner=self, key='comments')
-        self.affirm_shipment = zw.ZCheckBox(owner=self, 
+        self.shipping_location = zw.ZInstitutionWidget(page=self, key='location')        
+        self.shipping_time = zw.ZDateTimeEdit(page=self, key='shipment_time')
+        self.comments = zw.ZLineEdit(page=self, key='comments')
+        self.affirm_shipment = zw.ZCheckBox(page=self, 
                         text="I have shipped the cargo", key='affirm_shipment')
 
         self._setup_UI()
@@ -90,17 +90,17 @@ class Shipping5(zw.PageWidget):
         #}}}
 
     def update_location(self):
-        ok = mdl.update_location(
-                        part_id=self.part_id, 
-                        location=self.page_state["location"],
-                        arrived=self.page_state["shipment_time"],
-                        comments=self.page_state["comments"])
+        with self.wait():
+            ok = dbt.update_location(
+                            part_id=self.part_id, 
+                            location=self.page_state["location"],
+                            arrived=self.page_state["shipment_time"],
+                            comments=self.page_state["comments"])
         return True
 
     def on_navigate_next(self):
         super().on_navigate_next()
-        with self.wait():
-            ok = self.update_location()
+        ok = self.update_location()
         return ok
 
 

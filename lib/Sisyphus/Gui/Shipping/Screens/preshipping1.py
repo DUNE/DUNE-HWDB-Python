@@ -11,7 +11,6 @@ logger = config.getLogger(__name__)
 
 from Sisyphus.Utils.Terminal.Style import Style
 from Sisyphus.Gui.Shipping import Widgets as zw
-from Sisyphus.Gui.Shipping.ShippingLabel import ShippingLabel
 
 from PyQt5 import QtWidgets as qtw
 
@@ -24,26 +23,19 @@ class PreShipping1(zw.PageWidget):
 
         # Create the interactive widgets on this page
 
-        #self.subcomp_caption = qtw.QLabel("Contents")
-
-        #self.table = qtw.QTableWidget(0, 3)
-        #self.table.verticalHeader().setVisible(False)
-
         self.part_details = zw.ZPartDetails(
-                                    owner=self, 
+                                    page=self, 
                                     key='part_details', 
                                     source='workflow:part_info')
         self.part_details.setMinimumSize(600, 400)        
 
         msg = "The list of components for this shipment is correct"
-        self.confirm_list_checkbox = zw.ZCheckBox(owner=self, text=msg, key="confirm_list")
+        self.confirm_list_checkbox = zw.ZCheckBox(page=self, text=msg, key="confirm_list")
         
 
         msg = "All necessary QA/QC information for these components " \
                     "has been stored in the HWDB"
-        self.confirm_hwdb_updated_checkbox = zw.ZCheckBox(owner=self, text=msg, key="hwdb_updated")
-
-        #self.my_text_box = zw.ZLineEdit(owner=self, key="my_text_box")
+        self.confirm_hwdb_updated_checkbox = zw.ZCheckBox(page=self, text=msg, key="hwdb_updated")
 
         
         # Create the actual layout and place the interactive widgets in it

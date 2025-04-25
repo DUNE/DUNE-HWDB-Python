@@ -25,9 +25,6 @@ import threading
 import concurrent.futures
 import hashlib
 
-NUM_THREADS = 50
-_executor = concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS)
-
 HLD = highlight = "[bg=#999999,fg=#ffffff]"
 HLI = highlight = "[bg=#009900,fg=#ffffff]"
 HLW = highlight = "[bg=#999900,fg=#ffffff]"

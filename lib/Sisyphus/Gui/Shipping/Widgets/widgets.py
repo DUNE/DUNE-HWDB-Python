@@ -47,20 +47,19 @@ class PageWidget(qtw.QWidget):
     def __init__(self, *args, **kwargs):
         logger.debug(f"[{self.__class__.__name__}].__init__()")
 
-        self.owner = kwargs.pop("owner", None)
-        if self.owner is None:
-            raise ValueError("required paramter: owner")
+        self.workflow = kwargs.pop("workflow", None)
+        if self.workflow is None:
+            raise ValueError("required paramter: workflow")
 
-        self.workflow = self.owner
         self.application = self.workflow.application
 
         super().__init__(*args, **kwargs)
-        self._app_state = self.workflow.app_state
+        self._application_state = self.workflow.application_state
         self._workflow_state = self.workflow.workflow_state
         self.page_id = self.__class__.__name__.split('.')[-1]
 
-        self.title_bar = TitleBar(owner = self)
-        self.nav_bar = NavBar(owner = self)
+        self.title_bar = TitleBar(page=self)
+        self.nav_bar = NavBar(page=self)
 
         # Make the PageWidget's layout be a stacked layout that contains
         # the "real" widget containing the actual page contents, and
@@ -74,6 +73,7 @@ class PageWidget(qtw.QWidget):
         self.master_layout.addWidget(self.overlay)
         self.master_layout.addWidget(self.main_widget)
         self.master_layout.setCurrentWidget(self.main_widget)
+        self._wait_count = 0
 
     def setLayout(self, layout):
         # Re-interpret "setLayout" to mean for the main_widget instead
@@ -90,10 +90,12 @@ class PageWidget(qtw.QWidget):
         page = self
         class wait_mgr:
             def __enter__(self):
+                page._wait_count += 1
                 page.start_waiting()
             def __exit__(self, type, value, traceback):
-                time.sleep(3)
-                page.stop_waiting()
+                page._wait_count -= 1
+                if page._wait_count <= 0:
+                    page.stop_waiting()
         return wait_mgr()
                 
 
@@ -136,8 +138,8 @@ class PageWidget(qtw.QWidget):
         return self.workflow_state.get("part_info", {}).get("part_id", None)
 
     @property
-    def app_state(self):
-        return self.workflow.app_state
+    def application_state(self):
+        return self.workflow.application_state
 
     @property
     def workflow_state(self):
@@ -254,16 +256,16 @@ class TitleBar(qtw.QWidget):
     def __init__(self, *args, **kwargs):
         #logger.debug(f"{self.__class__.__name__}.__init__()")
 
-        self.owner = kwargs.pop('owner', None)        
-        if self.owner is None:
-            raise ValueError("required parameter: owner")
+        self.page = kwargs.pop('page', None)        
+        if self.page is None:
+            raise ValueError("required parameter: page")
 
         super().__init__(*args, **kwargs)
         
         main_layout = qtw.QVBoxLayout()
         main_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.page_title = qtw.QLabel(self.owner.page_name)
+        self.page_title = qtw.QLabel(self.page.page_name)
         self.page_title.setStyleSheet("""
                 font-size: 14pt;
                 font-weight: bold;
@@ -273,7 +275,7 @@ class TitleBar(qtw.QWidget):
         main_layout.addWidget(self.page_title)
 
         self.page_subtitle = ZLabel(
-                        owner=self.owner, 
+                        page=self.page, 
                         key='subtitle', 
                         source='attr:part_id',
                         default='[no part_id yet]')
@@ -288,9 +290,9 @@ class NavBar(qtw.QWidget):
     #{{{
     def __init__(self, *args, **kwargs):
 
-        self.page = self.owner = kwargs.pop('owner', None)
-        if self.owner is None:
-            raise ValueError("required parameter: owner")
+        self.page = kwargs.pop('page', None)
+        if self.page is None:
+            raise ValueError("required parameter: page")
         self.workflow = self.page.workflow
         self.application = self.page.application
 
@@ -301,11 +303,11 @@ class NavBar(qtw.QWidget):
 
         self.back_button = qtw.QPushButton("Back")
         self.back_button.setStyleSheet(STYLE_LARGE_BUTTON)
-        self.back_button.clicked.connect(self.owner.workflow.navigate_prev)
+        self.back_button.clicked.connect(self.page.workflow.navigate_prev)
 
         self.continue_button = qtw.QPushButton("Continue")
         self.continue_button.setStyleSheet(STYLE_LARGE_BUTTON)
-        self.continue_button.clicked.connect(self.owner.workflow.navigate_next)
+        self.continue_button.clicked.connect(self.page.workflow.navigate_next)
 
         self.close_tab_button = qtw.QPushButton("Close Tab")
         self.close_tab_button.setStyleSheet(STYLE_LARGE_BUTTON)
@@ -351,11 +353,11 @@ class LinkedWidget:
         #{{{
         #logger.debug(f"{self.__class__.__name__}.__init__()")
  
-        # owner = the page that this widget belongs to, which is not 
+        # page = the page that this widget belongs to, which is not 
         #           necessarily the parent. (The parent could be a 
         #           different container widget that we don't care
         #           about except for how it makes the page look.)
-        self.page = self.owner = kwargs.pop('owner', None)
+        self.page = kwargs.pop('page', None)
         self.workflow = self.page.workflow
         self.application = self.page.application
 
@@ -376,8 +378,8 @@ class LinkedWidget:
         #           page state
         self.source_key = kwargs.pop('source', None)
         
-        if self.owner is None:
-            raise ValueError("required parameter: owner")
+        if self.page is None:
+            raise ValueError("required parameter: page")
         if self.state_key is None:
             raise ValueError("required parameter: key")
 
@@ -462,15 +464,15 @@ class LinkedWidget:
 
     @property
     def page_state(self):
-        return self.owner.page_state
+        return self.page.page_state
 
     @property
     def workflow_state(self):
-        return self.owner.workflow_state
+        return self.page.workflow_state
 
     @property
     def application_state(self):
-        return self.owner.application_state
+        return self.page.application_state
 
     def restore(self):
         # This is the method that the page should call to restore a widget
@@ -504,7 +506,7 @@ class ZPartDetails(qtw.QWidget, LinkedWidget):
     def on_show_empty_slots_checked(self, status):
         self.page_state[self.state_key] = status
         self.restore_state()
-        self.owner.refresh()
+        self.page.refresh()
 
     def _setup_UI(self):
         #{{{
@@ -660,7 +662,7 @@ class ZCheckBox(qtw.QCheckBox, LinkedWidget):
 
     def handle_changed(self, status):
         self.page_state[self.state_key] = status
-        self.owner.refresh()
+        self.page.refresh()
 
     def restore_state(self):
         super().restore_state()
@@ -678,7 +680,7 @@ class ZDateTimeEdit(qtw.QDateTimeEdit, LinkedWidget):
 
     def handle_changed(self):
         self.page_state[self.state_key] = self.dateTime().toString(qtc.Qt.DateFormat.ISODate)
-        self.owner.refresh()
+        self.page.refresh()
 
     def restore_state(self):
         super().restore_state()
@@ -705,7 +707,6 @@ class ZLabel(qtw.QLabel, LinkedWidget):
     def setText(self, txt):
         self.page_state[self.state_key] = txt
         super().setText(txt)
-        #self.owner.refresh()
 
     def restore_state(self):
         super().restore_state()
@@ -726,7 +727,7 @@ class ZLineEdit(qtw.QLineEdit, LinkedWidget):
     
     def handle_changed(self):
         self.page_state[self.state_key] = self.text()
-        self.owner.refresh()
+        self.page.refresh()
 
     def restore_state(self):
         super().restore_state()
@@ -749,7 +750,7 @@ class ZTextEdit(qtw.QTextEdit, LinkedWidget):
 
     def handle_editingFinished(self):
         self.page_state[self.state_key] = self.document().toPlainText()
-        self.owner.refresh()
+        self.page.refresh()
 
     def restore_state(self):
         super().restore_state()
@@ -781,7 +782,7 @@ class ZRadioButton(qtw.QRadioButton, LinkedWidget):
         if self.isChecked():
             logger.debug(f"{self.state_key}/{self.state_value_when_selected}: checked")
             self.page_state[self.state_key] = self.state_value_when_selected
-            self.owner.refresh()
+            self.page.refresh()
             
     def restore_state(self):
         super().restore_state()
@@ -807,7 +808,7 @@ class ZRadioButtonGroup(qtw.QButtonGroup, LinkedWidget):
         if value in self.buttons.keys():
             return self.buttons[value]
 
-        new_button = ZRadioButton(owner=self.owner, 
+        new_button = ZRadioButton(page=self.page, 
                                     key=self.state_key, 
                                     value=value)
         if caption is not None:
@@ -859,7 +860,7 @@ class ZFileSelectWidget(qtw.QWidget, LinkedWidget):
 
     def handle_changed(self):
         self.page_state[self.state_key] = self.filename_lineedit.text()
-        self.owner.refresh()
+        self.page.refresh()
 
     def restore_state(self):
         super().restore_state()
@@ -918,7 +919,7 @@ class ZInstitutionWidget(qtw.QWidget, LinkedWidget):
     def on_selectInstitution(self):
         self.institution_id = str(self.inst_widget.currentData())
         self.page_state[self.state_key] = str(self.institution_id)
-        self.owner.refresh()
+        self.page.refresh()
 
     def restore_state(self):
         self.country_widget.blockSignals(True)
@@ -998,7 +999,5 @@ class ZInstitutionWidget(qtw.QWidget, LinkedWidget):
                 "country_by_inst": country_lookup_by_inst
             }
         #}}}
-
-
     #}}}
 

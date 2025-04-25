@@ -13,10 +13,9 @@ from PyQt5 import QtWidgets as qtw
 
 class TabWidget(qtw.QTabWidget):
     def __init__(self, *args, **kwargs):
-        self.owner = kwargs.pop("owner", None)
-        if not self.owner:
-            raise ValueError("required parameter: owner")
-        self.application = self.owner
+        self.application = kwargs.pop("application", None)
+        if not self.application:
+            raise ValueError("required parameter: application")
 
         super().__init__(*args, **kwargs)
 

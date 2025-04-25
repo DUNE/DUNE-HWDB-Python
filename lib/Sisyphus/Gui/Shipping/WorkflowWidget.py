@@ -33,20 +33,22 @@ from Sisyphus.Gui.Shipping.Screens import (
 ###############################################################################
 
 class WorkflowWidget(qtw.QWidget):
-    def __init__(self, *, owner=None, uuid=None):
+    def __init__(self, *, application=None, uuid=None):
         #{{{
+        super().__init__()
+        
         self._finished_init = False
-        if owner is None:
-            raise ValueError("required parameter: owner")
-        self.application = self.owner = owner
+        
+        self.application = application
+        if application is None:
+            raise ValueError("required parameter: application")
         
         if uuid is None:
             raise ValueError("required parameter: uuid")
         self.uuid = uuid
-        if uuid not in self.application.app_state['workflows']:
+        if uuid not in self.application.application_state['workflows']:
             raise ValueError("uuid not in workflows dict")
         
-        super().__init__()
 
         logger.debug(f"{HLD}WorkflowWidget parent: {self.parent()}")
 
@@ -55,12 +57,12 @@ class WorkflowWidget(qtw.QWidget):
         #}}}
 
     @property
-    def app_state(self):
-        return self.application.app_state
+    def application_state(self):
+        return self.application.application_state
 
     @property
     def workflow_state(self):
-        return self.application.app_state['workflows'][self.uuid]
+        return self.application.application_state['workflows'][self.uuid]
 
     @property
     def current_page_id(self):
@@ -101,37 +103,37 @@ class WorkflowWidget(qtw.QWidget):
 
         logger.info("creating pages...")
         self._page_lookup = {
-            "SelectPID": SelectPID(owner=self),
-            "SelectWorkflow": SelectWorkflow(owner=self),
+            "SelectPID": SelectPID(workflow=self),
+            "SelectWorkflow": SelectWorkflow(workflow=self),
 
-            "Packing1": Packing1(owner=self),
-            "PackingComplete": PackingComplete(owner=self),
+            "Packing1": Packing1(workflow=self),
+            "PackingComplete": PackingComplete(workflow=self),
 
-            "PreShipping1": PreShipping1(owner=self),
-            "PreShipping2": PreShipping2(owner=self),
-            "PreShipping3": PreShipping3(owner=self),
-            "PreShipping4a": PreShipping4a(owner=self),
-            "PreShipping4b": PreShipping4b(owner=self),
-            "PreShipping5": PreShipping5(owner=self),
-            "PreShipping6": PreShipping6(owner=self),
-            "PreShipping7": PreShipping7(owner=self),
-            "PreShippingComplete": PreShippingComplete(owner=self),
+            "PreShipping1": PreShipping1(workflow=self),
+            "PreShipping2": PreShipping2(workflow=self),
+            "PreShipping3": PreShipping3(workflow=self),
+            "PreShipping4a": PreShipping4a(workflow=self),
+            "PreShipping4b": PreShipping4b(workflow=self),
+            "PreShipping5": PreShipping5(workflow=self),
+            "PreShipping6": PreShipping6(workflow=self),
+            "PreShipping7": PreShipping7(workflow=self),
+            "PreShippingComplete": PreShippingComplete(workflow=self),
 
-            "Shipping1": Shipping1(owner=self),
-            "Shipping2": Shipping2(owner=self),
-            "Shipping3": Shipping3(owner=self),
-            "Shipping4": Shipping4(owner=self),
-            "Shipping5": Shipping5(owner=self),
-            "Shipping6": Shipping6(owner=self),
-            "ShippingComplete": ShippingComplete(owner=self),
+            "Shipping1": Shipping1(workflow=self),
+            "Shipping2": Shipping2(workflow=self),
+            "Shipping3": Shipping3(workflow=self),
+            "Shipping4": Shipping4(workflow=self),
+            "Shipping5": Shipping5(workflow=self),
+            "Shipping6": Shipping6(workflow=self),
+            "ShippingComplete": ShippingComplete(workflow=self),
 
-            "Transit1": Transit1(owner=self),
-            "TransitComplete": TransitComplete(owner=self),
+            "Transit1": Transit1(workflow=self),
+            "TransitComplete": TransitComplete(workflow=self),
 
-            "Receiving1": Receiving1(owner=self),
-            "Receiving2": Receiving2(owner=self),
-            "Receiving3": Receiving3(owner=self),
-            "ReceivingComplete": ReceivingComplete(owner=self),
+            "Receiving1": Receiving1(workflow=self),
+            "Receiving2": Receiving2(workflow=self),
+            "Receiving3": Receiving3(workflow=self),
+            "ReceivingComplete": ReceivingComplete(workflow=self),
         }
         logger.info("...finished creating pages")
 

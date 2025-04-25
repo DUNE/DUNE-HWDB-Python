@@ -10,7 +10,7 @@ from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
 from Sisyphus.Gui.Shipping import Widgets as zw
-from Sisyphus.Gui.Shipping import Model as mdl
+from Sisyphus.Gui.Shipping.Tasks import Database as dbt
 from PyQt5 import QtCore as qtc
 from PyQt5 import QtWidgets as qtw
 
@@ -28,10 +28,10 @@ class Receiving2(zw.PageWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.new_location = zw.ZInstitutionWidget(owner=self, key='location')        
-        self.arrival_time = zw.ZDateTimeEdit(owner=self, key='arrived')
-        self.comments = zw.ZLineEdit(owner=self, key='comments')
-        self.affirm_update = zw.ZCheckBox(owner=self, 
+        self.new_location = zw.ZInstitutionWidget(page=self, key='location')        
+        self.arrival_time = zw.ZDateTimeEdit(page=self, key='arrived')
+        self.comments = zw.ZLineEdit(page=self, key='comments')
+        self.affirm_update = zw.ZCheckBox(page=self, 
                         text="Yes, update the location now", key='affirm_update')
 
         self._setup_UI()
@@ -91,7 +91,7 @@ class Receiving2(zw.PageWidget):
 
     def update_location(self):
         with self.wait():
-            ok = mdl.update_locations_and_detach(
+            ok = dbt.update_locations_and_detach(
                             part_id=self.part_id, 
                             location=self.page_state["location"],
                             arrived=self.page_state["arrived"],

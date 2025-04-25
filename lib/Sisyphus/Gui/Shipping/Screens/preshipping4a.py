@@ -26,16 +26,16 @@ class PreShipping4a(zw.PageWidget):
         super().__init__(*args, **kwargs)
 
         self.destination_type = zw.ZRadioButtonGroup(
-                owner=self, key='shipping_service_type', default='Domestic')
+                page=self, key='shipping_service_type', default='Domestic')
         self.destination_type.create_button("Domestic", "Domestic")
         self.destination_type.create_button("International", "International")
 
         
-        self.hts_code = zw.ZLineEdit(owner=self, key='hts_code')
+        self.hts_code = zw.ZLineEdit(page=self, key='hts_code')
         
-        self.shipment_origin = zw.ZLineEdit(owner=self, key='shipment_origin')
-        self.dimension = zw.ZLineEdit(owner=self, key='dimension')
-        self.weight = zw.ZLineEdit(owner=self, key='weight')
+        self.shipment_origin = zw.ZLineEdit(page=self, key='shipment_origin')
+        self.dimension = zw.ZLineEdit(page=self, key='dimension')
+        self.weight = zw.ZLineEdit(page=self, key='weight')
 
         self._setup_UI()
         #}}}

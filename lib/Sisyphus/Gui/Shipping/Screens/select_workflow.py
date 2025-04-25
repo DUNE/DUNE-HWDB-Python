@@ -29,7 +29,7 @@ class SelectWorkflow(zw.PageWidget):
         
 
         self.workflow_type = zw.ZRadioButtonGroup(
-                        owner=self, key='workflow_type', default='preshipping')
+                        page=self, key='workflow_type', default='preshipping')
 
         #self.workflow_type.create_button("packing", "Packing")
         self.workflow_type.create_button("preshipping", "Pre-Shipping")

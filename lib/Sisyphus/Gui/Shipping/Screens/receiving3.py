@@ -10,7 +10,6 @@ from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
 from Sisyphus.Gui.Shipping import Widgets as zw
-from Sisyphus.Gui.Shipping.ShippingLabel import ShippingLabel
 
 from PyQt5 import QtCore as qtc
 from PyQt5 import QtWidgets as qtw
@@ -31,10 +30,10 @@ class Receiving3(zw.PageWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.email_contents = zw.ZTextEdit(owner=self, key='email_contents')
+        self.email_contents = zw.ZTextEdit(page=self, key='email_contents')
         
         self.confirm_email_contents = zw.ZCheckBox('I have sent the email',
-                        owner=self, key='confirm_email_contents')
+                        page=self, key='confirm_email_contents')
         self.instructions = qtw.QLabel('Paste the following into an email message and '
                     'send it to the FD Logistics team:')
         self.instructions.setWordWrap(True)

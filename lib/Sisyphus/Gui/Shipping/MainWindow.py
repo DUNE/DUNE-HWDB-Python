@@ -32,7 +32,7 @@ class MainWindow(qtw.QMainWindow):
         #self.overlay.setMinimumSize(qtc.QSize(200, 200))
         #self.overlay.setStyleSheet("background-color: #888")
 
-        self.tab_widget = TabWidget(owner=self.application)
+        self.tab_widget = TabWidget(application=self.application)
         
         #self.main_layout = qtw.QStackedLayout()
         #self.main_layout.addWidget(self.overlay)
@@ -111,7 +111,7 @@ class MainWindow(qtw.QMainWindow):
             #debug_menu.addAction(debug_info_action)
             
             debug_appstate_action = qtw.QAction("app state", self)
-            debug_appstate_action.triggered.connect(self.application.debug_app_state)
+            debug_appstate_action.triggered.connect(self.application.debug_application_state)
             debug_appstate_action.setShortcut('F8')
             debug_menu.addAction(debug_appstate_action)
             

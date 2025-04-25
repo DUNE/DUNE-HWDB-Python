@@ -11,7 +11,6 @@ logger = config.getLogger(__name__)
 
 from Sisyphus.Utils.Terminal.Style import Style
 from Sisyphus.Gui.Shipping import Widgets as zw
-from Sisyphus.Gui.Shipping import Model as mdl
 
 from PyQt5 import QtWidgets as qtw
 
@@ -25,9 +24,8 @@ class PreShipping3(zw.PageWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.approver_name = zw.ZLineEdit(owner=self, key='approver_name')
-        self.approver_email = zw.ZLineEdit(owner=self, key='approver_email')
-        #self.test_info = zw.ZTextEdit(owner=self, key='test_info')
+        self.approver_name = zw.ZLineEdit(page=self, key='approver_name')
+        self.approver_email = zw.ZLineEdit(page=self, key='approver_email')
 
         self._setup_UI()
 
@@ -51,7 +49,6 @@ class PreShipping3(zw.PageWidget):
 
         name_layout = qtw.QVBoxLayout()
         name_layout.addWidget(qtw.QLabel("Name"))
-        #name_layout.addWidget(QLineEdit("Joe Schmoe"))
         name_layout.addWidget(self.approver_name)
         name_layout_widget = qtw.QWidget(self)
         name_layout_widget.setLayout(name_layout)
@@ -72,24 +69,7 @@ class PreShipping3(zw.PageWidget):
         main_layout.addWidget(contact_info_layout_widget)
 
         ################
-
-        '''
-        test_info_label = qtw.QLabel("Provide information on where the corresponding QA/QC test results "
-                "can be found (e.g., link(s) to test results in the HWDB) and a EDMS or "
-                "doc-DB # of the corresponding documentation.")
-        test_info_label.setWordWrap(True)
-        main_layout.addWidget(test_info_label)
-
-        test_info_layout = qtw.QVBoxLayout()
-        #test_info_layout.addWidget(QTextEdit(self))
-        test_info_layout.addWidget(self.test_info)
-        test_info_widget = qtw.QWidget()
-        test_info_widget.setLayout(test_info_layout)
-
-        main_layout.addWidget(test_info_widget)
-        '''
-
-        ################
+        
         main_layout.addStretch()
 
         main_layout.addWidget(self.nav_bar)

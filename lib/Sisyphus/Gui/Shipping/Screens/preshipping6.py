@@ -24,17 +24,17 @@ class PreShipping6(zw.PageWidget):
         super().__init__(*args, **kwargs)
 
         self.received_acknowledgement = zw.ZCheckBox("Yes, I have received an acknowledgement",
-                    owner=self, key='received_acknowledgement')
+                    page=self, key='received_acknowledgement')
 
-        self.acknowledged_by = zw.ZLineEdit(owner=self, key='acknowledged_by')
+        self.acknowledged_by = zw.ZLineEdit(page=self, key='acknowledged_by')
 
-        self.acknowledged_time = zw.ZDateTimeEdit(owner=self, key='acknowledged_time')
+        self.acknowledged_time = zw.ZDateTimeEdit(page=self, key='acknowledged_time')
 
-        self.damage_status = zw.ZRadioButtonGroup(owner=self, key='damage_status', default='no damage')
+        self.damage_status = zw.ZRadioButtonGroup(page=self, key='damage_status', default='no damage')
         self.damage_status.create_button('no damage', 'no damage')
         self.damage_status.create_button('damage', 'damage')
 
-        self.damage_description = zw.ZTextEdit(owner=self, key='damage_description')
+        self.damage_description = zw.ZTextEdit(page=self, key='damage_description')
 
         self._setup_UI()
 

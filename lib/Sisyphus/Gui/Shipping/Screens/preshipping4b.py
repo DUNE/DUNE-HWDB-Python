@@ -23,10 +23,9 @@ class PreShipping4b(zw.PageWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.freight_forwarder = zw.ZLineEdit(owner=self, key='freight_forwarder')
-        self.mode_of_transportation = zw.ZLineEdit(owner=self, key='mode_of_transportation')
-        #self.expected_arrival_time = ZLineEdit(owner=self, key='expected_arrival_time')
-        self.expected_arrival_time = zw.ZDateTimeEdit(owner=self, key='expected_arrival_time')
+        self.freight_forwarder = zw.ZLineEdit(page=self, key='freight_forwarder')
+        self.mode_of_transportation = zw.ZLineEdit(page=self, key='mode_of_transportation')
+        self.expected_arrival_time = zw.ZDateTimeEdit(page=self, key='expected_arrival_time')
         
 
         self._setup_UI()

@@ -11,7 +11,6 @@ logger = config.getLogger(__name__)
 
 from Sisyphus.Utils.Terminal.Style import Style
 from Sisyphus.Gui.Shipping import Widgets as zw
-from Sisyphus.Gui.Shipping import Model as mdl
 
 from PyQt5 import QtWidgets as qtw
 
@@ -26,9 +25,9 @@ class PreShipping2(zw.PageWidget):
         super().__init__(*args, **kwargs)
         #self.page_name = "Pre-Shipping (2)"
 
-        self.qa_rep_name = zw.ZLineEdit(owner=self, key='qa_rep_name')
-        self.qa_rep_email = zw.ZLineEdit(owner=self, key='qa_rep_email')
-        self.test_info = zw.ZTextEdit(owner=self, key='test_info')
+        self.qa_rep_name = zw.ZLineEdit(page=self, key='qa_rep_name')
+        self.qa_rep_email = zw.ZLineEdit(page=self, key='qa_rep_email')
+        self.test_info = zw.ZTextEdit(page=self, key='test_info')
 
         self._setup_UI()
 

@@ -16,8 +16,7 @@ HLE = highlight = "[bg=#990000,fg=#ffffff]"
 
 from Sisyphus.Utils.Terminal.Style import Style
 from Sisyphus.Gui.Shipping import Widgets as zw
-from Sisyphus.Gui.Shipping import Model as mdl
-from Sisyphus.Gui.Shipping.ShippingLabel import ShippingLabel
+from Sisyphus.Gui.Shipping.Tasks.ShippingLabel import ShippingLabel
 from Sisyphus.Gui import DataModel as dm
 
 from Sisyphus import RestApiV1 as ra

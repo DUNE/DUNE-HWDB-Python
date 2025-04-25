@@ -10,7 +10,7 @@ from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)  
 
 from Sisyphus.Gui.Shipping import Widgets as zw
-from Sisyphus.Gui.Shipping import Model as mdl
+from Sisyphus.Gui.Shipping.Tasks import Database as dbt
 
 from PyQt5 import QtCore as qtc
 from PyQt5 import QtWidgets as qtw
@@ -26,14 +26,10 @@ class Shipping2(zw.PageWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        #self.bol_text = ZLineEdit(owner=self, key="bol_filename")
-        #self.select_bol_button = QPushButton("Select BoL file")
-        #self.select_bol_button.clicked.connect(self.select_bol_dialog)
-
-        self.bol_file = zw.ZFileSelectWidget(owner=self, key='bol_filename')
+        self.bol_file = zw.ZFileSelectWidget(page=self, key='bol_filename')
 
         self.proforma_container = qtw.QWidget()
-        self.proforma_file = zw.ZFileSelectWidget(owner=self, key='proforma_filename')
+        self.proforma_file = zw.ZFileSelectWidget(page=self, key='proforma_filename')
 
         self._setup_UI()
         #self.refresh()
@@ -116,7 +112,7 @@ class Shipping2(zw.PageWidget):
             new_full_filename = os.path.join(self.workflow.working_directory, new_filename)
             shutil.copy(filename, new_full_filename)
 
-            image_id, checksum = mdl.upload_image(self.part_id, new_full_filename)
+            image_id, checksum = dbt.upload_image(self.part_id, new_full_filename)
             self.page_state[node_name] = {
                 "filename": new_filename,
                 "image_id": image_id,

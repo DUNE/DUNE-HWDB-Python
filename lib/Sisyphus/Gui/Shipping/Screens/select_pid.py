@@ -11,7 +11,7 @@ logger = config.getLogger(__name__)
 
 from Sisyphus.Utils.Terminal.Style import Style
 from Sisyphus.Gui.Shipping import Widgets as zw
-from Sisyphus.Gui.Shipping import Model as mdl
+from Sisyphus.Gui.Shipping.Tasks import Database as dbt
 
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtCore as qtc
@@ -28,15 +28,15 @@ class SelectPID(zw.PageWidget):
         
         default_result_msg = "<i>(Enter a PID and click 'find')</i>"
 
-        self.pid_text_box = zw.ZLineEdit(owner=self, key='search_part_id')
+        self.pid_text_box = zw.ZLineEdit(page=self, key='search_part_id')
 
-        self.completer = qtw.QCompleter(sorted(self.app_state.setdefault('recent_searches', [])))
+        self.completer = qtw.QCompleter(sorted(self.application_state.setdefault('recent_searches', [])))
         self.pid_text_box.setCompleter(self.completer)
         self.find_button = qtw.QPushButton("find")
 
 
         self.part_details = zw.ZPartDetails(
-                                    owner=self, 
+                                    page=self, 
                                     key='part_details',
                                     source='workflow:part_info')
         self.part_details.setMinimumSize(600, 400)
@@ -89,57 +89,28 @@ class SelectPID(zw.PageWidget):
     def lookup_pid(self):
         #{{{
 
-        '''
-        def better_message_box(title, icon, text, buttons):
-            # QT's stupid QMessageBox().warning(...) puts the freaking
-            # dialog box in a random place on the screen. So we have
-            # to make our own. Thanks, jerks.
-            mw = self.application.main_window
-            msgbox = qtw.QMessageBox(mw)
-            msgbox.setWindowTitle(title)
-            msgbox.setText(text)
-            msgbox.setIcon(icon)
-            msgbox.setStandardButtons(qtw.QMessageBox.Ok)
-            
-            mw_geo = mw.frameGeometry()
-            msgbox.setGeometry(0, 0, 400, 150)
-            msg_geo = msgbox.frameGeometry()
-
-            new_x = mw_geo.x() + (mw_geo.width() - msg_geo.width()) // 2
-            new_y = mw_geo.y() + (mw_geo.height() - msg_geo.height()) // 2
-
-            msgbox.move(new_x, new_y)
-            return msgbox.exec()
-        '''
-
         part_id = self.page_state['search_part_id']
 
         with self.wait():
-            workflow_state = mdl.download_part_info(
+            workflow_state = dbt.download_part_info(
                                     part_id,
                                     refresh=True, # don't use the cache
                                     status_callback=self.application.update_status)
 
+        # If the part was not found, download_part_info will return a dict
+        # with the part_info and all the screen info blanked out, so it's
+        # still okay to update workflow_state with it, whether the part was
+        # found or not
         self.workflow_state.update(workflow_state)
 
         if not self.part_id:
-            
-            #better_message_box("Not Found", 
-            #                qtw.QMessageBox.Warning,
-            #                f"{part_id} was not found.",
-            #                qtw.QMessageBox.Ok)
-
             qtw.QMessageBox.warning(
                             self.application.main_window, 
                             "Not Found", 
                             f"{part_id} was not found.",
                             qtw.QMessageBox.Ok)
-
-            #self.messagebox(
-            #            qtw.QMessageBox.warning, 
-            #            'Not Found', 
-            #            f"{part_id} was not found.", 
-            #            qtw.QMessageBox.Ok) # | qtw.QMessageBox.Cancel)
+        else:
+            self.append_recent_search(self.part_id)
 
         self.restore() # update dynamic widgets with new data
         self.refresh() # update navigation bar
@@ -148,7 +119,7 @@ class SelectPID(zw.PageWidget):
     
     def append_recent_search(self, part_id):
         #{{{
-        rs = self.app_state['recent_searches']
+        rs = self.application_state['recent_searches']
 
         if part_id in rs:
             rs.remove(part_id)
@@ -171,10 +142,10 @@ class SelectPID(zw.PageWidget):
         self.workflow_state['user_email'] = self.email_text_box.text().strip()
 
         if self.workflow_state['user_name'] != "":
-            self.app_state['default_name'] = self.workflow_state['user_name']
+            self.application_state['default_name'] = self.workflow_state['user_name']
 
         if self.workflow_state['user_email'] != "":
-            self.app_state['default_email'] = self.workflow_state['user_email']
+            self.application_state['default_email'] = self.workflow_state['user_email']
         '''
 
 
