@@ -10,18 +10,14 @@ from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
 from Sisyphus.Gui.Shipping import Widgets as zw
+from Sisyphus.Gui.Shipping.Widgets.PageWidget import PageWidget
 from Sisyphus.Gui.Shipping.Tasks import Database as dbt
 from PyQt5 import QtCore as qtc
 from PyQt5 import QtWidgets as qtw
 
-HLD = highlight = "[bg=#999999,fg=#ffffff]"
-HLI = highlight = "[bg=#009900,fg=#ffffff]"
-HLW = highlight = "[bg=#999900,fg=#ffffff]"
-HLE = highlight = "[bg=#990000,fg=#ffffff]"
-
 ###############################################################################
 
-class Receiving2(zw.PageWidget):
+class Receiving2(PageWidget):
     page_name = "Receiving Workflow (2)"
     page_short_name = "Receiving (2)"
 

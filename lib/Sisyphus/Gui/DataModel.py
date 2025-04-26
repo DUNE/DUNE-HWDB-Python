@@ -25,12 +25,6 @@ _executor = concurrent.futures.ThreadPoolExecutor(
                     max_workers=NUM_THREADS,
                     thread_name_prefix='DataModel')
 
-
-HLD = highlight = "[bg=#999999,fg=#ffffff]"
-HLI = highlight = "[bg=#009900,fg=#ffffff]"
-HLW = highlight = "[bg=#999900,fg=#ffffff]"
-HLE = highlight = "[bg=#990000,fg=#ffffff]"
-
 class HWDBObject:
     '''base class for HWDB objects'''
     #{{{
@@ -53,7 +47,6 @@ class HWDBObject:
 
     def __new__(cls, **kwargs): 
         #{{{
-        logger.debug(f"{HLD}{cls.__name__}.__new__({kwargs})")
         cls._statistics['requested'] += 1
 
         constructor_kwargs = {arg: kwargs.get(arg) for arg in cls._constructor_args}
@@ -68,10 +61,9 @@ class HWDBObject:
             constructor_key = constructor_kwargs[cls._constructor_args[0]]
         else:
             constructor_key = tuple(constructor_kwargs.values())
-        logger.debug(f"{HLD}constructor_key={constructor_key}")
         
         if None in constructor_kwargs.values():
-            logger.debug(f"{HLD}returning empty {cls.__name__}")
+            logger.debug(f"{cls.__name__}: returning empty object")
             cls._statistics['empty'] += 1
             return super().__new__()
 
@@ -83,7 +75,7 @@ class HWDBObject:
         with cls._class_lock:
             profile_cache = cls._cache.setdefault(profile.profile_name, {})
             if constructor_key in profile_cache:
-                logger.debug(f"{HLD}returning object from cache")
+                logger.debug(f"{cls.__name__}: returning object from cache")
                 cls._statistics['served_from_cache'] += 1
                 # NOTE: just because we're returning an object from the
                 # cache, it doesn't mean it won't try to call __init__!
@@ -91,7 +83,7 @@ class HWDBObject:
                 # already been initialized!
                 return profile_cache[constructor_key]
             else:
-                logger.debug(f"{HLD}creating new {cls.__name__} object")
+                logger.debug(f"{cls.__name__}: creating new object")
                 cls._statistics['created'] += 1
                 new_obj = super().__new__(cls)
                 profile_cache[constructor_key] = new_obj
@@ -100,8 +92,6 @@ class HWDBObject:
     
     def __init__(self, **kwargs): 
         #{{{
-        logger.debug(f"{HLD}{self.__class__.__name__}.__init__({kwargs})")
-        
         # fwd_kwargs
         # Any arguments found here should be passed along to the RestApiV1 
         # functions. They should also be passed to any other HWDBObject-derived
@@ -118,17 +108,13 @@ class HWDBObject:
         with self._instance_lock:
             refresh = kwargs.get('refresh', False)
             if self._initialized and not refresh:
-                logger.debug(f"{HLD}{self.__class__.__name__}.__init__({kwargs})"
-                                    " - already initialized")
                 return
             if refresh:
                 self.__class__._statistics['refreshed'] += 1
-                logger.debug(f"{HLD}{self.__class__.__name__}.__init__({kwargs})"
-                                    " - refreshing")
+                logger.debug(f"{self.__class__.__name__}: re-initializing object")
             else:
                 self.__class__._statistics['initialized'] += 1
-                logger.debug(f"{HLD}{self.__class__.__name__}.__init__({kwargs})"
-                                    " - initializing")
+                logger.debug(f"{self.__class__.__name__}: initializing object")
 
 
             constructor_kwargs = {arg: kwargs.get(arg) for arg in self.__class__._constructor_args}
@@ -144,9 +130,6 @@ class HWDBObject:
             self._start_queries(constructor_kwargs)
             
             self._initialized = True
-
-            logger.debug(f"{HLD}{self.__class__.__name__}.__init__({kwargs})"
-                                " - finished initializing")
         #}}}            
 
     def _start_queries(self, constructor_kwargs):
@@ -162,7 +145,7 @@ class HWDBObject:
     def join(self):
         '''waits for all 'futures' to finish'''
 
-        logger.info(f"{HLI}{self.__class__.__name__}.join()")
+        logger.info(f"{self.__class__.__name__}.join()")
 
         futures = list(self._futures)
         for future_name in futures:
@@ -286,7 +269,7 @@ class ComponentType(HWDBObject):
             # The part_type_id was not a valid format!
             self.__class__._statistics['failed'] += 1
             msg = f"Invalid part_type_id: {part_type_id}"
-            logger.error(f"{HLE}{msg}")
+            logger.error(f"{msg}")
             raise ValueError(msg)
 
         # Get the data asynchronously. It will be the job of the 
@@ -334,7 +317,7 @@ class HWItem(HWDBObject):
         if part_id_decomp is None:
             # The part_id was not a valid format!
             msg = f"Invalid part_id: {constructor_kwargs['part_id']}"
-            logger.error(f"{HLE}{msg}")
+            logger.error(f"{msg}")
             self.__class__._statistics['failed'] += 1
             raise ValueError(msg)
 

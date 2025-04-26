@@ -10,6 +10,7 @@ from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
 from Sisyphus.Utils.Terminal.Style import Style
+from Sisyphus.Gui.Shipping.Widgets.PageWidget import PageWidget
 from Sisyphus.Gui.Shipping import Widgets as zw
 from Sisyphus.Gui.Shipping.Tasks import Database as dbt
 
@@ -18,7 +19,7 @@ from PyQt5 import QtCore as qtc
 
 ###############################################################################
 
-class SelectPID(zw.PageWidget):
+class SelectPID(PageWidget):
     page_name = "Select PID"
     page_short_name = "Select PID"
 

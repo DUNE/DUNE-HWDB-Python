@@ -9,11 +9,6 @@ Author:
 from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
-HLD = highlight = "[bg=#999999,fg=#ffffff]"
-HLI = highlight = "[bg=#009900,fg=#ffffff]"
-HLW = highlight = "[bg=#999900,fg=#ffffff]"
-HLE = highlight = "[bg=#990000,fg=#ffffff]" 
-
 from PyQt5 import QtCore as qtc
 from PyQt5 import QtWidgets as qtw
 
@@ -50,7 +45,7 @@ class WorkflowWidget(qtw.QWidget):
             raise ValueError("uuid not in workflows dict")
         
 
-        logger.debug(f"{HLD}WorkflowWidget parent: {self.parent()}")
+        logger.debug(f"WorkflowWidget parent: {self.parent()}")
 
         self.create_page_stack()
         self._finished_init = True
@@ -76,7 +71,7 @@ class WorkflowWidget(qtw.QWidget):
         return new_page_id
 
     def activate(self):
-        logger.debug(f"{HLD}{self.__class__.__name__}.activate()")
+        logger.debug(f"{self.__class__.__name__}.activate()")
         self.page_stack.setCurrentWidget(self._page_lookup[self.current_page_id])
         self.update_tab_title()
         self.current_page_widget.activate()
@@ -89,9 +84,9 @@ class WorkflowWidget(qtw.QWidget):
         self.application.save_state()
 
     def update_tab_title(self):
-         logger.debug(f"{HLD}{self.__class__.__name__}.update_tab_title()")
+         logger.debug(f"{self.__class__.__name__}.update_tab_title()")
          tab_index = self.application.tab_widget.indexOf(self)
-         logger.debug(f"{HLD}(finished_init: {self._finished_init}, "
+         logger.debug(f"(finished_init: {self._finished_init}, "
                     f" tab_index: {tab_index}, "
                     f" current_page_id: {self.current_page_widget.__class__.__name__}")
          self.application.tab_widget.setTabText(tab_index, self.current_page_widget.tab_title)

@@ -3,16 +3,10 @@
 from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
-HLD = highlight = "[bg=#999999,fg=#ffffff]"
-HLI = highlight = "[bg=#009900,fg=#ffffff]"
-HLW = highlight = "[bg=#999900,fg=#ffffff]"
-HLE = highlight = "[bg=#990000,fg=#ffffff]"
-
 from PyQt5 import QtCore as qtc
 from PyQt5 import QtWidgets as qtw
 
-from Sisyphus.Gui.Shipping.WorkflowWidget import WorkflowWidget
-from Sisyphus.Gui.Shipping.TabWidget import TabWidget
+from Sisyphus.Gui.Shipping.Widgets.TabWidget import TabWidget
 
 class MainWindow(qtw.QMainWindow):
     def __init__(self, application):
@@ -28,27 +22,12 @@ class MainWindow(qtw.QMainWindow):
 
         self._create_menu_bar()
 
-        #self.overlay = qtw.QLabel("WAITING")
-        #self.overlay.setMinimumSize(qtc.QSize(200, 200))
-        #self.overlay.setStyleSheet("background-color: #888")
-
         self.tab_widget = TabWidget(application=self.application)
         
-        #self.main_layout = qtw.QStackedLayout()
-        #self.main_layout.addWidget(self.overlay)
-        #self.main_layout.addWidget(self.tab_widget)
-        #self.main_layout.setStackingMode(qtw.QStackedLayout.StackAll)
-
-        #self.main_widget = qtw.QWidget()
-        #self.main_widget.setLayout(self.main_layout)
 
         self.setCentralWidget(self.tab_widget)
-        #self.setCentralWidget(self.main_widget)
         
         self.status_bar = self.statusBar()
-       
-        
-        #self.show()
         #}}}
 
     def _create_menu_bar(self):
@@ -59,10 +38,9 @@ class MainWindow(qtw.QMainWindow):
         menu_bar.addMenu(options_menu)
 
         ################
-        #new_action = qtw.QAction(QIcon('./assets/new.png'), '&New', self)
         new_action = qtw.QAction('&New Workflow', self)
         new_action.setStatusTip('Start New Shipping Workflow')
-        #new_action.setShortcut('Ctrl+N')
+        new_action.setShortcut('Ctrl+N')
         new_action.triggered.connect(self.application.create_new_tab)
         options_menu.addAction(new_action)
         ################

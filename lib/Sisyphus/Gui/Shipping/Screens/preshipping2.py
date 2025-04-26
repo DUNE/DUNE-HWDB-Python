@@ -11,13 +11,14 @@ logger = config.getLogger(__name__)
 
 from Sisyphus.Utils.Terminal.Style import Style
 from Sisyphus.Gui.Shipping import Widgets as zw
+from Sisyphus.Gui.Shipping.Widgets.PageWidget import PageWidget
 
 from PyQt5 import QtWidgets as qtw
 
 import json
 
 
-class PreShipping2(zw.PageWidget):
+class PreShipping2(PageWidget):
     page_name = "Pre-Shipping Workflow (2)"
     page_short_name = "Pre-Shipping (2)"
     

@@ -9,19 +9,15 @@ Author:
 from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
-HLD = highlight = "[bg=#999999,fg=#ffffff]"
-HLI = highlight = "[bg=#009900,fg=#ffffff]"
-HLW = highlight = "[bg=#999900,fg=#ffffff]"
-HLE = highlight = "[bg=#990000,fg=#ffffff]"
-
 import Sisyphus
 from Sisyphus.Utils.Terminal.Style import Style
-from Sisyphus.Gui.Shipping.WorkflowWidget import WorkflowWidget
-from Sisyphus.Gui.Shipping.MainWindow import MainWindow
+from Sisyphus.Gui.Shipping.Widgets.WorkflowWidget import WorkflowWidget
+from Sisyphus.Gui.Shipping.Widgets.MainWindow import MainWindow
 from Sisyphus.Gui.Configuration import ConfigDialog
 from Sisyphus.Gui import DataModel as dm
 
 from PyQt5 import QtWidgets as qtw
+from PyQt5 import QtCore as qtc
 
 from pathlib import Path
 import sys, os
@@ -326,7 +322,7 @@ class Application(qtw.QApplication):
     
     def exit(self):
         #{{{
-        logger.warning(f"{HLW}{self.__class__.__name__}.exit(): quitting aplication")
+        logger.warning(f"{self.__class__.__name__}.exit(): quitting aplication")
         self.save_state()
         self.main_window.close()
         #}}}
@@ -334,7 +330,33 @@ class Application(qtw.QApplication):
     #{{{
     def debug_application_state(self):
         Style.info.print("APP_STATE")
-        Style.info.print(json.dumps(self.application_state, indent=4))
+        #Style.info.print(json.dumps(self.application_state, indent=4))
+        from Sisyphus.Gui.Utilities.JSONViewer import QTreeView, JsonModel
+
+        class JsonViewDialog(qtw.QDialog):
+            def __init__(self, application_state):
+                super().__init__()
+                self.application_state = application_state
+                self.setWindowTitle("Application State")
+                self.main_layout = qtw.QVBoxLayout()
+                self.main_layout.setContentsMargins(10, 10, 10, 10)
+                self.setLayout(self.main_layout)
+
+                self.treeview = QTreeView()
+                self.jsonmodel = JsonModel()
+                self.treeview.setModel(self.jsonmodel)
+                self.jsonmodel.load(self.application_state)
+                
+                self.resize(800, 800)
+                self.treeview.header().setSectionResizeMode(0, qtw.QHeaderView.ResizeMode.Stretch)
+                self.treeview.setAlternatingRowColors(True)
+
+                self.main_layout.addWidget(self.treeview)
+
+
+        json_view_dialog = JsonViewDialog(self.application_state)
+        json_view_dialog.exec()
+
     
     def debug_tab_tree(self):
         Style.info.print("APP_STATE")

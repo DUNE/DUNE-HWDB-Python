@@ -10,13 +10,14 @@ from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
 from Sisyphus.Gui.Shipping import Widgets as zw
+from Sisyphus.Gui.Shipping.Widgets.PageWidget import PageWidget
 
 from PyQt5 import QtCore as qtc
 from PyQt5 import QtWidgets as qtw
 
 ###############################################################################
 
-class Shipping6(zw.PageWidget):
+class Shipping6(PageWidget):
     page_name = "Shipping Workflow (6)"
     page_short_name = "Shipping (6)"
 

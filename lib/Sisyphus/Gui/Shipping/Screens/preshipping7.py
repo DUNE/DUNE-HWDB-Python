@@ -9,13 +9,9 @@ Author:
 from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
-HLD = highlight = "[bg=#999999,fg=#ffffff]"
-HLI = highlight = "[bg=#009900,fg=#ffffff]"
-HLW = highlight = "[bg=#999900,fg=#ffffff]"
-HLE = highlight = "[bg=#990000,fg=#ffffff]"
-
 from Sisyphus.Utils.Terminal.Style import Style
 from Sisyphus.Gui.Shipping import Widgets as zw
+from Sisyphus.Gui.Shipping.Widgets.PageWidget import PageWidget
 from Sisyphus.Gui.Shipping.Tasks.ShippingLabel import ShippingLabel
 from Sisyphus.Gui import DataModel as dm
 
@@ -30,7 +26,7 @@ import os
 import json
 
 
-class PreShipping7(zw.PageWidget):
+class PreShipping7(PageWidget):
     page_name = "Pre-Shipping Workflow (7)"
     page_short_name = "Pre-Shipping (7)"
 

@@ -10,6 +10,7 @@ from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)  
 
 from Sisyphus.Gui.Shipping import Widgets as zw
+from Sisyphus.Gui.Shipping.Widgets.PageWidget import PageWidget
 from Sisyphus.Gui.Shipping.Tasks import Database as dbt
 
 from PyQt5 import QtCore as qtc
@@ -19,7 +20,7 @@ from datetime import datetime
 
 ###############################################################################
 
-class Shipping2(zw.PageWidget):
+class Shipping2(PageWidget):
     page_name = "Shipping Workflow (2)"
     page_short_name = "Shipping (2)"
 

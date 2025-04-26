@@ -7,8 +7,6 @@ Author:
 """
 
 from .widgets import (
-    PageWidget,
-    NavBar,
     ZCheckBox,
     ZDateTimeEdit,
     ZLabel,

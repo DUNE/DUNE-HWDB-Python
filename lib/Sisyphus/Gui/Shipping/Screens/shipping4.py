@@ -9,12 +9,8 @@ Author:
 from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
-HLD = highlight = "[bg=#999999,fg=#ffffff]"
-HLI = highlight = "[bg=#009900,fg=#ffffff]"
-HLW = highlight = "[bg=#999900,fg=#ffffff]"
-HLE = highlight = "[bg=#990000,fg=#ffffff]"
-
 from Sisyphus.Gui.Shipping import Widgets as zw
+from Sisyphus.Gui.Shipping.Widgets.PageWidget import PageWidget
 from Sisyphus.Gui.Shipping.Tasks import Database as dbt
 from PyQt5 import QtCore as qtc
 from PyQt5 import QtWidgets as qtw
@@ -25,7 +21,7 @@ from datetime import datetime
 
 ###############################################################################
 
-class Shipping4(zw.PageWidget):
+class Shipping4(PageWidget):
     page_name = "Shipping Workflow (4)"
     page_short_name = "Shipping (4)"
 

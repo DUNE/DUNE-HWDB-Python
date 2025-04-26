@@ -10,13 +10,14 @@ from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
 from Sisyphus.Gui.Shipping import Widgets as zw
+from Sisyphus.Gui.Shipping.Widgets.PageWidget import PageWidget
 
 from PyQt5 import QtCore as qtc
 from PyQt5 import QtWidgets as qtw
 
 ###############################################################################
 
-class TransitComplete(zw.PageWidget):
+class TransitComplete(PageWidget):
 
     page_name = "Transit Workflow Complete"
     page_short_name = "Transit Complete"

@@ -25,11 +25,6 @@ import threading
 import concurrent.futures
 import hashlib
 
-HLD = highlight = "[bg=#999999,fg=#ffffff]"
-HLI = highlight = "[bg=#009900,fg=#ffffff]"
-HLW = highlight = "[bg=#999900,fg=#ffffff]"
-HLE = highlight = "[bg=#990000,fg=#ffffff]"
-
 ###############################################################################
 
 def download_part_info(part_id, refresh=False, status_callback=None):
@@ -48,7 +43,7 @@ def download_part_info(part_id, refresh=False, status_callback=None):
         item_info = hwitem.data
 
     except (ra.DatabaseError, ValueError) as exc:
-        logger.error(f"{HLE}{type(exc)}:{exc}")
+        logger.error(f"{type(exc)}:{exc}")
         hwitem = None
 
     if hwitem:

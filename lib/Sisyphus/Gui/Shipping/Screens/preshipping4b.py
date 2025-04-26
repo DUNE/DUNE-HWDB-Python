@@ -10,13 +10,14 @@ from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
 from Sisyphus.Gui.Shipping import Widgets as zw
+from Sisyphus.Gui.Shipping.Widgets.PageWidget import PageWidget
 
 from PyQt5 import QtCore as qtc
 from PyQt5 import QtWidgets as qtw
 
 ###############################################################################
 
-class PreShipping4b(zw.PageWidget):
+class PreShipping4b(PageWidget):
     page_name = "Pre-Shipping Workflow (4b)"
     page_short_name = "Pre-Shipping (4b)"
     
