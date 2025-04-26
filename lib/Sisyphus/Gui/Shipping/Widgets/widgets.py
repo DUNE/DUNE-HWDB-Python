@@ -137,6 +137,7 @@ class ZPartDetails(qtw.QWidget, LinkedWidget):
         #}}}
 
     def restore_state(self):
+        #{{{
         super().restore_state()
         show_empty_slots_status = self.page_state.setdefault(self.state_key, False)
         self.show_empty_slots.blockSignals(True)
@@ -197,7 +198,7 @@ class ZPartDetails(qtw.QWidget, LinkedWidget):
                 self.table.setItem(idx, 0, qtw.QTableWidgetItem(subcomp['Sub-component PID']))
                 self.table.setItem(idx, 1, qtw.QTableWidgetItem(subcomp['Component Type Name']))
                 self.table.setItem(idx, 2, qtw.QTableWidgetItem(subcomp['Functional Position Name']))
-
+        #}}}
     #}}}
 
 class ZCheckBox(qtw.QCheckBox, LinkedWidget):
@@ -548,3 +549,56 @@ class ZInstitutionWidget(qtw.QWidget, LinkedWidget):
         #}}}
     #}}}
 
+class ZLocationHistory(qtw.QWidget, LinkedWidget):
+    #{{{
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        self.main_layout = qtw.QVBoxLayout()
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(self.main_layout)
+
+        self.frame = qtw.QFrame()
+        self.frame.setFrameStyle(qtw.QFrame.Box | qtw.QFrame.Sunken)
+        self.frame.setLineWidth(1)
+
+        self.main_layout.addWidget(self.frame)
+
+        inner_layout = qtw.QVBoxLayout()
+        self.frame.setLayout(inner_layout)
+
+        inner_layout.setContentsMargins(5, 5, 5, 5)
+        inner_layout.setSpacing(0)
+
+        self.table = qtw.QTableWidget(0, 3)
+        self.table.verticalHeader().setVisible(False)
+        self.table.setHorizontalHeaderLabels(['Location',
+                            'Arrived', 'Comments'])
+        horizontal_header = self.table.horizontalHeader()
+        horizontal_header.resizeSection(0, 260)
+        horizontal_header.resizeSection(1, 200)
+        horizontal_header.resizeSection(2, 260)
+
+        current_row = 0
+
+        inner_layout.addWidget(qtw.QLabel("Location History"))
+        inner_layout.addWidget(self.table)
+
+    def restore_state(self):
+        super().restore_state()
+        source = self.source() or {}
+        locations = source.get('locations', {})
+
+        self.table.setEditTriggers(qtw.QAbstractItemView.NoEditTriggers)
+        self.table.setRowCount(len(locations)) 
+        for idx, location in enumerate(locations):
+            location_name = qtw.QTableWidgetItem(f"({location['location']['id']}) "
+                                f"{location['location']['name']}")
+            arrived = qtw.QTableWidgetItem(location['arrived'])
+            comments = qtw.QTableWidgetItem(location['comments'])
+
+            self.table.setItem(idx, 0, location_name)
+            self.table.setItem(idx, 1, arrived) 
+            self.table.setItem(idx, 2, comments)
+
+    #}}}

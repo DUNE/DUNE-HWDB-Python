@@ -15,15 +15,8 @@ from PyQt5 import QtWidgets as qtw
 import os
 
 from Sisyphus.Gui.Shipping.Screens import (
-        SelectPID, SelectWorkflow,
-        Packing1, PackingComplete,
-        PreShipping1, PreShipping2, PreShipping3, PreShipping4a, PreShipping4b,
-            PreShipping5, PreShipping6, PreShipping7, PreShippingComplete,
-        Shipping1, Shipping2, Shipping3, Shipping4, Shipping5, 
-            Shipping6, ShippingComplete,
-        Transit1, TransitComplete,
-        Receiving1, Receiving2, Receiving3, ReceivingComplete
-)
+                General, Packing, PreShipping, Shipping, Transit, Receiving, WidgetTest)
+
 
 ###############################################################################
 
@@ -98,37 +91,40 @@ class WorkflowWidget(qtw.QWidget):
 
         logger.info("creating pages...")
         self._page_lookup = {
-            "SelectPID": SelectPID(workflow=self),
-            "SelectWorkflow": SelectWorkflow(workflow=self),
+            "SelectPID": General.SelectPID(workflow=self),
+            "SelectWorkflow": General.SelectWorkflow(workflow=self),
 
-            "Packing1": Packing1(workflow=self),
-            "PackingComplete": PackingComplete(workflow=self),
+            "Packing1": Packing.Packing1(workflow=self),
+            "PackingComplete": Packing.PackingComplete(workflow=self),
 
-            "PreShipping1": PreShipping1(workflow=self),
-            "PreShipping2": PreShipping2(workflow=self),
-            "PreShipping3": PreShipping3(workflow=self),
-            "PreShipping4a": PreShipping4a(workflow=self),
-            "PreShipping4b": PreShipping4b(workflow=self),
-            "PreShipping5": PreShipping5(workflow=self),
-            "PreShipping6": PreShipping6(workflow=self),
-            "PreShipping7": PreShipping7(workflow=self),
-            "PreShippingComplete": PreShippingComplete(workflow=self),
+            "PreShipping1": PreShipping.PreShipping1(workflow=self),
+            "PreShipping2": PreShipping.PreShipping2(workflow=self),
+            "PreShipping3": PreShipping.PreShipping3(workflow=self),
+            "PreShipping4a": PreShipping.PreShipping4a(workflow=self),
+            "PreShipping4b": PreShipping.PreShipping4b(workflow=self),
+            "PreShipping5": PreShipping.PreShipping5(workflow=self),
+            "PreShipping6": PreShipping.PreShipping6(workflow=self),
+            "PreShipping7": PreShipping.PreShipping7(workflow=self),
+            "PreShippingComplete": PreShipping.PreShippingComplete(workflow=self),
 
-            "Shipping1": Shipping1(workflow=self),
-            "Shipping2": Shipping2(workflow=self),
-            "Shipping3": Shipping3(workflow=self),
-            "Shipping4": Shipping4(workflow=self),
-            "Shipping5": Shipping5(workflow=self),
-            "Shipping6": Shipping6(workflow=self),
-            "ShippingComplete": ShippingComplete(workflow=self),
+            "Shipping1": Shipping.Shipping1(workflow=self),
+            "Shipping2": Shipping.Shipping2(workflow=self),
+            "Shipping3": Shipping.Shipping3(workflow=self),
+            "Shipping4": Shipping.Shipping4(workflow=self),
+            "Shipping5": Shipping.Shipping5(workflow=self),
+            "Shipping6": Shipping.Shipping6(workflow=self),
+            "ShippingComplete": Shipping.ShippingComplete(workflow=self),
 
-            "Transit1": Transit1(workflow=self),
-            "TransitComplete": TransitComplete(workflow=self),
+            "Transit1": Transit.Transit1(workflow=self),
+            "TransitComplete": Transit.TransitComplete(workflow=self),
 
-            "Receiving1": Receiving1(workflow=self),
-            "Receiving2": Receiving2(workflow=self),
-            "Receiving3": Receiving3(workflow=self),
-            "ReceivingComplete": ReceivingComplete(workflow=self),
+            "Receiving1": Receiving.Receiving1(workflow=self),
+            "Receiving2": Receiving.Receiving2(workflow=self),
+            "Receiving3": Receiving.Receiving3(workflow=self),
+            "ReceivingComplete": Receiving.ReceivingComplete(workflow=self),
+
+            "WidgetTest1": WidgetTest.WidgetTest1(workflow=self),
+            "WidgetTestComplete": WidgetTest.WidgetTestComplete(workflow=self),
         }
         logger.info("...finished creating pages")
 
@@ -168,6 +164,9 @@ class WorkflowWidget(qtw.QWidget):
             "Receiving2": "Receiving3",
             "Receiving3": "ReceivingComplete",
             "ReceivingComplete": None,
+
+            "WidgetTest1": "WidgetTestComplete",
+            "WidgetTestComplete": None,
         }
 
         self._prev_page = {
@@ -204,6 +203,9 @@ class WorkflowWidget(qtw.QWidget):
             "Receiving2": "Receiving1",
             "Receiving3": "Receiving2",
             "ReceivingComplete": None,
+
+            "WidgetTest1": "SelectWorkflow",
+            "WidgetTestComplete": "WidgetTest1",
         }
 
         #self.test_widget = qtw.QLabel("Test Widget")
@@ -242,8 +244,10 @@ class WorkflowWidget(qtw.QWidget):
                 next_page_id = "Transit1"
             elif page_state['workflow_type'] == "receiving":
                 next_page_id = "Receiving1"
+            elif page_state['workflow_type'] == "widgettest":
+                next_page_id = "WidgetTest1"
             else:
-                logger.warning(f"unrecognized workflow type {self.workflow_type}")
+                logger.warning(f"unrecognized workflow type {page_state['workflow_type']}")
                 next_page_id = "SelectWorkflow"
 
             self.set_current_page(next_page_id)

@@ -23,7 +23,9 @@ class Transit1(PageWidget):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
+        
+        self.location_history = zw.ZLocationHistory(page=self, 
+                            key='location_history', source='workflow:part_info')
         self.new_location = zw.ZInstitutionWidget(page=self, key='location')        
         self.arrival_time = zw.ZDateTimeEdit(page=self, key='arrived')
         self.comments = zw.ZLineEdit(page=self, key='comments')
@@ -38,6 +40,9 @@ class Transit1(PageWidget):
         main_layout.addWidget(self.title_bar)        
 
         ########################################
+
+        main_layout.addWidget(self.location_history)
+
 
         main_layout.addWidget(
             qtw.QLabel("Please update the Location record for this shipment."))

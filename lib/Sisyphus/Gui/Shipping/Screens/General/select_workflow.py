@@ -32,6 +32,8 @@ class SelectWorkflow(PageWidget):
         self.workflow_type.create_button("shipping", "Shipping")
         self.workflow_type.create_button("transit", "Transit")
         self.workflow_type.create_button("receiving", "Receiving")
+        if self.application._debug:
+            self.workflow_type.create_button("widgettest", "Widget Test (Debug)")
 
         self._setup_UI()
 
@@ -56,6 +58,8 @@ class SelectWorkflow(PageWidget):
         main_layout.addWidget(self.workflow_type.button("shipping"))
         main_layout.addWidget(self.workflow_type.button("transit"))
         main_layout.addWidget(self.workflow_type.button("receiving"))
+        if self.application._debug:
+            main_layout.addWidget(self.workflow_type.button("widgettest"))
         
         main_layout.addStretch()
 

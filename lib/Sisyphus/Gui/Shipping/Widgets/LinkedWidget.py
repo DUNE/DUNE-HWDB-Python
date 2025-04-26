@@ -75,6 +75,7 @@ class LinkedWidget:
         #}}}
 
     def source(self):
+        #{{{
         if self.source_key is None:
             return None
 
@@ -146,7 +147,7 @@ class LinkedWidget:
                 # If the format is "application:<key>", get the value from
                 # the application_state
                 return self.application_state.get(parts[1], None)
-
+        #}}}
     @property
     def page_state(self):
         return self.page.page_state

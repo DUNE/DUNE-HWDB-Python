@@ -166,7 +166,7 @@ class PageWidget(qtw.QWidget):
         logger.info(f"{self.__class__.__name__}.activate()")
         logger.info(f"(workflow init: {self.workflow._finished_init})")
         self.restore()
-        #self.refresh()
+        self.refresh()
         self.application.update_status(self.page_name)
 
     def restore(self):
