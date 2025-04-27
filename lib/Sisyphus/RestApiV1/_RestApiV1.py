@@ -115,10 +115,7 @@ class retry:
 
         @functools.wraps(function)
         def wrapped_function(*args, **kwargs):
-            #global _refresh_required
 
-            #status_callback = kwargs.pop("status_callback", 
-            #                        session_kwargs.get("status_callback", None))
             status_callback = kwargs.pop("status_callback", None)
 
             if status_callback is not None:
@@ -329,6 +326,11 @@ def _request(method, url, *args, return_type="json", **kwargs):
     # Pop this, but don't do anything with it. "retry" handles it.
     status_callback = augmented_kwargs.pop("status_callback", None)    
 
+    # Pop this, but don't do anything with it. It's for signaling further
+    # up the chain whether or not to look in the cache for this. But, at
+    # this point, it has already been decided to actually do the request.
+    refresh = augmented_kwargs.pop("refresh", None)    
+
     try:
         if log_headers:
             # TODO: This is no longer working! Maybe I'll fix it some day?
@@ -407,8 +409,58 @@ def _request(method, url, *args, return_type="json", **kwargs):
         extra_info.append(f"| response: [binary] {resp.text}")
     #logger.debug('\n'.join(extra_info))
 
+    database_errors = [
+        {
+            "signature": "The test specifications do not match the "
+                           "test type definition!",
+            "message": "The Test Results format does not match the "
+                         "test type definition",
+            "exc_type": BadSpecificationFormat,
+        },
+        {
+            "signature": "A 'specifications' object matching the "
+                            "ComponentType difinition is required!",
+            "message": "The specifications format does not match the "
+                         "definition for the component type",
+            "exc_type": BadSpecificationFormat,
+        },
+        {
+            "signature": "The input specifications do not match the "
+                            "component type definition",
+            "message": "The specifications format does not match the "
+                         "definition for the component type",
+            "exc_type": BadSpecificationFormat,
+        },
+        {
+            "signature": "Not authorized",
+            "message": "The user does not have the authority for this request",
+            "exc_type": InsufficientPermissions,
+        },
+        {
+            "signature": "Verification failed: JWT decode failed "
+                        "ExpiredSignatureError('Signature has expired')",
+            "message": "The user's token has expired",
+            "exc_type": ExpiredSignature,
+        },
+    ]
+
+    # At this point, we don't know if the response is valid JSON, normal
+    # text, or binary data, but we'll scan it as if it's text and look
+    # for the kinds of errors that the REST API spits out (as HTML)
+    if KW_DATA in resp.text:
+        for database_error in database_errors:
+            if (database_error["signature"] in resp.text):
+                msg = database_error["message"]
+                exc_type = database_error["exc_type"]
+                with log_lock:
+                    logger.error(msg)
+                    extra_info.append(f"| exc_type: {exc_type.__name__}")
+                    logger.info('\n'.join(extra_info))
+                raise exc_type(msg)
+
 
     if return_type.lower() == "json":
+        #{{{
         #  Convert the response to JSON and return.
         #  If the response cannot be converted to JSON, raise an exception
         try:
@@ -460,53 +512,6 @@ def _request(method, url, *args, return_type="json", **kwargs):
                 logger.info('\n'.join(extra_info))
             raise exc_type(msg) from None
 
-        if KW_DATA in resp_json:
-            database_errors = \
-            [
-                {
-                    "signature": "The test specifications do not match the "
-                                   "test type definition!",
-                    "message": "The Test Results format does not match the "
-                                 "test type definition",
-                    "exc_type": BadSpecificationFormat,
-                },
-                {
-                    "signature": "A 'specifications' object matching the "
-                                    "ComponentType difinition is required!",
-                    "message": "The specifications format does not match the "
-                                 "definition for the component type",
-                    "exc_type": BadSpecificationFormat,
-                },
-                {
-                    "signature": "The input specifications do not match the "
-                                    "component type definition",
-                    "message": "The specifications format does not match the "
-                                 "definition for the component type",
-                    "exc_type": BadSpecificationFormat,
-                },
-                {
-                    "signature": "Not authorized",
-                    "message": "The user does not have the authority for this request",
-                    "exc_type": InsufficientPermissions,
-                },
-                {
-                    "signature": "Verification failed: JWT decode failed "
-                                "ExpiredSignatureError('Signature has expired')",
-                    "message": "The user's token has expired",
-                    "exc_type": ExpiredSignature,
-                },
-            ]
-            
-            for database_error in database_errors:
-                if (database_error["signature"] in resp_json['data']):
-                    msg = database_error["message"]
-                    exc_type = database_error["exc_type"]
-                    with log_lock:
-                        logger.error(msg)
-                        extra_info.append(f"| exc_type: {exc_type.__name__}")
-                        logger.info('\n'.join(extra_info))
-                    raise exc_type(msg)
-
         if KW_ERRORS in resp_json and type(resp_json[KW_ERRORS]) is list:
             msg_parts = []
             for error in resp_json[KW_ERRORS]:
@@ -531,7 +536,10 @@ def _request(method, url, *args, return_type="json", **kwargs):
             logger.error(msg)
             logger.info('\n'.join(extra_info))
         raise exc_type(msg, resp_json) from None
+        #}}}
     else:
+        # The data isn't supposed to be JSON, so there's not much we can
+        # do to validate it further.
         with log_lock:
             logger.debug("returning raw response object")
         return resp
@@ -843,8 +851,15 @@ def patch_hwitem(part_id, data, **kwargs):
             "comments": <str>,
             "manufacturer": {"id": <int>},
             "serial_number": <str>,
+            "status": {"id": <status_id>},
             "specifications": {...},
         }
+
+    (True as of 2025-04-21, but is subject to change!!)
+    status_id:
+        'available' = 1
+        'not available' = 2
+        'permanently not available' = 3
 
     Structure of returned response:
         {
@@ -968,6 +983,32 @@ def get_subcomponents(part_id, **kwargs):
 
 def patch_subcomponents(part_id, data, **kwargs):
     #{{{
+    '''Attach subcomponents to a component
+
+    Structure for "data":
+        {
+            "component":
+            {
+                "part_id": <part_id>,
+            },
+            "subcomponents":
+            {
+                <func pos name>: <part_id>,
+                <func pos name>: <part_id>,
+                <func pos name>: <part_id>
+            }
+        }
+
+    Structure of returned response:
+        {
+            "component_id": 181869,
+            "data": "Updated",
+            "part_id": "D00599800007-00087",
+            "status": "OK"
+        }
+
+    '''
+
     logger.debug(f"<{func_name()}> part_id={part_id}")
     profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/components/{sanitize(part_id)}/subcomponents" 

@@ -36,7 +36,6 @@ class Test__get_component_type(unittest.TestCase):
         print(f"Test ended at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"Test duration: {duration:.2f} seconds")
 
-
     def test_get_component_type(self):
         """Get component type"""
         print("\n=== Testing to get a component type ===")
@@ -144,4 +143,5 @@ class Test__get_component_type(unittest.TestCase):
 #=================================================================================
 
 if __name__ == "__main__":
+    from Sisyphus.Configuration import config
     unittest.main(argv=config.remaining_args)
