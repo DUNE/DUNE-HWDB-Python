@@ -82,7 +82,8 @@ def download_part_info(part_id, refresh=False, status_callback=None):
             part_info['subcomponents'][subcomp['part_id']] = {
                 "Sub-component PID": subcomp['part_id'],
                 "Component Type Name": subcomp['type_name'],
-                "Functional Position Name": subcomp["functional_position"]
+                "Functional Position Name": subcomp["functional_position"],
+                "Status": hwitem.subcomp_details[subcomp['part_id']].data['status']['name'],
             }
 
         workflow_state['part_info'] = part_info

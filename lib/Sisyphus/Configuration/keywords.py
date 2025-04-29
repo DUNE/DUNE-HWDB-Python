@@ -42,3 +42,7 @@ KW_LOGLEVEL = "loglevel"
 
 KW_SETTINGS = "settings"
 KW_EXTRA_KWARGS = "request kwargs"
+KW_THROTTLE_LOCK = "throttle_lock"
+KW_LOG_HEADERS = "log_headers"
+KW_LOG_REQUEST_JSON = "log_request_json"
+KW_TIMEOUTS = "timeouts"

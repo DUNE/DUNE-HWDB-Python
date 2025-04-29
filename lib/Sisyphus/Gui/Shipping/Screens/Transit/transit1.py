@@ -26,7 +26,8 @@ class Transit1(PageWidget):
         
         self.location_history = zw.ZLocationHistory(page=self, 
                             key='location_history', source='workflow:part_info')
-        self.new_location = zw.ZInstitutionWidget(page=self, key='location')        
+        self.new_location = zw.ZInstitutionWidget(page=self, 
+                            key='location', source='application:attr:locations')
         self.arrival_time = zw.ZDateTimeEdit(page=self, key='arrived')
         self.comments = zw.ZLineEdit(page=self, key='comments')
         self.affirm_update = zw.ZCheckBox(page=self, 
@@ -94,7 +95,7 @@ class Transit1(PageWidget):
         with self.wait():
             ok = dbt.update_location(
                             part_id=self.part_id, 
-                            location=self.page_state["location"],
+                            location=self.page_state["location"]["institution_id"],
                             arrived=self.page_state["arrived"],
                             comments=self.page_state["comments"])
         return True
