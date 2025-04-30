@@ -17,6 +17,15 @@ from Sisyphus.Gui.Shipping.Tasks import Database as dbt
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtCore as qtc
 
+import concurrent.futures
+import threading
+
+NUM_THREADS = 50
+_executor = concurrent.futures.ThreadPoolExecutor(
+                    max_workers=NUM_THREADS,
+                    thread_name_prefix='select_pid_UI')
+
+
 ###############################################################################
 
 class SelectPID(PageWidget):
@@ -93,10 +102,17 @@ class SelectPID(PageWidget):
         part_id = self.page_state['search_part_id']
 
         with self.wait():
-            workflow_state = dbt.download_part_info(
-                                    part_id,
-                                    refresh=True, # don't use the cache
-                                    status_callback=self.application.update_status)
+            wfst = _executor.submit(
+                            dbt.download_part_info,
+                            part_id,
+                            refresh=True, # don't use the cache
+                            status_callback=self.application.update_status)
+
+            #workflow_state = dbt.download_part_info(
+            #                        part_id,
+            #                        refresh=True, # don't use the cache
+            #                        status_callback=self.application.update_status)
+            workflow_state = wfst.result()
 
         # If the part was not found, download_part_info will return a dict
         # with the part_info and all the screen info blanked out, so it's
