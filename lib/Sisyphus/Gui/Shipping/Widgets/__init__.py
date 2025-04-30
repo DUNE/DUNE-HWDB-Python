@@ -7,8 +7,6 @@ Author:
 """
 
 from .widgets import (
-    PageWidget,
-    NavBar,
     ZCheckBox,
     ZDateTimeEdit,
     ZLabel,
@@ -18,6 +16,8 @@ from .widgets import (
     ZRadioButtonGroup,
     ZFileSelectWidget,
     ZInstitutionWidget,
+    ZPartDetails,
+    ZLocationHistory,
     STYLE_SMALL_BUTTON,
     STYLE_LARGE_BUTTON,
 )

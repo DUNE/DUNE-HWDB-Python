@@ -11,10 +11,8 @@ from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
 import Sisyphus.RestApiV1 as ra
-ra.session_kwargs['timeout'] = 10
-
-
 import Sisyphus.RestApiV1.Utilities as ut
+
 from Sisyphus.HWDBUtility.SheetReader import Sheet, Cell
 from Sisyphus.HWDBUtility import TypeCheck as tc
 from Sisyphus.Utils.Terminal.Style import Style

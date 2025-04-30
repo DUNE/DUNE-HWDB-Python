@@ -508,6 +508,7 @@ class PDFLabels:
             #}}}
 
         def resolve_text(text, data):
+            #{{{
 
             substitutions = re.findall("[$]\\{([^}]*)\\}", text)
             for substitution in substitutions:
@@ -532,7 +533,7 @@ class PDFLabels:
         
 
             return text
-
+            #}}}
         cvs = self.cvs
 
         unit = label_template['units']

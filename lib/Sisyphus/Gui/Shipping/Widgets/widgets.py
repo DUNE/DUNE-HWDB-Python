@@ -10,18 +10,18 @@ from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 #logger.setLevel("INFO")
 
-HLD = highlight = "[bg=#999999,fg=#ffffff]"
-HLI = highlight = "[bg=#009900,fg=#ffffff]"
-HLW = highlight = "[bg=#999900,fg=#ffffff]"
-HLE = highlight = "[bg=#990000,fg=#ffffff]"
-
 from Sisyphus.Gui import DataModel as dm
 from Sisyphus.Utils.Terminal.Style import Style
 import json
 import os
+from copy import copy
+import time
+
+from .LinkedWidget import LinkedWidget
 
 from PyQt5 import QtCore as qtc
 from PyQt5 import QtWidgets as qtw
+from PyQt5 import QtGui as qtg
 
 ###############################################################################
 
@@ -34,234 +34,174 @@ STYLE_SMALL_BUTTON = """
     padding: 5px 15px;
 """
 
-class PageWidget(qtw.QWidget):
+class ZPartDetails(qtw.QWidget, LinkedWidget):
     #{{{
     def __init__(self, *args, **kwargs):
-        logger.debug(f"[{self.__class__.__name__}].__init__()")
-
-        self.owner = kwargs.pop("owner", None)
-        if self.owner is None:
-            raise ValueError("required paramter: owner")
-
-        self.workflow = self.owner
-        self.application = self.workflow.application
-
-        super().__init__(*args, **kwargs)
-        self._app_state = self.workflow.app_state
-        self._workflow_state = self.workflow.workflow_state
-        self.page_id = self.__class__.__name__.split('.')[-1]
-
-        self.title_bar = TitleBar(owner = self)
-        self.nav_bar = NavBar(owner = self)
-
-    @property
-    def page_name(self):
-        try:
-            return self._page_name
-        except AttributeError:
-            logger.warning(f"{self.__class__.__name__} page_name not set!")
-            self._page_name = self.page_id
-            return self._page_name
-
-    @page_name.setter
-    def page_name(self, value):
-        self._page_name = value
-
-    @property
-    def page_short_name(self):
-        try:
-            return self._page_short_name
-        except AttributeError:
-            logger.warning("page_short_name not set!")
-            self._page_short_name = self.page_name
-            return self._page_short_name
-
-    @property
-    def part_id(self):
-        return self.workflow_state.get("part_info", {}).get("part_id", None)
-
-    @property
-    def app_state(self):
-        return self.workflow.app_state
-
-    @property
-    def workflow_state(self):
-        return self.workflow.workflow_state
-
-    @workflow_state.setter
-    def workflow_state(self, value):
-        self.workflow.workflow_state = value
-        return value
-
-    @property
-    def page_state(self):
-        return self.workflow.workflow_state.setdefault(self.page_id, {})
-
-    def save(self):
-        logger.debug(f"{self.__class__.__name__}.save()")
-        self.workflow.save()
-
-    @property
-    def tab_title(self):
-        if self.part_id is not None:
-            tab_title = f"{self.part_id}\n{self.page_short_name}"
-        else:
-            tab_title = f"{self.page_short_name}"
-        return tab_title
-
-    def activate(self):
-        # call when switching to this page
-        logger.info(f"{HLD}{self.__class__.__name__}.activate()")
-        logger.info(f"(workflow init: {self.workflow._finished_init})")
-        self.restore()
-        self.update()
-        self.application.update_status(self.page_name)
-
-    def restore(self):
-        for linked_widget in self.findChildren(LinkedWidget):
-            linked_widget.restore()
-
-    def update(self):
-        # overload this method to add an action when the content of the page
-        # has changed, e.g., to enable/disable nav buttons
-        logger.info(f"{HLI}{self.__class__.__name__}.update()")
-        self.title_bar.page_subtitle.restore()
-
-    def on_navigate_next(self):
-        logger.debug(f"{HLD}{self.__class__.__name__}.on_navigate_next()")
-        self.save()
-        return True
-
-    def on_navigate_prev(self):
-        logger.debug(f"{HLD}{self.__class__.__name__}.on_navigate_prev()")
-        self.save()
-        return True
-
-    #@property
-    #def working_directory(self):
-    #    if self.part_id is None:
-    #        retval = self.application.working_directory
-    #    else:
-    #        retval = os.path.normpath(
-    #                        os.path.join(self.application.working_directory, self.part_id))
-    #    os.makedirs(retval, exist_ok=True)
-    #    return retval
-    #}}}
-
-class TitleBar(qtw.QWidget):
-    #{{{
-    def __init__(self, *args, **kwargs):
-        #logger.debug(f"{self.__class__.__name__}.__init__()")
-
-        self.owner = kwargs.pop('owner', None)        
-        if self.owner is None:
-            raise ValueError("required parameter: owner")
-
-        super().__init__(*args, **kwargs)
-        
-        main_layout = qtw.QVBoxLayout()
-        main_layout.setContentsMargins(0, 0, 0, 0)
-
-        self.page_title = qtw.QLabel(self.owner.page_name)
-        self.page_title.setStyleSheet("""
-                font-size: 14pt;
-                font-weight: bold;
-            """)
-        self.page_title.setAlignment(qtc.Qt.AlignCenter)
-
-        main_layout.addWidget(self.page_title)
-
-        self.page_subtitle = ZLabel(owner=self.owner, key='attr:part_id', default='[no part_id yet]')
-        self.page_subtitle.setAlignment(qtc.Qt.AlignCenter)
-        
-        main_layout.addWidget(self.page_subtitle)
-
-        self.setLayout(main_layout)
-    #}}}
-
-class NavBar(qtw.QWidget):
-    #{{{
-    def __init__(self, *args, **kwargs):
-
-        self.owner = kwargs.pop('owner', None)
-        if self.owner is None:
-            raise ValueError("required parameter: owner")
-
         super().__init__(*args, **kwargs)
 
-        main_layout = qtw.QHBoxLayout()
-        main_layout.setContentsMargins(0, 0, 0, 0)
+        self.pid_label = qtw.QLabel("<not set>")
+        self.part_name_label = qtw.QLabel("<not set>")
+        self.system_label = qtw.QLabel("<not set>")
+        self.subsystem_label = qtw.QLabel("<not set>")
 
-        self.back_button = qtw.QPushButton("Back")
-        self.back_button.setStyleSheet(STYLE_LARGE_BUTTON)
-        self.back_button.clicked.connect(self.owner.workflow.navigate_prev)
+        self.show_empty_slots = qtw.QCheckBox("show vacant slots")
+        self.show_empty_slots.toggled.connect(self.on_show_empty_slots_checked)
 
-        self.continue_button = qtw.QPushButton("Continue")
-        self.continue_button.setStyleSheet(STYLE_LARGE_BUTTON)
-        self.continue_button.clicked.connect(self.owner.workflow.navigate_next)
+        self._setup_UI()
 
-        main_layout.addWidget(self.back_button)
-        main_layout.addStretch()
-        main_layout.addWidget(self.continue_button)
-
-        self.setLayout(main_layout)
-    #}}}
-
-class LinkedWidget:
-    #{{{
-    def __init__(self, *args, **kwargs):
-        #logger.debug(f"{self.__class__.__name__}.__init__()")
- 
-        # owner = the page that this widget belongs to, which is not 
-        #           necessarily the parent. (The parent could be a 
-        #           different container widget that we don't care
-        #           about except for how it makes the page look.)
-        self.owner = kwargs.pop('owner', None)
-
-        # page_state_key = the key to store/retrieve data to/from in
-        #           the page's dictionary
-        self.page_state_key = kwargs.pop('key', None)
-
-        # page_state_value = for sets of widgets that all share the same
-        #           key (e.g., radio buttons), what value to use if this
-        #           particular widget is selected
-        self.page_state_value = kwargs.pop('value', None)
-
-        # default_value = if there is no value for this widget's key, 
-        #           use this value
-        self.default_value = kwargs.pop('default', '')
-        
-        if self.owner is None:
-            raise ValueError("required parameter: owner")
-        if self.page_state_key is None:
-            raise ValueError("required parameter: key")
-
-        # This should call the 'other' inherited class' __init__, 
-        # whatever it happens to be
-        super().__init__(*args, **kwargs)
-        self.setObjectName(__class__.__name__)       
-
-    @property
-    def page_state(self):
-        return self.owner.page_state
-
-    @property
-    def workflow_state(self):
-        return self.owner.workflow_state
-
-
-    def restore(self):
-        # This is the method that the page should call to restore a widget
-        # but it should not be overloaded unless necessary
-        self.blockSignals(True)
+    def on_show_empty_slots_checked(self, status):
+        self.stored_value = status
         self.restore_state()
-        self.blockSignals(False)
+        self.page.refresh()
+
+    def _setup_UI(self):
+        #{{{
+        # The "more obvious" way of doing this is to just make this widget
+        # inherit from QFrame instead of QWidget, but for some reason, it
+        # refuses to draw the border in the dark or light style (though it
+        # does work in other styles). So, we'll make this a QWidget that
+        # contains a QFrame that contains the rest. >:-@
+
+        self.main_layout = qtw.QVBoxLayout()
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(self.main_layout)
+
+        self.frame = qtw.QFrame()
+        self.frame.setFrameStyle(qtw.QFrame.Box | qtw.QFrame.Sunken)
+        self.frame.setLineWidth(1)
+
+        self.main_layout.addWidget(self.frame)
+
+        grid_layout = qtw.QGridLayout()
+        self.frame.setLayout(grid_layout)
+
+        grid_layout.setContentsMargins(5, 5, 5, 5)
+        grid_layout.setColumnStretch(0, 1)
+        grid_layout.setColumnStretch(1, 2)
+        grid_layout.setColumnStretch(2, 1)
+        grid_layout.setHorizontalSpacing(10)
+        grid_layout.setVerticalSpacing(0)
+
+        top_right = qtc.Qt.AlignTop | qtc.Qt.AlignRight
+        top_left = qtc.Qt.AlignTop | qtc.Qt.AlignLeft
+        center_right = qtc.Qt.AlignVCenter | qtc.Qt.AlignRight
+        center_left = qtc.Qt.AlignVCenter | qtc.Qt.AlignLeft
+        top_center = qtc.Qt.AlignTop | qtc.Qt.AlignHCenter
+
+        self.table = qtw.QTableWidget(0, 4)
+        self.table.verticalHeader().setVisible(False)
+        self.table.setHorizontalHeaderLabels(['Sub-component PID',
+                            'Component Type Name', 'Functional Position Name', "Status"])
+        horizontal_header = self.table.horizontalHeader()
+        horizontal_header.resizeSection(0, 200)
+        horizontal_header.resizeSection(1, 260)
+        horizontal_header.resizeSection(2, 260)
+
+
+        current_row = 0
+
+        grid_layout.addWidget(qtw.QLabel("PID"),
+                            current_row, 0, 1, 1)
+        grid_layout.addWidget(self.pid_label,
+                            current_row, 1, 1, 1)
+        current_row += 1
+
+        grid_layout.addWidget(qtw.QLabel("Part Type Name"),
+                            current_row, 0, 1, 1)
+        grid_layout.addWidget(self.part_name_label,
+                            current_row, 1, 1, 1)
+        current_row += 1
+
+        grid_layout.addWidget(qtw.QLabel("System"),
+                            current_row, 0, 1, 1)
+        grid_layout.addWidget(self.system_label,
+                            current_row, 1, 1, 1)
+        current_row += 1
+
+        grid_layout.addWidget(qtw.QLabel("Subsystem"),
+                            current_row, 0, 1, 1)
+        grid_layout.addWidget(self.subsystem_label,
+                            current_row, 1, 1, 1)
+        grid_layout.addWidget(self.show_empty_slots,
+                            current_row, 2, 1, 1)
+        current_row += 1
+
+
+        grid_layout.setRowMinimumHeight(current_row, 10)
+        current_row += 1
+
+
+        grid_layout.addWidget(self.table,
+                            current_row, 0, 1, 3)
+        current_row += 1
+        #}}}
 
     def restore_state(self):
-        # Overload this one!
-        # This is where the meat of the widget's 'restore' functionality
-        # should be implemented
-        logger.debug(f"{self.__class__.__name__}.restore_state()")
+        #{{{
+        super().restore_state()
+        show_empty_slots_status = self.page_state.setdefault(self.state_key, False)
+        self.show_empty_slots.blockSignals(True)
+        self.show_empty_slots.setChecked(show_empty_slots_status)
+        self.show_empty_slots.blockSignals(False)
+
+        self.table.setEditTriggers(qtw.QAbstractItemView.NoEditTriggers)
+
+        source = self.source() or {}
+        self.pid_label.setText(source.get('part_id', 'N/A'))
+        self.part_name_label.setText(source.get('part_type_name', 'N/A'))
+        self.system_label.setText(source.get('system', 'N/A'))
+        self.subsystem_label.setText(source.get('subsystem', 'N/A'))
+
+        subcomps = source.get('subcomponents', {})
+
+        if show_empty_slots_status:
+            connectors = source.get('connector_data', {})
+            subcomps_by_func_pos = { v['Functional Position Name']: v
+                            for v in subcomps.values() }
+
+            self.table.setRowCount(len(connectors))
+            for idx, (func_pos, connector_def) in enumerate(connectors.items()):
+                part_type_id = connector_def['part_type_id']
+                part_type_name = connector_def['part_type_name']
+
+                if func_pos in subcomps_by_func_pos:
+                    subcomp_is_empty = False
+                    subcomp = subcomps_by_func_pos[func_pos]
+                else:
+                    subcomp_is_empty = True
+                    subcomp = {
+                        "Sub-component PID": "<empty>",
+                        "Component Type Name": part_type_name,
+                        "Functional Position Name": func_pos
+                    }
+
+                subcomp_pid_widget = qtw.QTableWidgetItem(subcomp['Sub-component PID'])
+                subcomp_type_widget = qtw.QTableWidgetItem(subcomp['Component Type Name'])
+                subcomp_func_pos_widget = qtw.QTableWidgetItem(subcomp['Functional Position Name'])
+                something_widget = qtw.QTableWidgetItem(subcomp['Status'])
+
+                if subcomp_is_empty:
+                    #subcomp_pid_widget.setStyleSheet("color: #ff0000")
+                    brush = qtg.QBrush()
+                    color = qtg.QColor(255, 0, 0, 255)
+                    brush.setColor(color)
+                    subcomp_pid_widget.setForeground(brush)
+                    subcomp_pid_widget.setBackground(brush)
+
+                self.table.setItem(idx, 0, subcomp_pid_widget)
+                self.table.setItem(idx, 1, subcomp_type_widget)
+                self.table.setItem(idx, 2, subcomp_func_pos_widget)
+                self.table.setItem(idx, 3, something_widget)
+
+        else:
+            self.table.setRowCount(len(subcomps))
+            for idx, subcomp in enumerate(subcomps.values()):
+                self.table.setItem(idx, 0, qtw.QTableWidgetItem(subcomp['Sub-component PID']))
+                self.table.setItem(idx, 1, qtw.QTableWidgetItem(subcomp['Component Type Name']))
+                self.table.setItem(idx, 2, qtw.QTableWidgetItem(subcomp['Functional Position Name']))
+                self.table.setItem(idx, 3, qtw.QTableWidgetItem(subcomp['Status']))
+
+        #}}}
     #}}}
 
 class ZCheckBox(qtw.QCheckBox, LinkedWidget):
@@ -271,12 +211,12 @@ class ZCheckBox(qtw.QCheckBox, LinkedWidget):
         self.toggled.connect(self.handle_changed)
 
     def handle_changed(self, status):
-        self.page_state[self.page_state_key] = status
-        self.owner.update()
+        self.stored_value = status
+        self.page.refresh()
 
     def restore_state(self):
         super().restore_state()
-        status = self.page_state.setdefault(self.page_state_key, False)
+        status = self.page_state.setdefault(self.state_key, False)
         self.setChecked(status)
     #}}}
 
@@ -289,14 +229,20 @@ class ZDateTimeEdit(qtw.QDateTimeEdit, LinkedWidget):
         self.dateTimeChanged.connect(self.handle_changed)
 
     def handle_changed(self):
-        self.page_state[self.page_state_key] = self.dateTime().toString(qtc.Qt.DateFormat.ISODate)
-        self.owner.update()
+        self.stored_value = self.dateTime().toString(qtc.Qt.DateFormat.ISODate)
+        self.page.refresh()
 
     def restore_state(self):
         super().restore_state()
         now = qtc.QDateTime.currentDateTime().toString(qtc.Qt.DateFormat.ISODate)
 
-        datetime = self.page_state.setdefault(self.page_state_key, now)
+        # Note that it should already exist and has an initial value of
+        # an empty string, so we have to actually look at it and decide
+        # what to do, instead of doing a setdefault or something
+        datetime = self.page_state.get(self.state_key, '')
+        if datetime == '':
+            datetime = now
+            self.stored_value = datetime
 
         self.setDateTime(
             qtc.QDateTime.fromString(datetime, qtc.Qt.DateFormat.ISODate)
@@ -309,21 +255,17 @@ class ZLabel(qtw.QLabel, LinkedWidget):
         super().__init__(*args, **kwargs)
 
     def setText(self, txt):
-        self.page_state[self.page_state_key] = txt
+        self.stored_value = txt
         super().setText(txt)
-        #self.owner.update()
 
     def restore_state(self):
         super().restore_state()
 
-        if self.page_state_key.startswith('attr:'):
-            attr_key = self.page_state_key[5:]
-            if hasattr(self.owner, attr_key):
-                txt = getattr(self.owner, attr_key) or self.default_value
-            else:
-                txt = self.default_value
-        else:
-            txt = self.page_state.get(self.page_state_key, self.default_value)
+        # Note: if you ever need this to work off the state_key like
+        # every other LinkedWidget, you can put the desired state_key
+        # into the source_key, and it will pull from there.
+        txt = self.source() or self.default_value
+        
         super().setText(txt)
 
     #}}}
@@ -335,12 +277,12 @@ class ZLineEdit(qtw.QLineEdit, LinkedWidget):
         self.textChanged.connect(self.handle_changed)
     
     def handle_changed(self):
-        self.page_state[self.page_state_key] = self.text()
-        self.owner.update()
+        self.stored_value = self.text()
+        self.page.refresh()
 
     def restore_state(self):
         super().restore_state()
-        self.setText(self.page_state.setdefault(self.page_state_key, self.default_value))
+        self.setText(self.page_state.setdefault(self.state_key, self.default_value))
     #}}}
 
 class ZTextEdit(qtw.QTextEdit, LinkedWidget):
@@ -358,12 +300,12 @@ class ZTextEdit(qtw.QTextEdit, LinkedWidget):
         self.textChanged.connect(self.handle_editingFinished)
 
     def handle_editingFinished(self):
-        self.page_state[self.page_state_key] = self.document().toPlainText()
-        self.owner.update()
+        self.stored_value = self.document().toPlainText()
+        self.page.refresh()
 
     def restore_state(self):
         super().restore_state()
-        self.setText(self.page_state.setdefault(self.page_state_key, ""))
+        self.setText(self.page_state.setdefault(self.state_key, ""))
 
     def focusInEvent(self, event):
         super().focusInEvent(event)
@@ -389,13 +331,13 @@ class ZRadioButton(qtw.QRadioButton, LinkedWidget):
 
     def handle_selected(self):
         if self.isChecked():
-            logger.debug(f"{self.page_state_key}/{self.page_state_value}: checked")
-            self.page_state[self.page_state_key] = self.page_state_value
-            self.owner.update()
+            logger.debug(f"{self.state_key}/{self.state_value_when_selected}: checked")
+            self.stored_value = self.state_value_when_selected
+            self.page.refresh()
             
     def restore_state(self):
         super().restore_state()
-        if self.page_state.get(self.page_state_key, None) == self.page_state_value:
+        if self.page_state.get(self.state_key, None) == self.state_value_when_selected:
             self.setChecked(True)
         else:
             self.setChecked(False)
@@ -411,13 +353,14 @@ class ZRadioButtonGroup(qtw.QButtonGroup, LinkedWidget):
     def button(self, value):
         if value in self.buttons.keys():
             return self.buttons[value]
+        raise KeyError(f"button {value!r} does not exist in ZRadioButtonGroup")
 
     def create_button(self, value, caption=None):
         if value in self.buttons.keys():
             return self.buttons[value]
 
-        new_button = ZRadioButton(owner=self.owner, 
-                                    key=self.page_state_key, 
+        new_button = ZRadioButton(page=self.page, 
+                                    key=self.state_key, 
                                     value=value)
         if caption is not None:
             new_button.setText(caption)
@@ -467,12 +410,12 @@ class ZFileSelectWidget(qtw.QWidget, LinkedWidget):
         self.handle_changed()
 
     def handle_changed(self):
-        self.page_state[self.page_state_key] = self.filename_lineedit.text()
-        self.owner.update()
+        self.stored_value = self.filename_lineedit.text()
+        self.page.refresh()
 
     def restore_state(self):
         super().restore_state()
-        self.filename_lineedit.setText(self.page_state.get(self.page_state_key, ''))
+        self.filename_lineedit.setText(self.page_state.get(self.state_key, ''))
     #}}}
 
 class ZInstitutionWidget(qtw.QWidget, LinkedWidget):
@@ -491,11 +434,17 @@ class ZInstitutionWidget(qtw.QWidget, LinkedWidget):
         ### Country Widget
         country_widget = self.country_widget = qtw.QComboBox()
         country_widget.setStyleSheet("width: 200px")
-        #country_widget.setEditable(True)
         country_widget.currentIndexChanged.connect(self.on_selectCountry)
         country_widget.setPlaceholderText("Select Country...")
-        for country_code, country in self.get_countries().items():
-            country_widget.addItem(country, country_code)
+
+        source_data = self.source()
+        self.countries = source_data['countries']
+        self.institutions = source_data['institutions']
+
+        for country in self.countries.values():
+            cn = f"({country['code']}) {country['name']}"
+            country_widget.addItem(cn, country['code'])
+
         #country_widget.setCurrentIndex(-1)
         main_layout.addWidget(country_widget)
         
@@ -510,38 +459,53 @@ class ZInstitutionWidget(qtw.QWidget, LinkedWidget):
         main_layout.addStretch()
     
     def on_selectCountry(self):
+        self.inst_widget.blockSignals(True)
+
         self.country_code = self.country_widget.currentData()
+        self.institution_id = None
+        self.institution_name = None
 
         self.inst_widget.clear()
-        for inst_id, inst in self.get_insts(self.country_code).items():
-            self.inst_widget.addItem(inst, inst_id)
+         
+        for inst_id in self.countries[self.country_code]['institution_ids']:
+            institution = self.institutions[inst_id]
+            inst_name = f"({institution['id']}) {institution['name']}"
+            self.inst_widget.addItem(inst_name, inst_id)
 
-        if self.institution_id in self.get_insts(self.country_code):
-            self.inst_widget.setCurrentIndex(
-                    self.inst_widget.findData(self.institution_id))
-        else:
-            self.institution_id = None
-            
-
+        self.inst_widget.blockSignals(False)
 
     def on_selectInstitution(self):
-        self.institution_id = str(self.inst_widget.currentData())
-        self.page_state[self.page_state_key] = str(self.institution_id)
-        self.owner.update()
+        self.institution_id = self.inst_widget.currentData()
+        self.institution_name = self.institutions[self.institution_id]['name']
+        self.stored_value = {
+            'institution_id': self.institution_id,
+            'institution_name': self.institution_name,
+            'country_code': self.country_code,
+        }
+        self.page.refresh()
 
     def restore_state(self):
+        
         self.country_widget.blockSignals(True)
         self.inst_widget.blockSignals(True)
-        
-        self.institution_id = str(self.page_state.setdefault(
-                                            self.page_state_key, self.default_value))
-        self.country_code = self.get_country_of_inst(self.institution_id)
+
+        #if self.stored_value is None:
+        if type(self.stored_value) is not dict:
+            self.stored_value = {
+                'institution_id': None,
+                'institution_name': None,
+                'country_code': None,
+            }
+
+        inst_id = self.institution_id = self.stored_value['institution_id']
+        inst_name = self.institution_name = self.stored_value['institution_name']
+        country_code = self.country_code = self.stored_value['country_code']
         
         if self.country_code:
-            c_index = self.country_widget.findData(self.country_code)
+            c_index = self.country_widget.findData(country_code)
             self.country_widget.setCurrentIndex(c_index)
             self.on_selectCountry()
-            i_index = self.inst_widget.findData(self.institution_id)
+            i_index = self.inst_widget.findData(inst_id)
             self.inst_widget.setCurrentIndex(i_index)
         else:        
             self.country_widget.setCurrentIndex(-1)
@@ -549,65 +513,59 @@ class ZInstitutionWidget(qtw.QWidget, LinkedWidget):
     
         self.country_widget.blockSignals(False)
         self.inst_widget.blockSignals(False)
-        
-        
-    @classmethod
-    def get_countries(cls):
-        if not hasattr(cls, '_inst_cache'):
-            cls._get_inst_data()
-        return cls._inst_cache['countries']
-
-    @classmethod
-    def get_insts(cls, country_code):
-        if not hasattr(cls, '_inst_cache'):
-            cls._get_inst_data()
-        return cls._inst_cache['insts'][country_code]
-    
-    @classmethod
-    def get_country_of_inst(cls, inst_id):
-        if not hasattr(cls, '_inst_cache'):
-            cls._get_inst_data()
-        return cls._inst_cache['country_by_inst'].get(inst_id, None)
-
-    @classmethod
-    def _get_inst_data(cls):
-        #{{{
-        if hasattr(cls, '_cache'):
-            return cls._cache
-
-        inst_data = dm.Institutions().data
-        full_list = [ (f"({c_code}) {c_name}", f"({inst_id}) {inst_name}", c_code, inst_id)
-                      for c_code, c_name, inst_name, inst_id in
-                sorted(list(
-                    [
-                        (
-                            inst['country']['code'],
-                            inst['country']['name'],
-                            inst['name'],
-                            str(inst['id'])
-                        ) for inst in inst_data 
-                    ]
-                ))
-            ]
-        country_list = {
-                c_code: c_full_name for 
-                    (c_full_name, inst_full_name, c_code, inst_id) in full_list
-            }
-        inst_list = {c_code_key:
-                        {inst_id: inst_full_name
-                            for (c_full_name, inst_full_name, c_code, inst_id) in full_list
-                            if c_code_key == c_code}
-                        for c_code_key in country_list.keys()}
-        inst_list[None] = {}
-        country_lookup_by_inst = {inst_id: c_code 
-                            for (c_full_name, inst_full_name, c_code, inst_id) in full_list}
-        cls._inst_cache = {
-                "countries": country_list,
-                "insts": inst_list,
-                "country_by_inst": country_lookup_by_inst
-            }
         #}}}
-
-
     #}}}
 
+class ZLocationHistory(qtw.QWidget, LinkedWidget):
+    #{{{
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        self.main_layout = qtw.QVBoxLayout()
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(self.main_layout)
+
+        self.frame = qtw.QFrame()
+        self.frame.setFrameStyle(qtw.QFrame.Box | qtw.QFrame.Sunken)
+        self.frame.setLineWidth(1)
+
+        self.main_layout.addWidget(self.frame)
+
+        inner_layout = qtw.QVBoxLayout()
+        self.frame.setLayout(inner_layout)
+
+        inner_layout.setContentsMargins(5, 5, 5, 5)
+        inner_layout.setSpacing(0)
+
+        self.table = qtw.QTableWidget(0, 3)
+        self.table.verticalHeader().setVisible(False)
+        self.table.setHorizontalHeaderLabels(['Location',
+                            'Arrived', 'Comments'])
+        horizontal_header = self.table.horizontalHeader()
+        horizontal_header.resizeSection(0, 260)
+        horizontal_header.resizeSection(1, 200)
+        horizontal_header.resizeSection(2, 260)
+
+        current_row = 0
+
+        inner_layout.addWidget(qtw.QLabel("Location History"))
+        inner_layout.addWidget(self.table)
+
+    def restore_state(self):
+        super().restore_state()
+        source = self.source() or {}
+        locations = source.get('locations', {})
+
+        self.table.setEditTriggers(qtw.QAbstractItemView.NoEditTriggers)
+        self.table.setRowCount(len(locations)) 
+        for idx, location in enumerate(locations):
+            location_name = qtw.QTableWidgetItem(f"({location['location']['id']}) "
+                                f"{location['location']['name']}")
+            arrived = qtw.QTableWidgetItem(location['arrived'])
+            comments = qtw.QTableWidgetItem(location['comments'])
+
+            self.table.setItem(idx, 0, location_name)
+            self.table.setItem(idx, 1, arrived) 
+            self.table.setItem(idx, 2, comments)
+
+    #}}}

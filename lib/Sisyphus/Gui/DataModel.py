@@ -18,55 +18,19 @@ import base64, PIL.Image, io
 import sys
 import re
 import functools
+import time
 import threading
 import concurrent.futures
 NUM_THREADS = 50
-_executor = concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS)
-
-HLD = highlight = "[bg=#999999,fg=#ffffff]"
-HLI = highlight = "[bg=#009900,fg=#ffffff]"
-HLW = highlight = "[bg=#999900,fg=#ffffff]"
-HLE = highlight = "[bg=#990000,fg=#ffffff]"
-
-#{{{
-def parse_part_id(part_id):
-    match = parse_part_id.regex.fullmatch(part_id)
-    return match.groupdict() if match else None
-setattr(parse_part_id, 'regex', re.compile(
-    r'''(?x)^
-        (?P<part_id>
-            (?P<part_type_id>
-                (?P<project_id>[a-zA-Z])
-                (?P<system_id>[0-9]{3})
-                (?P<subsystem_id>[0-9]{3})
-                [0-9]{5}
-            )
-            -
-            [0-9]{5}
-        )
-    $'''))
-
-def parse_part_type_id(part_type_id):
-    match = parse_part_type_id.regex.fullmatch(part_type_id)
-    return match.groupdict() if match else None
-setattr(parse_part_type_id, 'regex', re.compile(
-    r'''(?x)^
-        (?P<part_type_id>
-            (?P<project_id>[a-zA-Z])
-            (?P<system_id>[0-9]{3})
-            (?P<subsystem_id>[0-9]{3})
-            [0-9]{5}
-        )
-    $'''))
-#}}}
-
-
+_executor = concurrent.futures.ThreadPoolExecutor(
+                    max_workers=NUM_THREADS,
+                    thread_name_prefix='DataModel')
 
 class HWDBObject:
+    '''base class for HWDB objects'''
     #{{{
     @classmethod
     def caching(cls, dec_cls):
-        #setattr(dec_cls, '_cache', {'from_decorator': None, dec_cls.__name__: None})
         setattr(dec_cls, '_cache', {})
         setattr(dec_cls, '_class_lock', threading.RLock())
         setattr(dec_cls, '_statistics', {
@@ -84,10 +48,12 @@ class HWDBObject:
 
     def __new__(cls, **kwargs): 
         #{{{
-        logger.debug(f"{HLD}{cls.__name__}.__new__({kwargs})")
         cls._statistics['requested'] += 1
 
         constructor_kwargs = {arg: kwargs.get(arg) for arg in cls._constructor_args}
+
+        profile = kwargs.get('profile', None) or config.active_profile
+        refresh = kwargs.get('refresh', False)
 
         if len(constructor_kwargs) == 0:
             constructor_key = None
@@ -95,10 +61,9 @@ class HWDBObject:
             constructor_key = constructor_kwargs[cls._constructor_args[0]]
         else:
             constructor_key = tuple(constructor_kwargs.values())
-        logger.debug(f"{HLD}constructor_key={constructor_key}")
         
         if None in constructor_kwargs.values():
-            logger.debug(f"{HLD}returning empty {cls.__name__}")
+            logger.debug(f"{cls.__name__}: returning empty object")
             cls._statistics['empty'] += 1
             return super().__new__()
 
@@ -108,27 +73,32 @@ class HWDBObject:
         # and the other will get a reference to the same object from
         # the cache.
         with cls._class_lock:
-            if constructor_key in cls._cache:
-                logger.debug(f"{HLD}returning object from cache")
+            profile_cache = cls._cache.setdefault(profile.profile_name, {})
+            if constructor_key in profile_cache:
+                logger.debug(f"{cls.__name__}: returning object from cache")
                 cls._statistics['served_from_cache'] += 1
                 # NOTE: just because we're returning an object from the
                 # cache, it doesn't mean it won't try to call __init__!
                 # So, __init__ has to keep track of whether it has 
                 # already been initialized!
-                return cls._cache[constructor_key]
+                return profile_cache[constructor_key]
             else:
-                logger.debug(f"{HLD}creating new {cls.__name__} object")
+                logger.debug(f"{cls.__name__}: creating new object")
                 cls._statistics['created'] += 1
                 new_obj = super().__new__(cls)
-                cls._cache[constructor_key] = new_obj
+                profile_cache[constructor_key] = new_obj
                 return new_obj
         #}}}
     
     def __init__(self, **kwargs): 
         #{{{
-        logger.debug(f"{HLD}{self.__class__.__name__}.__init__({kwargs})")
-        
-        self.fwd_kwargs = {k: v for k, v in kwargs.items() if k == 'status_callback'}
+        # fwd_kwargs
+        # Any arguments found here should be passed along to the RestApiV1 
+        # functions. They should also be passed to any other HWDBObject-derived
+        # classes so that *they* can pass it to any RestApiV1 functions
+        # *they* use.
+        self.fwd_kwargs = {k: v for k, v in kwargs.items() 
+                    if k in ('profile', 'status_callback', 'refresh')}
 
         with self.__class__._class_lock:
             if not getattr(self, "_instance_lock", None):
@@ -138,25 +108,13 @@ class HWDBObject:
         with self._instance_lock:
             refresh = kwargs.get('refresh', False)
             if self._initialized and not refresh:
-                logger.debug(f"{HLD}{self.__class__.__name__}.__init__({kwargs})"
-                                    " - already initialized")
                 return
             if refresh:
                 self.__class__._statistics['refreshed'] += 1
-                logger.debug(f"{HLD}{self.__class__.__name__}.__init__({kwargs})"
-                                    " - refreshing")
+                logger.debug(f"{self.__class__.__name__}: re-initializing object")
             else:
                 self.__class__._statistics['initialized'] += 1
-                logger.debug(f"{HLD}{self.__class__.__name__}.__init__({kwargs})"
-                                    " - initializing")
-
-            # I don't see a problem with setting _initialized at the beginning
-            # since it's only used here in __init__, and any thread that wants
-            # to check this will be locked out until we exit this 'with' block.
-            # The reason I want to set it here is in case this function exits
-            # abnormally. If that happens, there's no sense in other threads
-            # trying to initialize every time they try to get this hwitem.
-            self._initialized = True
+                logger.debug(f"{self.__class__.__name__}: initializing object")
 
             constructor_kwargs = {arg: kwargs.get(arg) for arg in self.__class__._constructor_args}
             for k, v in constructor_kwargs.items():
@@ -169,9 +127,7 @@ class HWDBObject:
                 return
 
             self._start_queries(constructor_kwargs)
-
-            logger.debug(f"{HLD}{self.__class__.__name__}.__init__({kwargs})"
-                                " - finished initializing")
+            self._initialized = True
         #}}}            
 
     def _start_queries(self, constructor_kwargs):
@@ -183,11 +139,23 @@ class HWDBObject:
                 self._data[future_name] = self._futures[future_name].result()
                 del self._futures[future_name]
             return self._data.get(future_name)
-    #}}}
 
+    def join(self):
+        '''waits for all 'futures' to finish'''
+
+        logger.info(f"{self.__class__.__name__}.join()")
+
+        futures = list(self._futures)
+        for future_name in futures:
+            result = self._get_results(future_name)
+            if isinstance(result, HWDBObject):
+                result.join()
+
+    #}}}
 
 @HWDBObject.caching
 class WhoAmI(HWDBObject):
+    '''represents the current authenticated user'''
     #{{{
     _constructor_args = [] # No args. Just get the whole list.
     
@@ -206,6 +174,7 @@ class WhoAmI(HWDBObject):
 
 @HWDBObject.caching
 class Institutions(HWDBObject):
+    '''represents a list of institutions'''
     #{{{
     _constructor_args = [] # No args. Just get the whole list.
     
@@ -224,6 +193,7 @@ class Institutions(HWDBObject):
 
 @HWDBObject.caching
 class System(HWDBObject):
+    '''represents a system'''
     #{{{
     _constructor_args = ['project_id', 'system_id']
     
@@ -254,6 +224,7 @@ class System(HWDBObject):
 
 @HWDBObject.caching
 class Subsystem(HWDBObject):
+    '''represents a subsystem'''
     #{{{
     _constructor_args = ['project_id', 'system_id', 'subsystem_id']
     
@@ -284,18 +255,19 @@ class Subsystem(HWDBObject):
 
 @HWDBObject.caching
 class ComponentType(HWDBObject):
+    '''represents the component type information for items/parts'''
     #{{{
     _constructor_args = ['part_type_id']   
 
     def _start_queries(self, constructor_kwargs):
         #{{{
-        part_type_id_decomp = parse_part_type_id(constructor_kwargs['part_type_id'])
+        part_type_id_decomp = self._parse_part_type_id(constructor_kwargs['part_type_id'])
 
         if part_type_id_decomp is None:
             # The part_type_id was not a valid format!
             self.__class__._statistics['failed'] += 1
             msg = f"Invalid part_type_id: {part_type_id}"
-            logger.error(f"{HLE}{msg}")
+            logger.error(f"{msg}")
             raise ValueError(msg)
 
         # Get the data asynchronously. It will be the job of the 
@@ -312,22 +284,38 @@ class ComponentType(HWDBObject):
     @property
     def data(self):
         return self._get_results("component")['data']
+
+    @classmethod
+    def _parse_part_type_id(cls, part_type_id):
+        match = cls._parse_part_type_id_regex.fullmatch(part_type_id)
+        return match.groupdict() if match else None
+
+    _parse_part_type_id_regex = re.compile(
+        r'''(?x)^
+            (?P<part_type_id>
+                (?P<project_id>[a-zA-Z])
+                (?P<system_id>[0-9]{3})
+                (?P<subsystem_id>[0-9]{3})
+                [0-9]{5}
+            )
+        $''')
     #}}}
 
 @HWDBObject.caching
 class HWItem(HWDBObject):
-
+    '''represents an item (or part) in the HWDB'''
+    #{{{
     _constructor_args = ['part_id']
 
 
     def _start_queries(self, constructor_kwargs):
         #{{{
-        part_id_decomp = parse_part_id(constructor_kwargs['part_id'])
+        part_id_decomp = self._parse_part_id(constructor_kwargs['part_id'])
 
         if part_id_decomp is None:
             # The part_id was not a valid format!
             msg = f"Invalid part_id: {constructor_kwargs['part_id']}"
-            logger.error(f"{HLE}{msg}")
+            logger.error(f"{msg}")
             self.__class__._statistics['failed'] += 1
             raise ValueError(msg)
 
@@ -375,14 +363,21 @@ class HWItem(HWDBObject):
         with self._instance_lock:
             if self._data.get("qr_code_processed") is None:
                 content = self._get_results("qr_code").content
-        
-                # Turn the 'content' into an image, crop it to the right size,
-                # and save the cropped image's data as base85
-                img_obj = PIL.Image.open(io.BytesIO(content))
-                cropped_obj = img_obj.crop((40, 40, 410, 410))
-                obj_bytes = io.BytesIO()
-                cropped_obj.save(obj_bytes, format="PNG")
-                qr_code = base64.b85encode(obj_bytes.getvalue()).decode('utf-8')
+                
+                try: 
+                    # Turn the 'content' into an image, crop it to the right size,
+                    # and save the cropped image's data as base85
+                    img_obj = PIL.Image.open(io.BytesIO(content))
+                    cropped_obj = img_obj.crop((40, 40, 410, 410))
+                    obj_bytes = io.BytesIO()
+                    cropped_obj.save(obj_bytes, format="PNG")
+                    qr_code = base64.b85encode(obj_bytes.getvalue()).decode('utf-8')
+                except Exception as exc:
+                    logger.error("There was a problem with the QR code returned from "
+                            "the REST API. "
+                            f"Exception was {type(exc)}: {exc}")
+                    logger.info(f"The content returned was: {content}")
+                    raise
 
                 self._data["qr_code_processed"] = qr_code
             return self._data.get("qr_code_processed", None) 
@@ -390,7 +385,7 @@ class HWItem(HWDBObject):
     
     @property
     def data(self):
-        return self._get_results("hwitem")['data']
+        return self._get_results("hwitem").get('data', None)
 
     @property
     def component_type(self):
@@ -404,18 +399,43 @@ class HWItem(HWDBObject):
 
     @property
     def subcomponents(self):
-        return self._get_results("subcomp")['data']
+        subcomps = self._get_results("subcomp").get('data', None)
+
+        self.subcomp_details = {}
+
+        for subcomp in subcomps:
+            self.subcomp_details[subcomp['part_id']] = HWItem(part_id=subcomp['part_id'])
+
+
+        return subcomps
 
     @property
     def locations(self):
         return self._get_results("locations")['data']
 
-    def update(self):
-        ...
+    @classmethod
+    def _parse_part_id(cls, part_id):
+        match = cls._parse_part_id_regex.fullmatch(part_id)
+        return match.groupdict() if match else None
+
+    _parse_part_id_regex = re.compile(
+        r'''(?x)^
+            (?P<part_id>
+                (?P<part_type_id>
+                    (?P<project_id>[a-zA-Z])
+                    (?P<system_id>[0-9]{3})
+                    (?P<subsystem_id>[0-9]{3})
+                    [0-9]{5}
+                )
+                -
+                [0-9]{5}
+            )
+        $''')
     #}}}
 
 
 def main():
+    #{{{
     from Sisyphus.Utils.Terminal.Style import Style
     from Sisyphus.Utils.Terminal.Image import image2text
     
@@ -427,10 +447,11 @@ def main():
     #status_callback = lambda msg: Style.debug.print(f"callback: {msg}", flush=True)
     #fwd_kwargs = {"status_callback": status_callback}
     fwd_kwargs = {}
-
     part_id = ''
-    if len(sys.argv) > 1:
-        part_ids = sys.argv[1:]
+    if len(config.remaining_args) > 1:
+        part_ids = config.remaining_args[1:]
+    else:
+        part_ids = []
 
     ###############################
     ##
@@ -439,7 +460,10 @@ def main():
     ###############################
     print()
     title_style.print("Parts List")
-    print('\n'.join(part_ids))
+    if part_ids:
+        print('\n'.join(part_ids))
+    else:
+        print('No part selected.')
 
     ################################################
     ##
@@ -482,6 +506,8 @@ def main():
         try:
             hwitem = future.result()
             hwitems.append( (part_id, hwitem))
+            #Style.error.print(f"{part_id} -> join")
+            #hwitem.join()
         except Exception as exc:
             hwitems.append( (part_id, exc))
 
@@ -491,7 +517,9 @@ def main():
         title_style.print(part_id)
         
         if isinstance(result, Exception):
-            Style.error.print(f"Exception Type: {type(Exception)}")
+            exc = result
+            Style.error.print(f"Exception Type: {type(exc)}")
+            Style.error.print(f"Exception: {exc}")
             continue
         else:
             hwitem = result
@@ -508,6 +536,10 @@ def main():
         print()
         title_style.print(f"{part_id} Subcomponents")
         Style.notice.print(json.dumps(hwitem.subcomponents, indent=4))
+
+        print()
+        for sub_part_id, details in hwitem.subcomp_details.items():
+            print(sub_part_id, details.data['status']['name'])
 
         print()
         title_style.print(f"{part_id} Locations")
@@ -527,12 +559,13 @@ def main():
         obj_type_name = obj_type.__name__
         print()
         Style.debug.print(f"{obj_type_name} cache keys:")
-        Style.debug.print(list(obj_type._cache.keys()))
+        for profile_name, cache in obj_type._cache.items():
+            Style.debug.print(f"{profile_name}: {list(cache.keys())}")
         print()
         Style.debug.print(f"{obj_type_name} statistics:")
         Style.debug.print(json.dumps(obj_type._statistics, indent=4))
 
-    if False:
+    if True:
         print()
         debug_title_style.print(f"Execution Statistics")
 
@@ -541,6 +574,7 @@ def main():
         object_statistics(System)
         object_statistics(Subsystem)
         object_statistics(WhoAmI)
+    #}}}
 
 if __name__ == '__main__':
     sys.exit(main())

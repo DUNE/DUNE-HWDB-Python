@@ -8,7 +8,7 @@ Author: Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
 
 import os
 
-version = 'v1.3.0.dev.2025.04.10a'
+version = 'v1.3.0.dev.2025.04.30a'
 
 project_root = os.path.realpath(os.path.join(os.path.dirname(__file__), "../.."))
 

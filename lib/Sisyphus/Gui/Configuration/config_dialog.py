@@ -6,39 +6,60 @@ Author:
     Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
 """
 
-from Sisyphus.Configuration import config, API_DEV, API_PROD, DEFAULT_API
+from Sisyphus.Configuration import config, RESTAPI_DEV, RESTAPI_PROD, DEFAULT_RESTAPI
+#from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
+import Sisyphus.Configuration as cfg # for keywords
 from Sisyphus.Gui import DataModel as dm
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtCore as qtc
 
 import sys
-
+from copy import deepcopy
+import os
 import json
-dumpjson = lambda d: print(json.dumps(d, indent=4))
+
+STYLE_LARGE_BUTTON = """
+    font-size: 12pt;
+    padding: 5px 15px;
+"""
+
+STYLE_SMALL_BUTTON = """
+    padding: 5px 15px;
+"""
 
 class ConfigDialog(qtw.QDialog):
     def __init__(self, *args, **kwargs):
         #{{{
         #super().__init__(*args, **kwargs)
         super().__init__()
-       
+        # Grab a copy of the config state as it is right now.
+        # We will need it if the user cancels their changes.
+        self._backup_config_data = deepcopy(config.config_data)
+
         # Create the widgets that are interactive in some way.
         # _setup_UI will place them in some orderly way 
-        self.profile = qtw.QComboBox()
-        self.use_as_default = qtw.QCheckBox("use as default")
+        self.select_profile = qtw.QComboBox()
+        self.set_active = qtw.QCheckBox("set active")
         self.delete_profile = qtw.QPushButton("Delete Profile")
         self.rename_profile = qtw.QPushButton("Rename Profile")
         self.new_profile = qtw.QPushButton("New Profile")
-        self.server_dev = qtw.QRadioButton(f"Development ({API_DEV})")
-        self.server_prod = qtw.QRadioButton(f"Production ({API_PROD})")
-        self.server_other = qtw.QRadioButton("Other")
-        self.server_other_text = qtw.QLineEdit()
-        server_group = qtw.QButtonGroup()
-        server_group.addButton(self.server_dev)
-        server_group.addButton(self.server_prod)
-        server_group.addButton(self.server_other)
+
+        self.servers = {}
+        self.servers_by_name = {}
+
+        self.server_group = qtw.QButtonGroup()
+        for server_name, server_url in self.config[cfg.KW_SERVERS].items():
+            radio_button = qtw.QRadioButton(f"{server_name} ({server_url})")
+            self.servers_by_name[server_name] = {
+                "server_name": server_name,
+                "server_url": server_url,
+                "radio_button": radio_button
+            }
+            self.servers[radio_button] = self.servers_by_name[server_name]
+            self.server_group.addButton(radio_button)
+
         self.username = qtw.QLineEdit()
         self.user_id = qtw.QLineEdit()
         self.username.setEnabled(False)
@@ -75,8 +96,8 @@ class ConfigDialog(qtw.QDialog):
         layout = profile_select_layout = qtw.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(10)
-        layout.addWidget(self.profile)
-        layout.addWidget(self.use_as_default)
+        layout.addWidget(self.select_profile)
+        layout.addWidget(self.set_active)
 
         layout = profile_buttons_layout = qtw.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -84,6 +105,8 @@ class ConfigDialog(qtw.QDialog):
         layout.addWidget(self.delete_profile)
         layout.addWidget(self.rename_profile)
         layout.addWidget(self.new_profile)
+        for btn in (self.delete_profile, self.rename_profile, self.new_profile):
+            btn.setStyleSheet(STYLE_SMALL_BUTTON)
         layout.addStretch()
        
         layout = profile_layout = qtw.QVBoxLayout()
@@ -103,17 +126,11 @@ class ConfigDialog(qtw.QDialog):
         #  SERVER
         #
         #######################
-        layout = server_other_layout = qtw.QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self.server_other)
-        layout.addWidget(self.server_other_text)
-        
         layout = server_layout = qtw.QVBoxLayout()
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(0)
-        layout.addWidget(self.server_dev)
-        layout.addWidget(self.server_prod)
-        layout.addLayout(server_other_layout)
+        for radio_button, server_details in self.servers.items():
+            layout.addWidget(radio_button)
 
         frame = server_frame = qtw.QFrame()
         frame.setFrameStyle(qtw.QFrame.Box | qtw.QFrame.Sunken)
@@ -142,6 +159,8 @@ class ConfigDialog(qtw.QDialog):
         layout.setSpacing(10)
         layout.addWidget(self.working_directory)
         layout.addWidget(self.working_directory_select)
+        self.working_directory_select.setStyleSheet(STYLE_SMALL_BUTTON)
+        self.working_directory.setEnabled(False)
        
         #######################
         #
@@ -154,6 +173,8 @@ class ConfigDialog(qtw.QDialog):
         button_layout.addStretch()
         button_layout.addWidget(self.cancel_button)
         button_layout.addWidget(self.save_button)
+        for btn in (self.cancel_button, self.save_button):
+            btn.setStyleSheet(STYLE_LARGE_BUTTON)
 
         #######################
         #
@@ -231,7 +252,9 @@ class ConfigDialog(qtw.QDialog):
                             current_row, 1, 1, 1, center_left)
         
         current_row += 1
-        grid_layout.addWidget(qtw.QLabel("(Separate multiple address with a comma)"), 
+        widget = qtw.QLabel("(Separate multiple address with a comma)")
+        widget.setEnabled(False) # really, just to make it look grey
+        grid_layout.addWidget(widget, 
                             current_row, 1, 1, 1, top_left)
         
         current_row += 1
@@ -248,40 +271,31 @@ class ConfigDialog(qtw.QDialog):
         #}}}
 
     def _setup_connections(self):
-        self.profile.currentIndexChanged.connect(self.on_profile_currentIndexChanged)
-        self.use_as_default.stateChanged.connect(self.on_use_as_default_stateChanged)
+        self.select_profile.currentIndexChanged.connect(self.on_select_profile_currentIndexChanged)
+        self.set_active.stateChanged.connect(self.on_set_active_stateChanged)
         self.new_profile.clicked.connect(self.on_new_profile_clicked)
         self.rename_profile.clicked.connect(self.on_rename_profile_clicked)
         self.delete_profile.clicked.connect(self.on_delete_profile_clicked)
-        self.server_dev.toggled.connect(self.on_server_dev_toggled)
-        self.server_prod.toggled.connect(self.on_server_prod_toggled)
-        self.server_other.toggled.connect(self.on_server_other_toggled)
-        self.server_other_text.textChanged.connect(self.on_server_other_text_textChanged)
+        
+        for radio_button, server_details in self.servers.items():
+            radio_button.toggled.connect(self.on_server_toggled)
 
-        self.cancel_button.clicked.connect(self.on_cancel_clicked)
+        self.full_name.textChanged.connect(self.on_full_name_textChanged)
+        self.email.textChanged.connect(self.on_email_textChanged)
+        self.full_name_sync.toggled.connect(self.on_full_name_sync_toggled)
+        self.email_sync.toggled.connect(self.on_email_sync_toggled)
+        self.working_directory.textChanged.connect(self.on_working_directory_textChanged)
+        self.working_directory_select.clicked.connect(self.on_working_directory_select_clicked)
+        self.cancel_button.clicked.connect(self.on_cancel_button_clicked)
+        self.save_button.clicked.connect(self.on_save_button_clicked)
 
-    def on_server_dev_toggled(self, status):
+    def on_server_toggled(self, status):
         if status:
-            self.current_profile['rest api'] = API_DEV
-            self.server_other_text.setText('')
-            self.server_other_text.setEnabled(False)
-
-    def on_server_prod_toggled(self, status):
-        if status:
-            self.current_profile['rest api'] = API_PROD
-            self.server_other_text.setText('')
-            self.server_other_text.setEnabled(False)
-
-    def on_server_other_toggled(self, status):
-        if status:
-            self.current_profile['rest api'] = ''
-            self.server_other_text.setText('')
-            self.server_other_text.setEnabled(True)
-    
-    def on_server_other_text_textChanged(self):
-        if self.server_other.isChecked():
-            self.current_profile['rest api'] = self.server_other_text.text()
-
+            sender = self.sender()
+            server_details = self.servers[sender]
+            self.current_profile[cfg.KW_RESTAPI_NAME] = server_details['server_name']
+            self.current_profile[cfg.KW_RESTAPI] = server_details['server_url']
+            
 
     def on_rename_profile_clicked(self):
         #{{{
@@ -324,116 +338,172 @@ class ConfigDialog(qtw.QDialog):
                                 qtw.QMessageBox.Ok)
             return
 
-        self.config["profiles"][new_profile_name] = {
-            "rest api": DEFAULT_API,
-        }
+        self.config["profiles"][new_profile_name] = deepcopy(cfg.NEW_PROFILE)
 
-        self.profile.addItem(new_profile_name, new_profile_name)
-        self.profile.setCurrentIndex(self.profile.count()-1)
+        self.select_profile.addItem(new_profile_name, new_profile_name)
+        self.select_profile.setCurrentIndex(self.select_profile.count()-1)
         #}}}            
 
-    def on_profile_currentIndexChanged(self, index):
-        #{{{
-        print(self.profile.currentData())
-        self.use_as_default.blockSignals(True)
-        if self.config['default profile'] == self.profile.currentData():
-            self.use_as_default.setChecked(True)
-            self.use_as_default.setEnabled(False)
-        else:
-            self.use_as_default.setChecked(False)
-            self.use_as_default.setEnabled(True)
-        self.use_as_default.blockSignals(False)
+    def on_select_profile_currentIndexChanged(self, index):
         self.populate_profile()
-        #}}}
 
-    def on_use_as_default_stateChanged(self, state):
+    def on_set_active_stateChanged(self, state):
         #{{{
         if state:
-            self.config["default_profile"] = self.profile.currentData()
-            for index in range(self.profile.count()):
-                if index == self.profile.currentIndex():
-                    new_text = f"{self.profile.itemData(index)} *"
+            self.config[cfg.KW_ACTIVE_PROFILE] = self.select_profile.currentData()
+            for index in range(self.select_profile.count()):
+                if index == self.select_profile.currentIndex():
+                    new_text = f"{self.select_profile.itemData(index)} *"
                 else:
-                    new_text = self.profile.itemData(index)
-                self.profile.setItemText(index, new_text)
-            self.use_as_default.setEnabled(False)
+                    new_text = self.select_profile.itemData(index)
+                self.select_profile.setItemText(index, new_text)
+            self.set_active.setEnabled(False)
         #}}}
 
-    def on_cancel_clicked(self):
-        dumpjson(self.config)
+    def on_cancel_button_clicked(self):
+        # TODO: are you sure?
+        config.config_data = self._backup_config_data
         self.close()
 
-    def populate_profile(self):
-        #{{{
-        current_profile_name = self.profile.currentData()
-        current_profile = self.config['profiles'][current_profile_name]
+    def on_save_button_clicked(self):
+        config.save()
+        self.close()
 
-        api = current_profile["rest api"]
-        if api == API_DEV:
-            self.server_dev.setChecked(True)
-            self.server_other_text.setEnabled(False)
-        elif api == API_PROD:
-            self.server_prod.setChecked(True)
-            self.server_other_text.setEnabled(False)
-        else:
-            self.server_other.setChecked(True)
-            self.server_other_text.setText(api)
-            self.server_other_text.setEnabled(True)
-
-            
-
-        #}}}
-
-    @property
-    def current_profile_name(self):
-        return self.profile.currentData()
 
     @property
     def current_profile(self):
-        return self.config['profiles'][self.current_profile_name]
+        return self.config['profiles'][self.select_profile.currentData()]
+
+    @property
+    def current_profile_name(self):
+        return self.select_profile.currentData()
+
+    def populate_profile(self):
+        #{{{
+        server_name = self.current_profile[cfg.KW_RESTAPI_NAME]
+        editable = self.current_profile[cfg.KW_RESTAPI_EDITABLE]
+
+        self.set_active.blockSignals(True)
+        if self.config[cfg.KW_ACTIVE_PROFILE] == self.select_profile.currentData():
+            self.set_active.setChecked(True)
+            self.set_active.setEnabled(False)
+        else:
+            self.set_active.setChecked(False)
+            self.set_active.setEnabled(True)
+        self.set_active.blockSignals(False)
+
+        for radio_button, server_details in self.servers.items():
+            if server_name == server_details['server_name']:
+                radio_button.setChecked(True)
+            else:
+                radio_button.setChecked(False)
+            if editable:
+                radio_button.setEnabled(True)
+            else:
+                radio_button.setEnabled(False)
+
+        
+        profile_obj = config.get_profile(self.current_profile_name)
+        self.hwdb_user_data = dm.WhoAmI(profile=profile_obj).data
+
+        username = self.hwdb_user_data["username"]
+        user_id = self.hwdb_user_data["user_id"]
+
+        self.username.setText(username)
+        self.user_id.setText(str(user_id))
+
+
+        self.user_node = self.current_profile.setdefault('users', {}).setdefault(username, {})
+        user_node = self.user_node
+        user_node.setdefault("full_name", None)
+        user_node.setdefault("email", None)
+        user_node.setdefault("working_directory", os.path.expanduser('~'))
+
+        self.full_name.blockSignals(True)
+        self.email.blockSignals(True)
+        self.full_name.setText(user_node['full_name'] or self.hwdb_user_data['full_name']) 
+        self.email.setText(user_node['email'] or self.hwdb_user_data['email']) 
+        self.full_name.blockSignals(False)
+        self.email.blockSignals(False)
+
+        self.full_name.setEnabled(user_node['full_name'] is not None)
+        self.email.setEnabled(user_node['email'] is not None)
+        self.full_name_sync.setChecked(user_node['full_name'] is None)
+        self.email_sync.setChecked(user_node['email'] is None)
+
+        self.working_directory.setText(user_node['working_directory'])
+        
+
+        #}}}
+
+    def on_full_name_textChanged(self):
+        self.user_node['full_name'] = self.full_name.text()
+    
+    def on_full_name_sync_toggled(self, status):
+        self.full_name.blockSignals(True)
+        if status:
+            self.full_name.setEnabled(False)
+            self.full_name.setText(self.hwdb_user_data['full_name'])
+            self.user_node['full_name'] = None
+        else:
+            self.full_name.setEnabled(True)
+            self.user_node['full_name'] = self.full_name.text()
+        self.full_name.blockSignals(False)
+           
+    def on_email_textChanged(self):
+        self.user_node['email'] = self.email.text()
+    
+    def on_email_sync_toggled(self, status):
+        self.email.blockSignals(True)
+        if status:
+            self.email.setEnabled(False)
+            self.email.setText(self.hwdb_user_data['email'])
+            self.user_node['email'] = None
+        else:
+            self.email.setEnabled(True)
+            self.user_node['email'] = self.email.text()
+        self.email.blockSignals(False)
+
+    def on_working_directory_textChanged(self):
+        self.user_node['working_directory'] = self.working_directory.text()
+
+    def on_working_directory_select_clicked(self):
+        filename = qtw.QFileDialog.getExistingDirectory(
+                            self,
+                            "Select Working Directory",
+                            self.user_node['working_directory'])
+        if filename != "":
+            self.working_directory.setText(filename)
+
+    @property
+    def current_profile_name(self):
+        return self.select_profile.currentData()
+
+    @property
+    def current_profile(self):
+        return self.config[cfg.KW_PROFILES][self.current_profile_name]
 
     @property
     def config(self):
         return config.config_data
 
-
     def restore(self):
-        #self.whoami = dm.WhoAmI().data
-
-        #dumpjson(self.whoami)
-        dumpjson(config.config_data)
-
-        #self.username.setText(whoami["username"])
-        #self.user_id.setText(str(whoami["user_id"]))
-
-        default_profile_name = self.config.get("default profile", None)
-        profiles = self.config["profiles"]
+        default_profile_name = self.config.get(cfg.KW_ACTIVE_PROFILE, None)
+        profiles = self.config[cfg.KW_PROFILES]
 
         if not default_profile_name or default_profile_name not in profiles.keys():
-            default_profile_name = self.config["default_profile"] = next(iter(profiles))
+            default_profile_name = self.config[cfg.KW_ACTIVE_PROFILE] = next(iter(profiles))
 
-        self.profile.blockSignals(True)
-        self.profile.clear()
+        self.select_profile.blockSignals(True)
+        self.select_profile.clear()
         for profile in profiles:
             if profile != default_profile_name:
-                self.profile.addItem(profile, profile)
+                self.select_profile.addItem(profile, profile)
             else:
-                self.profile.addItem(f"{profile} *", profile)
+                self.select_profile.addItem(f"{profile} *", profile)
 
-        curr_index = self.profile.findData(default_profile_name)
-        self.profile.blockSignals(False)
-        self.profile.setCurrentIndex(curr_index)
+        curr_index = self.select_profile.findData(default_profile_name)
+        self.select_profile.setCurrentIndex(curr_index)
+        self.select_profile.blockSignals(False)
 
- 
-
-
-        #active_profile = config.config_data["profiles"][default_profile_name]
-
-        #dumpjson(active_profile)
-        
-
-    def save(self):
-        ...
-
-
-
+        self.populate_profile()

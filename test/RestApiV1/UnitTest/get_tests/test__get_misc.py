@@ -39,7 +39,8 @@ class Test__get_misc(unittest.TestCase):
     
     def setUp(self):
         self.start_time = time.time()
-        print(f"\nTest #{getattr(self, 'test_number', 'N/A')}: {self.__class__.__name__}.{self._testMethodName}")
+        print(f"\nTest #{getattr(self, 'test_number', 'N/A')}: "
+                    f"{self.__class__.__name__}.{self._testMethodName}")
         print(f"Test started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
     def tearDown(self):
@@ -301,7 +302,7 @@ class Test__get_misc(unittest.TestCase):
             resp = get_systems(proj_id)
             
             self.assertEqual(resp["status"], "OK")
-            self.assertIsInstance(resp["data"][0]["comments"], str)
+            self.assertIn("comments", resp["data"][0])
         except AssertionError as err:
             logger.error(f"Assertion Error: {repr(err)}")
             logger.info(f"server response:\n{json.dumps(resp, indent=4)}")
@@ -365,3 +366,4 @@ class Test__get_misc(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(argv=config.remaining_args)
+

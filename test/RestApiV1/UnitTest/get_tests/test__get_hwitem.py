@@ -100,5 +100,5 @@ class Test__get_hwitems(unittest.TestCase):
             raise err 
     
 if __name__ == "__main__":
-    unittest.main(argv=config.remaining_args)
+    from Sisyphus.Configuration import config
 
