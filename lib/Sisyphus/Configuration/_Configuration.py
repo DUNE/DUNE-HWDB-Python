@@ -426,6 +426,15 @@ class Config:
         active_profile_name = self.config_data[KW_ACTIVE_PROFILE]
         return self.get_profile(active_profile_name)
 
+    @property
+    def settings(self):
+        return self.config_data.get(KW_SETTINGS, {})
+
+    @property
+    def bearer_token(self):
+        return self.active_profile.get(KW_BEARER_TOKEN, BEARER_TOKEN_FILE)
+
+
     def _extract_cert_info(self):
         #{{{
         self.logger.debug("Extracting certificate information")
@@ -478,23 +487,7 @@ class Config:
     def reset(self):
         self.reset_log_config()
         self.config_data = deepcopy(NEW_CONFIG)
-        
-    #def set_active(self):
-    #    self.config_data[KW_ACTIVE_PROFILE] = self.profile_name
-    
-    #def remove(self, profile_name=None):
-    #    #{{{
-    #    if profile_name is None:
-    #        profile_name = self.profile_name
-    #        
-    #    if profile_name in self.profiles.keys():
-    #        self.profiles.pop(profile_name)
-    #        self.logger.info(f"Removed profile '{profile_name}' from configuration")
-    #    else:
-    #        self.logger.info(f"Unable to remove profile '{profile_name}' from configuration "
-    #                         "because it does not exist.")
-    #    #}}}
-                
+                 
     def save(self):
         #{{{
         '''Make the current config permanent'''
@@ -514,20 +507,7 @@ class Config:
             shutil.copyfile(self.temp_pem_file.name, perm_filename)
             self.active_profile[KW_CERTIFICATE] = perm_filename
             del self.temp_pem_file
-        
-        # Delete any saved certificates that don't correspond to a current profile
-        # pattern = re.compile('certificate_(.*)\\.pem')
-        # files = {
-        #         pattern.match(f).group(1): f 
-        #             for f in os.listdir(self.user_settings_dir) 
-        #             if pattern.match(f) is not None
-        # }
-        # profiles = list(self.config_data["profiles"].keys())
-        # for k, v in files.items():
-        #     if k not in profiles:
-        #         filepath = os.path.join(self.user_settings_dir, v)
-        #         os.remove(filepath)
-        
+               
         # Save the config file
         try:
             with open(self.user_config_file, "w") as f:
@@ -730,7 +710,6 @@ class Config:
         # If they provided --htgettoken, we need to explicitly change the auth type back
         if self.args.htgettoken:
             active_profile.authentication[KW_AUTH_TYPE] = KW_HTGETTOKEN
-
         #}}}
     
     def _load_config(self, filename):
@@ -740,9 +719,6 @@ class Config:
             with open(filename, "r") as f:
                 raw_data = f.read()
         except Exception:
-            #except FileNotFoundError:
-            # msg = f"The configuration file at '{filename}' could not be read."
-            # raise ConfigurationError(msg)
             self.config_data = deepcopy(NEW_CONFIG)
             return
         
@@ -766,8 +742,6 @@ class Config:
             }                
             with open(filename, "w") as f:
                 f.write(json.dumps(self.config_data, indent=4))
-
-
         #}}}
 
     def _parse_args(self, args=None):
@@ -779,7 +753,6 @@ class Config:
                         'These options are available for most scripts, and are only set '
                         'for the duration of the script. If used with the '
                         'Configuration Utility, however, they will be set permanently.')
-
         group.add_argument('--dev',
                             dest='dev',
                             action='store_true',
@@ -789,12 +762,6 @@ class Config:
                             dest='prod',
                             action='store_true',
                             required=False,
-                            help=f'shortcut for "--profile=production"')
-        #group.add_argument('--rest-api',
-        #                    dest='rest_api',
-        #                    metavar='<url>',
-        #                    required=False,
-        #                    help=f'use the REST API at <url>, ex. {DEFAULT_RESTAPI}')
         group.add_argument('--profile',
                             dest='profile',
                             metavar='<profile-name>',

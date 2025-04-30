@@ -509,6 +509,7 @@ class PDFLabels:
 
         def resolve_text(text, data):
             #{{{
+
             substitutions = re.findall("[$]\\{([^}]*)\\}", text)
             for substitution in substitutions:
                 value = data
