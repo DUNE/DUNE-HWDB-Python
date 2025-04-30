@@ -31,39 +31,56 @@ import threading
 import time
 import subprocess
 import os
-#import faulthandler
-#faulthandler.enable()
 from contextlib import nullcontext
 
-
-# To help with logging
-def func_name():
-    '''get the name of the function calling this function'''
-    return sys._getframe(1).f_code.co_name
-
-
-# A hack for Requests 2.32
-# If using requests in a multithreaded fashion, the app will sometimes
-# seg fault when using certificates. For some reason, the problem goes
-# away if you disable 'verify' with requests. The Configuration module
-# now automatically inserts {'verify': False} into the settings for 
-# its initial profiles.
+###############################################################################
 #
-# Anyway, the upshot of this is that Python will spit out really annoying
-# warning messages on every request made with this. But we can disable 
-# the warnings...
+#  REQUESTS 2.32 HACKS
+#  -------------------
+#
+#  We discovered that the Requests 2.32 library had a bug where if certificates
+#  were being used, and the library was being used in multiple threads, the
+#  application using it would often suffer a segmentation fault.
+#
+#  You can check which version of requests you are using by using this command:
+#
+#      pip list | grep requests
+# 
+#  It was also discovered that if requests were made with {'verify': False} in
+#  the headers, this problem would go away.
+# 
+#  This has become much less relevant now that we're using htgettoken to obtain
+#  a bearer token that now must be sent in the header instead of using
+#  certificates. Nevertheless, lest we need to revert to certificates and the
+#  problem should return, we are retaining some precautionary measures.
+#
+#  (1) The Configuration module will insert {'verify': True} into its default
+#      profiles, which the user can change to False if the need arises. (They
+#      will have to edit the config file manually to do so.) 
+#
+#  (2) If {'verify': False} is used, the application will constantly spit out
+#      some really annoying warnings. So we will disable them:
+#
 import warnings
 import urllib3
-warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWarning)
-
-
-# A second hack for Requests 2.32
-# A different way to avoid seg faults is to just allow only one thread
-# process requests at a time
-if config.active_profile.settings.get("use_throttle_lock", False):
+warnings.filterwarnings("ignore", 
+                    category=urllib3.exceptions.InsecureRequestWarning)
+#
+#  (3) Another way to keep multiple threads from making requests at the same
+#      time is to use a threading.Lock() object to allow only one thread at a
+#      time into the block of code making the request.
+# 
+#      A configuration setting called "throttle_lock" is available to switch
+#      this on or off. By default this is off. A context manager is used to
+#      to do the locking:
+#
+if config.active_profile.settings.get(cfg.KW_THROTTLE_LOCK, False):
     throttle_lock = threading.Lock()
 else:
     throttle_lock = nullcontext()
+#
+###############################################################################
+
 
 # Use this function when constructing a URL that uses some variable as 
 # part of the URL itself, e.g.,
@@ -74,16 +91,17 @@ else:
 def sanitize(s, safe=""):
     return urllib.parse.quote(str(s), safe=safe)
 
+
+# This is just to keep multiple lines of log messages together, so they
+# won't get separated if two threads are trying to log a the same time.
 log_lock = threading.Lock()
-log_request_json = True
 
-# Something happened with Python 3.12 with the GIL that caused seg faults when
-# multiple threads shared the same session object. To mitigate this, every time
-# one needs a session, one should request one by calling get_session(). It will
-# create a session for each thread and put it in threading.local(). Hopefully,
-# once the thread is done, the session will be garbage collected along with the
-# thread.
 
+
+# To help with logging
+def func_name():
+    '''get the name of the function calling this function'''
+    return sys._getframe(1).f_code.co_name
 
 #-----------------------------------------------------------------------------
 
@@ -92,24 +110,35 @@ class retry:
     #{{{
     '''Wrapper for RestApi functions to permit them to retry on a connection failure'''
 
-    #def __init__(self, retries=1, timeouts=(None, None, None, None, None) ):
-    def __init__(self, retries=None, timeout=None, timeouts=None ):
-        # You can either specify the number of retries and an optional 
-        # timeout, or you can specify a list/tuple of the timeouts to use 
-        # on each try. If you specify timeouts, then retries will be ignored 
-        # and calculated from the timeouts list. If you specify retries
-        # and NOT timeouts, then timeouts will be initialized as the timeout
-        # value repeated <retries> times. A timeout of None means don't
-        # use a specific timeout on that try.
+    def __init__(self, timeouts=None ):
+        # timeouts should be a list containing the timeout to use on each try
+        # when executing a request. The total number of retries allowed will be
+        # the length of this list. To not specify a timeout (and thus use
+        # whatever the default is for the library... maybe 300 seconds?) use
+        # None.
+        #
+        # Examples:
+        #     None: equivalent to [None]
+        #     [None]: do only 1 attempt, use the library's default timeout
+        #     30: equivalent to [30]
+        #     [30]: do only 1 attempt, with a timeout of 30 seconds
+        #     [5, 10, None]: do one attempt with a 5 second timeout, a second
+        #                    attempt with a 10 second timeout, and a third
+        #                    attempt using the library's default timeout.
+        #
+        # Note that this is to set the default timeouts the wrapped function
+        # will use, but the function itself can also take a timeouts parameter
+        # to override these defaults. Additionally, the config profile can
+        # also set these.
+        #
+        # The order of precedence is that what is sent to the function will
+        # override the config profile settings, and the config profile settings
+        # will override the defaults set here.
 
-        self.default_timeouts = timeouts
-
-        if timeouts is not None:
-            self.default_retries = len(timeouts)
-            self.timeouts = tuple(timeouts)
+        if type(timeouts) not in (list, tuple):
+            self.default_timeouts = (timeouts,)
         else:
-            self.default_retries = retries or 1
-            self.timeouts = (timeout,) * self.default_retries
+            self.default_timeouts = tuple(timeouts)
 
     def __call__(self, function):
 
@@ -123,24 +152,19 @@ class retry:
             else:
                 update_status = lambda msg: None
 
-            timeouts = kwargs.pop("timeouts", None)
-            retries = kwargs.pop("retries", None)
-            timeout = kwargs.pop("timeout", None)
             profile = kwargs.get("profile", config.active_profile)
 
-            if timeouts is not None:
-                retries = len(timeouts)
-                timeouts = tuple(timeouts)
-            elif retries is not None:
-                timeouts = (timeout,) * retries
-            else:
-                retries = self.default_retries
-                timeouts = self.default_timeouts
+            # Use the 'timeouts' passed to the function, or from the 
+            # config settings, or the defaults, in that order. (I.e., use
+            # the first one that isn't None)
+
+            timeouts = ( kwargs.pop("timeouts", None)
+                        or profile.settings.get(cfg.KW_TIMEOUTS, None)
+                        or self.default_timeouts )
 
             last_err = None
-            default_timeout = kwargs.get('timeout', None)
-            logger.debug(f"Wrapper function is assigned {retries} retries")
-            for try_num in range(retries):
+            logger.debug(f"RestApi operation will be tried {len(timeouts)} times.")
+            for try_num, timeout in enumerate(timeouts):
                 try:
                     if type(last_err) in (ExpiredSignature, CurrentlyUnavailable):
                         SessionManager(profile).profile_manager.refresh()                        
@@ -149,12 +173,11 @@ class retry:
                     logger.error(f"Failed to refresh token: {exc}")
 
                 try:
-                    if timeouts[try_num]:
-                        kwargs['timeout'] = timeouts[try_num]
-                    elif default_timeout:
-                        kwargs['timeout'] = default_timeout
-                    else:
-                        kwargs.pop('timeout', None)
+                    if timeout is not None:
+                        kwargs['timeout'] = timeout
+                    # Note that someone could pass 'timeout' in the kwargs
+                    # instead of our 'timeouts' parameter. This is a valid
+                    # parameter, so just leave it there.
 
                     # Display a message in the terminal, but only if we're on 
                     # the main thread. This message will be erased when the 
@@ -210,7 +233,7 @@ class retry:
                     # was actually somthing wrong with the request itself and
                     # not something that trying again would fix. Re-raise
                     # the exception.
-                    msg = (f"Exception: {type(exc)} \"{exc}\" while calling {function.__name__} "
+                    msg = (f"Exception: {exc!r} while calling {function.__name__} "
                             f"in thread '{threading.current_thread().name}' "
                             f"(attempt #{try_num+1})")
                     logger.error(msg)
@@ -239,8 +262,9 @@ class retry:
 
 #-----------------------------------------------------------------------------
 
-#@retry(retries=5, timeouts=(5, 10, 15, 20, 25))
-@retry(timeouts=(5, 10, 15, 30, 60, 60))
+DEFAULT_TIMEOUTS = (5, 10, 15, 30, 60)
+
+@retry(timeouts=DEFAULT_TIMEOUTS)
 def _request(method, url, *args, return_type="json", **kwargs):
     #{{{
     '''Does a session.request() with some extra error handling
@@ -249,38 +273,6 @@ def _request(method, url, *args, return_type="json", **kwargs):
     type is "json" (which is the default), it will enforce that the 
     response is a valid JSON dictionary that contains a "status" of 
     "OK" otherwise.
-
-    Raises
-    ------
-    NameResolutionFailure
-            The "get" returned a ConnectionError that is most likely
-            due to not being able to resolve the URL.
-    
-    ConnectionFailed
-            The "get" returned a ConnectionError for other reasons
-    
-    InvalidResponse
-            The server returned something that wasn't JSON, or wasn't a
-            dictionary, or the dictionary not have a "status"
-
-    DatabaseError
-            The server returned a valid response, but returned a
-            status other than "OK"
-
-    CertificateError
-            The certificate was invalid or expired.
-
-    BadSpecificationFormat
-            The data provided for the Item Specification or Test Results
-            does not conform to the specification or test definition.
-
-    InsufficientPermissions
-            The user does not have adequate authority for this request.
-
-    ExpiredSignature
-            The bearer token has expired 
-            (new authentication system, March 2025)
-    
     '''
 
     profile = kwargs.pop('profile', None) or config.active_profile
@@ -290,26 +282,15 @@ def _request(method, url, *args, return_type="json", **kwargs):
     threadname = threading.current_thread().name
     msg = (f"<_request> [{method.upper()}] "
             f"url='{url}' method='{method.lower()}'")
-    with log_lock:
-        logger.debug(msg) 
+    logger.debug(msg) 
 
-    if log_request_json and "json" in kwargs:
+    if profile.settings.get(cfg.KW_LOG_REQUEST_JSON, False) and "json" in kwargs:
         try:
             msg = f"json =\n{json.dumps(kwargs['json'], indent=4)}"
         except json.JSONDecodeError as exc:
             msg = f"data =\n{kwargs['json']}"
-        with log_lock:
-            logger.debug(msg)
+        logger.debug(msg)
 
-    #get_session(profile=profile)
-    #session = thread_local.session
-    #bearer_header = thread_local.bearer_header
-
-    #
-    #  Send the "get" request and handle possible errors
-    #
-    #augmented_kwargs = {**session_kwargs, **kwargs}
-    
     augmented_kwargs = {**profile.settings.get(cfg.KW_EXTRA_KWARGS, {}), **kwargs}
         
     extra_info = \
@@ -330,14 +311,22 @@ def _request(method, url, *args, return_type="json", **kwargs):
     # up the chain whether or not to look in the cache for this. But, at
     # this point, it has already been decided to actually do the request.
     refresh = augmented_kwargs.pop("refresh", None)    
-
+    
     try:
-        if log_headers:
-            # TODO: This is no longer working! Maybe I'll fix it some day?
-            verify = augmented_kwargs.pop('verify', True)
-            timeout = augmented_kwargs.pop('timeout', True)
+        if profile.settings.get(cfg.KW_LOG_HEADERS, False):
+            session = session_manager.session
+
+            # We need to pop some of the augmented_kwargs because Request 
+            # doesn't accept them. We will have to re-attach them to the 'send'
+            send_kwargs = {
+                k:v for k, v in [
+                    ('verify', augmented_kwargs.pop('verify', None)),
+                    ('timeout', augmented_kwargs.pop('timeout', None)) ]
+                if v is not None
+            }
+
             req = requests.Request(method, url, *args, **augmented_kwargs)
-            prepped = req.prepare()
+            prepped = session.prepare_request(req)
 
             with log_lock:
                 logger.info(f"prepped.headers: {prepped.headers}")
@@ -349,14 +338,10 @@ def _request(method, url, *args, return_type="json", **kwargs):
 
 
             with throttle_lock:
-                resp = session.send(prepped)
+                resp = session_manager.session.send(prepped, **send_kwargs)
 
         else:
             with throttle_lock:
-                #augmented_kwargs['headers'] = {
-                #        **augmented_kwargs.get('headers', {}),
-                #        **bearer_header
-                #}
                 resp = session_manager.session.request(method, url, *args, **augmented_kwargs)
 
 
@@ -407,7 +392,6 @@ def _request(method, url, *args, return_type="json", **kwargs):
         extra_info.append(f"| response: {resp.text}")
     else:
         extra_info.append(f"| response: [binary] {resp.text}")
-    #logger.debug('\n'.join(extra_info))
 
     database_errors = [
         {

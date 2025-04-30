@@ -15,7 +15,7 @@ from Sisyphus.Gui.Shipping.Widgets.PageWidget import PageWidget
 from PyQt5 import QtCore as qtc
 from PyQt5 import QtWidgets as qtw
 
-
+from datetime import datetime
 import csv
 import json
 import smtplib
@@ -110,7 +110,11 @@ class Receiving3(PageWidget):
                     f"&lt;{self.application.user_email}&gt;")
         
         email_subject = "Final Reciving checklist for shipment {self.pid}"
-        
+    
+        arrived = datetime.fromisoformat(workflow_state['Receiving2']['arrived'])
+        time_format = '<b>%B %d, %Y</b> at <b>%I:%M %p</b> (Central Time)'
+        formatted_arrived = arrived.strftime(time_format)
+    
         email_msg = (
             f"""<table>"""
             f"""<tr><td width="100">From:</td><td>{email_from}</td></tr>"""
@@ -122,8 +126,8 @@ class Receiving3(PageWidget):
 
             f"Dear {workflow_state['PreShipping3']['approver_name']},<br/>\n<br/>\n"
             f"Your shipment, {self.part_id}, has arrived at "
-            f"{workflow_state['Receiving2']['location']} [TODO: lookup inst] at "
-            f"{workflow_state['Receiving2']['arrived']} [TODO: format time].<br/>\n<br/>\n"
+            f"<b>{workflow_state['Receiving2']['location']['institution_name']}</b> at "
+            f"{formatted_arrived}.<br/>\n<br/>\n"
 
             f"Sincerely,<br/>\n<br/>\n"
             f"{self.application.user_full_name}<br/>\n"

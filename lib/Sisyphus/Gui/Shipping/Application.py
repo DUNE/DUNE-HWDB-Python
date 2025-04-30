@@ -58,6 +58,7 @@ class Application(qtw.QApplication):
         self._whoami = dm.WhoAmI()
         self.current_style = 'light'
         self.load_state()
+        self.load_institutions()
 
         if self.application_state.setdefault('style', 'light') == 'light':
             self.setStyleSheet_light()
@@ -68,6 +69,27 @@ class Application(qtw.QApplication):
 
         self.restore_tabs()
         #}}}
+
+    def load_institutions(self):
+        inst_data = dm.Institutions().data
+
+        inst_sorted_by_name = sorted( [ (inst['name'], inst) for inst in inst_data ] )
+
+        inst_by_id = { inst['id']: inst for _, inst in inst_sorted_by_name }
+
+        country_list_unsorted = { x['country']['code']: x['country'] for x in inst_data }
+        country_list_by_code = { x: country_list_unsorted[x] for x in sorted(country_list_unsorted.keys()) }
+
+
+        for inst in inst_by_id.values():
+            inst['country_code'] = inst['country']['code']
+            del inst['country']
+            country_list_by_code[inst['country_code']].setdefault('institution_ids', []).append(inst['id'])
+
+        self.locations = {
+            "countries": country_list_by_code,
+            "institutions": inst_by_id,
+        }
 
     @property
     def whoami(self):
@@ -329,7 +351,6 @@ class Application(qtw.QApplication):
 
     #{{{
     def debug_application_state(self):
-        Style.info.print("APP_STATE")
         #Style.info.print(json.dumps(self.application_state, indent=4))
         from Sisyphus.Gui.Utilities.JSONViewer import QTreeView, JsonModel
 

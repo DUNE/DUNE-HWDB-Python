@@ -50,7 +50,7 @@ class ZPartDetails(qtw.QWidget, LinkedWidget):
         self._setup_UI()
 
     def on_show_empty_slots_checked(self, status):
-        self.page_state[self.state_key] = status
+        self.stored_value = status
         self.restore_state()
         self.page.refresh()
 
@@ -88,10 +88,10 @@ class ZPartDetails(qtw.QWidget, LinkedWidget):
         center_left = qtc.Qt.AlignVCenter | qtc.Qt.AlignLeft
         top_center = qtc.Qt.AlignTop | qtc.Qt.AlignHCenter
 
-        self.table = qtw.QTableWidget(0, 3)
+        self.table = qtw.QTableWidget(0, 4)
         self.table.verticalHeader().setVisible(False)
         self.table.setHorizontalHeaderLabels(['Sub-component PID',
-                            'Component Type Name', 'Functional Position Name'])
+                            'Component Type Name', 'Functional Position Name', "Status"])
         horizontal_header = self.table.horizontalHeader()
         horizontal_header.resizeSection(0, 200)
         horizontal_header.resizeSection(1, 260)
@@ -178,7 +178,7 @@ class ZPartDetails(qtw.QWidget, LinkedWidget):
                 subcomp_pid_widget = qtw.QTableWidgetItem(subcomp['Sub-component PID'])
                 subcomp_type_widget = qtw.QTableWidgetItem(subcomp['Component Type Name'])
                 subcomp_func_pos_widget = qtw.QTableWidgetItem(subcomp['Functional Position Name'])
-
+                something_widget = qtw.QTableWidgetItem(subcomp['Status'])
 
                 if subcomp_is_empty:
                     #subcomp_pid_widget.setStyleSheet("color: #ff0000")
@@ -191,6 +191,7 @@ class ZPartDetails(qtw.QWidget, LinkedWidget):
                 self.table.setItem(idx, 0, subcomp_pid_widget)
                 self.table.setItem(idx, 1, subcomp_type_widget)
                 self.table.setItem(idx, 2, subcomp_func_pos_widget)
+                self.table.setItem(idx, 3, something_widget)
 
         else:
             self.table.setRowCount(len(subcomps))
@@ -198,6 +199,8 @@ class ZPartDetails(qtw.QWidget, LinkedWidget):
                 self.table.setItem(idx, 0, qtw.QTableWidgetItem(subcomp['Sub-component PID']))
                 self.table.setItem(idx, 1, qtw.QTableWidgetItem(subcomp['Component Type Name']))
                 self.table.setItem(idx, 2, qtw.QTableWidgetItem(subcomp['Functional Position Name']))
+                self.table.setItem(idx, 3, qtw.QTableWidgetItem(subcomp['Status']))
+
         #}}}
     #}}}
 
@@ -208,7 +211,7 @@ class ZCheckBox(qtw.QCheckBox, LinkedWidget):
         self.toggled.connect(self.handle_changed)
 
     def handle_changed(self, status):
-        self.page_state[self.state_key] = status
+        self.stored_value = status
         self.page.refresh()
 
     def restore_state(self):
@@ -226,7 +229,7 @@ class ZDateTimeEdit(qtw.QDateTimeEdit, LinkedWidget):
         self.dateTimeChanged.connect(self.handle_changed)
 
     def handle_changed(self):
-        self.page_state[self.state_key] = self.dateTime().toString(qtc.Qt.DateFormat.ISODate)
+        self.stored_value = self.dateTime().toString(qtc.Qt.DateFormat.ISODate)
         self.page.refresh()
 
     def restore_state(self):
@@ -239,7 +242,7 @@ class ZDateTimeEdit(qtw.QDateTimeEdit, LinkedWidget):
         datetime = self.page_state.get(self.state_key, '')
         if datetime == '':
             datetime = now
-            self.page_state[self.state_key] = datetime
+            self.stored_value = datetime
 
         self.setDateTime(
             qtc.QDateTime.fromString(datetime, qtc.Qt.DateFormat.ISODate)
@@ -252,7 +255,7 @@ class ZLabel(qtw.QLabel, LinkedWidget):
         super().__init__(*args, **kwargs)
 
     def setText(self, txt):
-        self.page_state[self.state_key] = txt
+        self.stored_value = txt
         super().setText(txt)
 
     def restore_state(self):
@@ -274,7 +277,7 @@ class ZLineEdit(qtw.QLineEdit, LinkedWidget):
         self.textChanged.connect(self.handle_changed)
     
     def handle_changed(self):
-        self.page_state[self.state_key] = self.text()
+        self.stored_value = self.text()
         self.page.refresh()
 
     def restore_state(self):
@@ -297,7 +300,7 @@ class ZTextEdit(qtw.QTextEdit, LinkedWidget):
         self.textChanged.connect(self.handle_editingFinished)
 
     def handle_editingFinished(self):
-        self.page_state[self.state_key] = self.document().toPlainText()
+        self.stored_value = self.document().toPlainText()
         self.page.refresh()
 
     def restore_state(self):
@@ -329,7 +332,7 @@ class ZRadioButton(qtw.QRadioButton, LinkedWidget):
     def handle_selected(self):
         if self.isChecked():
             logger.debug(f"{self.state_key}/{self.state_value_when_selected}: checked")
-            self.page_state[self.state_key] = self.state_value_when_selected
+            self.stored_value = self.state_value_when_selected
             self.page.refresh()
             
     def restore_state(self):
@@ -407,7 +410,7 @@ class ZFileSelectWidget(qtw.QWidget, LinkedWidget):
         self.handle_changed()
 
     def handle_changed(self):
-        self.page_state[self.state_key] = self.filename_lineedit.text()
+        self.stored_value = self.filename_lineedit.text()
         self.page.refresh()
 
     def restore_state(self):
@@ -434,8 +437,22 @@ class ZInstitutionWidget(qtw.QWidget, LinkedWidget):
         #country_widget.setEditable(True)
         country_widget.currentIndexChanged.connect(self.on_selectCountry)
         country_widget.setPlaceholderText("Select Country...")
-        for country_code, country in self.get_countries().items():
-            country_widget.addItem(country, country_code)
+        #country_widget.setMaxVisibleItems(10)
+        #country_widget.setMaximumHeight(200)
+
+        #for country_code, country in self.get_countries().items():
+        #    country_widget.addItem(country, country_code)
+
+        source_data = self.source()
+        self.countries = source_data['countries']
+        self.institutions = source_data['institutions']
+
+        for country in self.countries.values():
+            cn = f"({country['code']}) {country['name']}"
+            country_widget.addItem(cn, country['code'])
+
+
+
         #country_widget.setCurrentIndex(-1)
         main_layout.addWidget(country_widget)
         
@@ -450,38 +467,53 @@ class ZInstitutionWidget(qtw.QWidget, LinkedWidget):
         main_layout.addStretch()
     
     def on_selectCountry(self):
+        self.inst_widget.blockSignals(True)
+
         self.country_code = self.country_widget.currentData()
+        self.institution_id = None
+        self.institution_name = None
 
         self.inst_widget.clear()
-        for inst_id, inst in self.get_insts(self.country_code).items():
-            self.inst_widget.addItem(inst, inst_id)
+         
+        for inst_id in self.countries[self.country_code]['institution_ids']:
+            institution = self.institutions[inst_id]
+            inst_name = f"({institution['id']}) {institution['name']}"
+            self.inst_widget.addItem(inst_name, inst_id)
 
-        if self.institution_id in self.get_insts(self.country_code):
-            self.inst_widget.setCurrentIndex(
-                    self.inst_widget.findData(self.institution_id))
-        else:
-            self.institution_id = None
-            
-
+        self.inst_widget.blockSignals(False)
 
     def on_selectInstitution(self):
-        self.institution_id = str(self.inst_widget.currentData())
-        self.page_state[self.state_key] = str(self.institution_id)
+        self.institution_id = self.inst_widget.currentData()
+        self.institution_name = self.institutions[self.institution_id]['name']
+        self.stored_value = {
+            'institution_id': self.institution_id,
+            'institution_name': self.institution_name,
+            'country_code': self.country_code,
+        }
         self.page.refresh()
 
     def restore_state(self):
+        
         self.country_widget.blockSignals(True)
         self.inst_widget.blockSignals(True)
-        
-        self.institution_id = str(self.page_state.setdefault(
-                                            self.state_key, self.default_value))
-        self.country_code = self.get_country_of_inst(self.institution_id)
+
+        #if self.stored_value is None:
+        if type(self.stored_value) is not dict:
+            self.stored_value = {
+                'institution_id': None,
+                'institution_name': None,
+                'country_code': None,
+            }
+
+        inst_id = self.institution_id = self.stored_value['institution_id']
+        inst_name = self.institution_name = self.stored_value['institution_name']
+        country_code = self.country_code = self.stored_value['country_code']
         
         if self.country_code:
-            c_index = self.country_widget.findData(self.country_code)
+            c_index = self.country_widget.findData(country_code)
             self.country_widget.setCurrentIndex(c_index)
             self.on_selectCountry()
-            i_index = self.inst_widget.findData(self.institution_id)
+            i_index = self.inst_widget.findData(inst_id)
             self.inst_widget.setCurrentIndex(i_index)
         else:        
             self.country_widget.setCurrentIndex(-1)
@@ -489,63 +521,6 @@ class ZInstitutionWidget(qtw.QWidget, LinkedWidget):
     
         self.country_widget.blockSignals(False)
         self.inst_widget.blockSignals(False)
-        
-        
-    @classmethod
-    def get_countries(cls):
-        if not hasattr(cls, '_inst_cache'):
-            cls._get_inst_data()
-        return cls._inst_cache['countries']
-
-    @classmethod
-    def get_insts(cls, country_code):
-        if not hasattr(cls, '_inst_cache'):
-            cls._get_inst_data()
-        return cls._inst_cache['insts'][country_code]
-    
-    @classmethod
-    def get_country_of_inst(cls, inst_id):
-        if not hasattr(cls, '_inst_cache'):
-            cls._get_inst_data()
-        return cls._inst_cache['country_by_inst'].get(inst_id, None)
-
-    @classmethod
-    def _get_inst_data(cls):
-        #{{{
-        if hasattr(cls, '_cache'):
-            return cls._cache
-
-        inst_data = dm.Institutions().data
-        full_list = [ (f"({c_code}) {c_name}", f"({inst_id}) {inst_name}", c_code, inst_id)
-                      for c_code, c_name, inst_name, inst_id in
-                sorted(list(
-                    [
-                        (
-                            inst['country']['code'],
-                            inst['country']['name'],
-                            inst['name'],
-                            str(inst['id'])
-                        ) for inst in inst_data 
-                    ]
-                ))
-            ]
-        country_list = {
-                c_code: c_full_name for 
-                    (c_full_name, inst_full_name, c_code, inst_id) in full_list
-            }
-        inst_list = {c_code_key:
-                        {inst_id: inst_full_name
-                            for (c_full_name, inst_full_name, c_code, inst_id) in full_list
-                            if c_code_key == c_code}
-                        for c_code_key in country_list.keys()}
-        inst_list[None] = {}
-        country_lookup_by_inst = {inst_id: c_code 
-                            for (c_full_name, inst_full_name, c_code, inst_id) in full_list}
-        cls._inst_cache = {
-                "countries": country_list,
-                "insts": inst_list,
-                "country_by_inst": country_lookup_by_inst
-            }
         #}}}
     #}}}
 

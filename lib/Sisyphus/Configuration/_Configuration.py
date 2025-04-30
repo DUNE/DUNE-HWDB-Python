@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Sisyphus/Configuration/_Configuration.py
-Copyright (c) 2024 Regents of the University of Minnesota
+Copyright (c) 2025 Regents of the University of Minnesota
 Author: Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
 """
 
@@ -48,86 +47,132 @@ LOG_CONFIG_FILE = os.path.join(USER_SETTINGS_DIR, "log_config.py")
 BEARER_TOKEN_FILENAME = 'bearer_token'
 VAULT_TOKEN_FILENAME = 'vault_token'
 
+###############################################################################
+#
+#  DEFAULT INITIAL CONFIGURATION
+#  -----------------------------
+#  When the application is first run, it checks ~/.sisyphus/config.json. If it
+#  does not find it, it will create a new one. The new config.json will contain
+#  a "development" and a "production" profile. Since we've changed over to 
+#  using htgettoken for authentication, these profiles should be acceptable
+#  out-of-the-box.
+#
+###############################################################################
+
 NEW_CONFIG = {
     KW_ACTIVE_PROFILE: KW_DEVELOPMENT,
     KW_PROFILES: {
         KW_DEVELOPMENT: {
             KW_RESTAPI: RESTAPI_DEV,
             KW_RESTAPI_NAME: KW_DEVELOPMENT,
-            KW_RESTAPI_EDITABLE: False, # Obviously, we can't stope anyone
-                        # from going into the config file and editing this,
-                        # but any user interfaces that modify the config
-                        # for the user should respect this. This is to 
-                        # prevent someone from having a profile named
-                        # "development" point to production and vice-versa.
+            KW_RESTAPI_EDITABLE: False, # Obviously, we can't stop anyone from
+                        # going into the config file and editing this, but at
+                        # least, any user interfaces that modify the config for
+                        # the user should respect this. This is to prevent
+                        # someone from having a profile named "development"
+                        # point to production, or vice-versa.
             KW_DELETABLE: False, # Like above, some profiles should always
                         # exist and should not be able to be deleted.
             KW_AUTHENTICATION: {
                 KW_AUTH_TYPE: KW_AUTH_HTGETTOKEN, # The alternate is 
-                        # "certificate", which is deprecated. At some point
-                        # in the future, certificates may not even work 
-                        # anymore.
+                        # "certificate", which is deprecated. At some point in
+                        # the future, certificates may not even work anymore.
                 KW_HTGETTOKEN_FLAGS: [] # Additional flags to pass to
-                        # htgettoken. The app already handles several of 
-                        # these, and they should not be overriden. One
-                        # possibly useful flag is "--web-open-command=",
-                        # which forces htgettoken to not attempt to open
-                        # a browser window.
+                        # htgettoken. The app already handles several of these,
+                        # and it (currently) will *not* check to see if you
+                        # are duplicating them here, so they should not be
+                        # overriden.
+                        #
+                        # One possibly useful flag is "--web-open-command=",
+                        # which forces htgettoken to not attempt to open a
+                        # browser window.
             },
             KW_USERS: {}, # For a profile that uses a certificate, it doesn't
-                        # make sense to have a "users" node, since there's
-                        # only one user for a certificate. But, using the
-                        # new token method, there's nothing keeping multiple
-                        # users from using the same profile, but logging in
-                        # with different credentials. So, for any settings
-                        # that are user-specific (e.g., what email addresses
-                        # to use), they should be stored here.
+                        # make sense to have a "users" node, since there's only
+                        # one user for a certificate. But, using the new token
+                        # method, there's nothing keeping multiple users from
+                        # using the same profile, but logging in with different
+                        # credentials. So, for any settings that are user-
+                        # specific (e.g., what email addresses to use), they
+                        # should be stored here.
                         #
-                        # Of course, this requires an actual call to whoami
-                        # in the REST API, so the Configuration module
-                        # should NOT try to do anything with this
-                        # automatically in anything that happens when 
-                        # __init__ is invoked. Just loading the 
-                        # Configuration module alone (e.g., to get a
-                        # logger) should not have the overhead of an API 
+                        # Of course, this requires an actual call to whoami in
+                        # the REST API, so the Configuration module should NOT
+                        # try to do anything with this *automatically in
+                        # anything that happens when Configuration is imported.
+                        # Just loading the Configuration module alone (e.g., to
+                        # get a logger) should not have the overhead of an API 
                         # call.
             KW_SETTINGS: {
                 KW_EXTRA_KWARGS: { # Extra kwargs for requests
-                    'verify': False,
+                    'verify': True,
                         # There's a bug in Requests 2.32 that causes a 
                         # segmentation fault when used in a multithreaded
-                        # application. This hack makes it go away.
-                }
+                        # application when using certificates. Setting
+                        # 'verify' to False makes it go away. Since we're
+                        # using a header provided by htgettoken now, we can
+                        # set this to True. (Alternatively, it could be 
+                        # omitted altogether.) However, if we ever need to
+                        # revert to certificates, you will probably need
+                        # to set this to False again.
+                },
+                KW_THROTTLE_LOCK: False, # Setting this to True will cause
+                        # the RestApiV1 module to use a threading.Lock()
+                        # object to restrict REST API calls to only one
+                        # thread at a time. (I.e., multiple threads may
+                        # still be created and used, but only one will be
+                        # permitted in the code block that makes the
+                        # request.) If this parameter is omitted, a
+                        # default value of False will be used.
+                KW_LOG_HEADERS: False, # Setting this to True will cause
+                        # the RestApiV1 module to explicitly prepare requests 
+                        # before sending them, so that the exact content of
+                        # the header and body of the request can be logged.
+                        # Useful if you need to see exactly what is being sent.
+                KW_LOG_REQUEST_JSON: False, # If the request includes a 'json'
+                        # parameter, log its contents. Useful for checking
+                        # what is actually in the request, but it does clutter
+                        # the logs a bit.
+                KW_TIMEOUTS: (5, 10, 15, 30, 60), # The number of times to
+                        # retry a request if the request times out, and the
+                        # length of each timeout
             }
         },
         KW_PRODUCTION: {
+            # The same comments for the "development" profile apply here. Keys
+            # that have useful default values are omitted. See the 
+            # "development" profile for extra options, if needed.
             KW_RESTAPI: RESTAPI_PROD,
             KW_RESTAPI_NAME: KW_PRODUCTION,
             KW_RESTAPI_EDITABLE: False,
             KW_DELETABLE: False,
             KW_AUTHENTICATION: {
                 KW_AUTH_TYPE: KW_AUTH_HTGETTOKEN,
-                KW_HTGETTOKEN_FLAGS: []
             },
             KW_USERS: {},
-            KW_SETTINGS: {
-                KW_EXTRA_KWARGS: {
-                    'verify': False,
-                }
-            }
+            KW_SETTINGS: {},
         }
     },
-    KW_SERVERS: {   # Just a list of available servers.
+    KW_SERVERS: {       # Just a list of available servers. This is used in 
+                        # Sisyphus.Gui.Configuration to give the user a set of
+                        # choices to use for a new profile.
         KW_DEVELOPMENT: RESTAPI_DEV,
         KW_PRODUCTION: RESTAPI_PROD,
-        #KW_TEST: RESTAPI_DEV,   # It's probably never going to happen, but
-                                # I think there should be a 'test' server
-                                # that should be used by consortia to test
-                                # their setups, instead of using 'development',
-                                # which could change at any moment if 
-                                # Fermilab is actively working on the REST API.
+        #KW_TEST: RESTAPI_DEV,   # It's probably never going to happen, but I
+                        # think there should be a 'test' server that should be
+                        # used by consortia to test their setups, instead of
+                        # using 'development', which could change at any moment
+                        # if Fermilab is actively working on the REST API.
     }
 }
+
+###############################################################################
+#
+#  DEFAULT NEW PROFILE
+#  -------------------
+#  This is a template for creating a new profile, as is done in
+#  Sisyphus.Gui.Configuration
+#
 
 NEW_PROFILE = {
     KW_RESTAPI_NAME: DEFAULT_RESTAPI_NAME,
@@ -146,6 +191,7 @@ NEW_PROFILE = {
     }
 }
 
+###############################################################################
 
 class Profile:
     '''represents a node under 'profiles' in the Config object
@@ -164,14 +210,14 @@ class Profile:
     _cache = {}
     _class_lock = threading.Lock()
 
-    def __new__(cls, parent, profile_name, data):
+    def __new__(cls, parent, profile_name, profile_data):
 
         # Create a key for the cache. When multiple requests are made
         # for the same key, just return the same object each time.
         # I didn't include 'parent' because... I can't imagine anyone
         # having two different config objects that point to the same
         # profile object.
-        key = (profile_name, id(data))
+        key = (profile_name, id(profile_data))
         with cls._class_lock:
             if key in cls._cache:
                 return cls._cache[key]
@@ -181,7 +227,7 @@ class Profile:
                 setattr(new_obj, '_initialized', False)
                 return new_obj
 
-    def __init__(self, parent, profile_name, data):
+    def __init__(self, parent, profile_name, profile_data):
 
         # If we're being served up an instance from the cache, it's still
         # going to try to __init__ it. So, we have to check if it's already
@@ -191,7 +237,7 @@ class Profile:
                 return
                 
             self._profile_name = profile_name
-            self.profile_data = data
+            self.profile_data = profile_data
             self._parent = parent
             self._initialized = True
 
@@ -217,14 +263,6 @@ class Profile:
             return self.profile_data[KW_RESTAPI]
         except KeyError:
             raise ConfigurationError(f"{KW_RESTAPI!r} not set in profile {self._profile_name}")
-    
-    #@property
-    #def certificate(self):
-    #    return self.profile_data.get(KW_CERTIFICATE, None)
-
-    #@property
-    #def cert_type(self):
-    #    return self.profile_data.get(KW_CERT_TYPE, None)
     
     @property
     def settings(self):
@@ -277,10 +315,10 @@ class Config:
         if getattr(self, "active_profile", None) is not None:
             if self.active_profile.profile_data[KW_LOGLEVEL] is not None:
                 logger.setLevel(self.active_profile.profile_data[KW_LOGLEVEL])
-        if not already_loaded:
-            logger.debug(f"created logger '{name}'")
-        #else:
-        #    logger.debug(f"returning logger '{name}'")
+        
+        #if not already_loaded:
+        #    logger.debug(f"created logger '{name}'")
+        
         return logger
         #}}}
 
@@ -387,41 +425,6 @@ class Config:
     def active_profile(self):
         active_profile_name = self.config_data[KW_ACTIVE_PROFILE]
         return self.get_profile(active_profile_name)
-
-    '''
-    @property 
-    def authentication(self):
-        return self.active_profile.get(KW_AUTHENTICATION, 'token')
-    
-    @property 
-    def log_settings(self):
-        return self.log_config_dict #[KW_LOGGING]
-    
-    @property
-    def rest_api(self):
-        return self.active_profile.profile_data[KW_RESTAPI]
-    
-    @property
-    def certificate(self):
-        return self.active_profile.profile_data[KW_CERTIFICATE]
-
-    @property
-    def cert_type(self):
-        return self.active_profile.profile_data[KW_CERT_TYPE]
-
-    @property
-    def active_profile(self):
-        return self.config_data[KW_ACTIVE_PROFILE]
-
-    @property
-    def settings(self):
-        return self.config_data.get(KW_SETTINGS, {})
-    '''
-
-    #@property
-    #def bearer_token(self):
-    #    return self.active_profile.get(KW_BEARER_TOKEN, BEARER_TOKEN_FILE)
-
 
     def _extract_cert_info(self):
         #{{{
@@ -884,6 +887,4 @@ if __name__ == '__main__':
     run_tests()
 else:
     config = Config()
-
-#logger.info("exiting module")
 

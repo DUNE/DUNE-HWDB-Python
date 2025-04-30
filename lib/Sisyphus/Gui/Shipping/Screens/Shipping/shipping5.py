@@ -24,7 +24,8 @@ class Shipping5(PageWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.shipping_location = zw.ZInstitutionWidget(page=self, key='location')        
+        self.shipping_location = zw.ZInstitutionWidget(page=self, 
+                        key='location', source="application:attr:locations")
         self.shipping_time = zw.ZDateTimeEdit(page=self, key='shipment_time')
         self.comments = zw.ZLineEdit(page=self, key='comments')
         self.affirm_shipment = zw.ZCheckBox(page=self, 
@@ -89,7 +90,7 @@ class Shipping5(PageWidget):
         with self.wait():
             ok = dbt.update_location(
                             part_id=self.part_id, 
-                            location=self.page_state["location"],
+                            location=self.page_state["location"]['institution_id'],
                             arrived=self.page_state["shipment_time"],
                             comments=self.page_state["comments"])
         return True

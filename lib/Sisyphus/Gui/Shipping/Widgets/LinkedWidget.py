@@ -57,7 +57,7 @@ class LinkedWidget:
 
         # default_value = if there is no value for this widget's key, 
         #           use this value
-        self.default_value = kwargs.pop('default', '')
+        self.default_value = kwargs.pop('default', None)
 
         # source_key = a place to look for additional data outside of the
         #           page state
@@ -160,6 +160,15 @@ class LinkedWidget:
     def application_state(self):
         return self.page.application_state
 
+    @property
+    def stored_value(self):
+        return self.page_state.setdefault(self.state_key, None)
+
+    @stored_value.setter
+    def stored_value(self, value):
+        self.page_state[self.state_key] = value
+
+
     def restore(self):
         # This is the method that the page should call to restore a widget
         # but it should not be overloaded unless necessary
@@ -171,5 +180,6 @@ class LinkedWidget:
         # Overload this one!
         # This is where the meat of the widget's 'restore' functionality
         # should be implemented
-        logger.debug(f"{self.__class__.__name__}.restore_state()")
+        #logger.debug(f"{self.__class__.__name__}.restore_state()")
+        pass
     #}}}

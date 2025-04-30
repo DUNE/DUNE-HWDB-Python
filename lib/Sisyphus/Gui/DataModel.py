@@ -18,6 +18,7 @@ import base64, PIL.Image, io
 import sys
 import re
 import functools
+import time
 import threading
 import concurrent.futures
 NUM_THREADS = 50
@@ -128,7 +129,6 @@ class HWDBObject:
                 return
 
             self._start_queries(constructor_kwargs)
-            
             self._initialized = True
         #}}}            
 
@@ -401,7 +401,15 @@ class HWItem(HWDBObject):
 
     @property
     def subcomponents(self):
-        return self._get_results("subcomp").get('data', None)
+        subcomps = self._get_results("subcomp").get('data', None)
+
+        self.subcomp_details = {}
+
+        for subcomp in subcomps:
+            self.subcomp_details[subcomp['part_id']] = HWItem(part_id=subcomp['part_id'])
+
+
+        return subcomps
 
     @property
     def locations(self):
@@ -539,6 +547,10 @@ def main():
         print()
         title_style.print(f"{part_id} Subcomponents")
         Style.notice.print(json.dumps(hwitem.subcomponents, indent=4))
+
+        print()
+        for sub_part_id, details in hwitem.subcomp_details.items():
+            print(sub_part_id, details.data['status']['name'])
 
         print()
         title_style.print(f"{part_id} Locations")
