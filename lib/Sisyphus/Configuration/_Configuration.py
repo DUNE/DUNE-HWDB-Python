@@ -762,6 +762,7 @@ class Config:
                             dest='prod',
                             action='store_true',
                             required=False,
+                            help=f'shortcut for "--profile=production"')
         group.add_argument('--profile',
                             dest='profile',
                             metavar='<profile-name>',

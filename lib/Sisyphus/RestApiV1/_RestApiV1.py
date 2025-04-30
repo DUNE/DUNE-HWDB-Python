@@ -501,7 +501,7 @@ def _request(method, url, *args, return_type="json", **kwargs):
                     extra_info.append(f"| exc_type: {exc_type.__name__}")
                     logger.info('\n'.join(extra_info))
                 raise exc_type(msg) from None       
-             else:
+            else:
                 msg = "The server response was not valid JSON. Check logs for details."
                 with log_lock:
                     exc_type = InvalidResponse
