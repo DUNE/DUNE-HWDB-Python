@@ -55,7 +55,6 @@ class HWDBObject:
         profile = kwargs.get('profile', None) or config.active_profile
         refresh = kwargs.get('refresh', False)
 
-
         if len(constructor_kwargs) == 0:
             constructor_key = None
         elif len(constructor_kwargs) == 1:
@@ -116,7 +115,6 @@ class HWDBObject:
             else:
                 self.__class__._statistics['initialized'] += 1
                 logger.debug(f"{self.__class__.__name__}: initializing object")
-
 
             constructor_kwargs = {arg: kwargs.get(arg) for arg in self.__class__._constructor_args}
             for k, v in constructor_kwargs.items():
@@ -433,10 +431,6 @@ class HWItem(HWDBObject):
                 [0-9]{5}
             )
         $''')
-
-    def update(self):
-        ...
-
     #}}}
 
 
@@ -479,11 +473,6 @@ def main():
     whoami_future = _executor.submit(WhoAmI, **fwd_kwargs)
     hwitems_future = [ (part_id, _executor.submit(HWItem, part_id=part_id, **fwd_kwargs))
                         for part_id in part_ids ]
-
-
-    #for future in concurrent.futures.as_completed(???):
-
-
 
     ########################################
     ##

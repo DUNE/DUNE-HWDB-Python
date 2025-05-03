@@ -79,7 +79,6 @@ class Test__post_hwitem(unittest.TestCase):
     #-------------------------------------------------------------------------
 
     #@unittest.skip("fails")
-    
     def test__post_hwitem__empty_spec(self):
         print("\n=== Testing to post a new Item with empty specifications ===")
         print("POST /api/v1/component-types/{part_type_id}/components")
