@@ -435,5 +435,3 @@ class Application(qtw.QApplication):
         self.tab_widget.addTab(new_widget, "Test!")
     #}}}
 
-
-

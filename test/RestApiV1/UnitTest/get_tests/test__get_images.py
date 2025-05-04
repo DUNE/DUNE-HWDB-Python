@@ -25,6 +25,7 @@ from Sisyphus import RestApiV1 as ra
 from Sisyphus.Utils.Terminal.Image import image2text
 
 from Sisyphus.Configuration import config
+
 logger = config.getLogger(__name__)
 
 class Test__get_images(unittest.TestCase):
