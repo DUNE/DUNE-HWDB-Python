@@ -112,6 +112,7 @@ class SelectPID(PageWidget):
             #                        part_id,
             #                        refresh=True, # don't use the cache
             #                        status_callback=self.application.update_status)
+            self.application.processEvents()
             workflow_state = wfst.result()
 
         # If the part was not found, download_part_info will return a dict
