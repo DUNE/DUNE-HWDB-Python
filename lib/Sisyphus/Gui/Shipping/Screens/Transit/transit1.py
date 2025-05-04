@@ -18,8 +18,8 @@ from PyQt5 import QtWidgets as qtw
 ###############################################################################
 
 class Transit1(PageWidget):
-    page_name = "Transit Workflow"
-    page_short_name = "Transit"
+    page_name = "In-Transit Workflow"
+    page_short_name = "In-Transit"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

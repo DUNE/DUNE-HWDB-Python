@@ -56,14 +56,21 @@ class Application(qtw.QApplication):
                                 config.active_profile.profile_dir, "shipping_conf.json")
 
         self._whoami = dm.WhoAmI()
-        self.current_style = 'light'
+        self.current_style = 'dark'
         self.load_state()
         self.load_institutions()
 
-        if self.application_state.setdefault('style', 'light') == 'light':
-            self.setStyleSheet_light()
-        elif self.application_state['style'] == 'dark':
-            self.setStyleSheet_dark() 
+        #if self.application_state.setdefault('style', 'light') == 'light':
+        #    self.setStyleSheet_light()
+        #elif self.application_state['style'] == 'dark':
+        #    self.setStyleSheet_dark() 
+        #else:
+        #    self.setStyleSheet_sisyphus()
+
+        if self.application_state.setdefault('style', 'dark') == 'dark':
+            self.setStyleSheet_dark()
+        elif self.application_state['style'] == 'light':
+            self.setStyleSheet_light() 
         else:
             self.setStyleSheet_sisyphus()
 

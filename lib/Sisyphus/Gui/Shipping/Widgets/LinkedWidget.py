@@ -24,7 +24,7 @@ from PyQt5 import QtGui as qtg
 ###############################################################################
 
 STYLE_LARGE_BUTTON = """
-    font-size: 12pt;
+    font-size: 15pt;
     padding: 5px 15px;
 """
 

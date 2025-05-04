@@ -19,7 +19,7 @@ from PyQt5 import QtWidgets as qtw
 
 class PreShipping4a(PageWidget):
     
-    page_name = "Pre-Shipping Workflow (4a)"
+    page_name = "Pre-Shipping Workflow : Step 4a"
     page_short_name = "Pre-Shipping (4a)"
 
     def __init__(self, *args, **kwargs):
@@ -51,30 +51,45 @@ class PreShipping4a(PageWidget):
         group_box_1 = qtw.QGroupBox()
 
         group_box_1_layout = qtw.QVBoxLayout()
-        group_box_1_layout.addWidget(
-            qtw.QLabel("Will this be a domestic or international shipment?")
-        )
+        domesticinter = qtw.QLabel("Will this be a domestic or international shipment?")
+        domesticinter.setWordWrap(True)
+        domesticinter.setStyleSheet("""
+                font-size: 15pt;
+            """)                                   
+        group_box_1_layout.addWidget(domesticinter)
 
 
         '''
         group_box_1_layout.addWidget(self.radio_domestic)
         group_box_1_layout.addWidget(self.radio_international)
         '''
-        group_box_1_layout.addWidget(self.destination_type.button('Domestic'))       
-        group_box_1_layout.addWidget(self.destination_type.button('International'))       
+
+        domesticbutton = self.destination_type.button('Domestic')
+        domesticbutton.setStyleSheet("""
+                font-size: 15pt;
+            """)
+        interbutton = self.destination_type.button('International')
+        interbutton.setStyleSheet("""
+                font-size: 15pt;
+            """)
+        group_box_1_layout.addWidget(domesticbutton)       
+        group_box_1_layout.addWidget(interbutton)       
 
         group_box_2 = qtw.QGroupBox()
         group_box_2_layout = qtw.QVBoxLayout() 
         intl_label_1 = qtw.QLabel("For international shipment:")
+        intl_label_1.setStyleSheet("""
+                font-size: 15pt;
+            """)        
         intl_label_2 = qtw.QLabel(
                 "Provide your Harmonized Tariff Schedule (HTS) code.\n"
                 " - Use the HTS code that your institution or lab used in the past successfully\n"
                 " - Else, for Equipment and Materials for the LBNF & DUNE Scientific Projects, "
-                    "use 8543.90.8845 (parts of particle accelerators"
+                    "use 8543.90.8845 (parts of particle accelerators)."
         )
         intl_label_2.setWordWrap(True)
         intl_label_2.setStyleSheet("""
-                font-size: 10pt;
+                font-size: 15pt;
             """)
         group_box_2_layout.addWidget(intl_label_1)
         group_box_2_layout.addWidget(intl_label_2)
@@ -90,7 +105,11 @@ class PreShipping4a(PageWidget):
         ################
         ################
 
-        main_layout.addWidget(qtw.QLabel("Provide the shipment's origin:"))
+        shipmentoriginmess = qtw.QLabel("Provide the shipment's origin:")
+        shipmentoriginmess.setStyleSheet("""
+                font-size: 15pt;
+            """)
+        main_layout.addWidget(shipmentoriginmess)
         main_layout.addWidget(self.shipment_origin)
 
         ################
@@ -100,19 +119,30 @@ class PreShipping4a(PageWidget):
                 "Provide the dimension (length x width x height) and weight of your shipment. "
                 "Don't forget to provide their units as well (inches, m, lbs, kg, etc.)"
         )
+        dim_wt_label.setStyleSheet("""
+                font-size: 15pt;
+            """)
         dim_wt_label.setWordWrap(True)
         main_layout.addWidget(dim_wt_label)
 
         dim_wt_layout = qtw.QVBoxLayout()
 
         dim_layout = qtw.QHBoxLayout()
-        dim_layout.addWidget(qtw.QLabel("Dimension"))
+        dimLabel = qtw.QLabel("Dimension")
+        dimLabel.setStyleSheet("""
+                font-size: 15pt;
+            """)
+        dim_layout.addWidget(dimLabel)
         dim_layout.addWidget(self.dimension)
         dim_widget = qtw.QWidget()
         dim_widget.setLayout(dim_layout)
 
         wt_layout = qtw.QHBoxLayout()
-        wt_layout.addWidget(qtw.QLabel("Weight"))
+        weightLabel = qtw.QLabel("Weight")
+        weightLabel.setStyleSheet("""
+                font-size: 15pt;
+            """)
+        wt_layout.addWidget(weightLabel)
         wt_layout.addWidget(self.weight)
         wt_widget = qtw.QWidget()
         wt_widget.setLayout(wt_layout)

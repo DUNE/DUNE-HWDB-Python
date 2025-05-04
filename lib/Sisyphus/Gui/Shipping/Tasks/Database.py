@@ -122,8 +122,8 @@ def populate_preshipping_from_hwdb(spec):
         }
 
     workflow_state["PreShipping2"] = {
-            "qa_rep_name": psc.get("QA Rep name", ""),
-            "qa_rep_email": ', '.join(psc.get("QA Rep Email", [])),
+            "qa_rep_name": psc.get("Consortium QA Rep name", ""),
+            "qa_rep_email": ', '.join(psc.get("Consortium QA Rep Email", [])),
             "test_info": psc.get("QA/QC related info Line 1", ""),
         }
 

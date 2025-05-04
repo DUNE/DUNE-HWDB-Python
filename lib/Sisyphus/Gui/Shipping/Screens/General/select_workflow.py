@@ -28,10 +28,18 @@ class SelectWorkflow(PageWidget):
                         page=self, key='workflow_type', default='preshipping')
 
         #self.workflow_type.create_button("packing", "Packing")
-        self.workflow_type.create_button("preshipping", "Pre-Shipping")
-        self.workflow_type.create_button("shipping", "Shipping")
-        self.workflow_type.create_button("transit", "Transit")
-        self.workflow_type.create_button("receiving", "Receiving")
+        self.workflow_type.create_button("preshipping", "Pre-Shipping").setStyleSheet("""
+                font-size: 15pt;
+            """)
+        self.workflow_type.create_button("shipping", "Shipping").setStyleSheet("""
+                font-size: 15pt;
+            """)
+        self.workflow_type.create_button("intransit", "In-Transit").setStyleSheet("""
+                font-size: 15pt;
+            """)
+        self.workflow_type.create_button("receiving", "Receiving").setStyleSheet("""
+                font-size: 15pt;
+            """)
         if self.application._debug:
             self.workflow_type.create_button("widgettest", "Widget Test (Debug)")
 
@@ -56,7 +64,7 @@ class SelectWorkflow(PageWidget):
         #main_layout.addWidget(self.workflow_type.button("packing"))
         main_layout.addWidget(self.workflow_type.button("preshipping"))
         main_layout.addWidget(self.workflow_type.button("shipping"))
-        main_layout.addWidget(self.workflow_type.button("transit"))
+        main_layout.addWidget(self.workflow_type.button("intransit"))
         main_layout.addWidget(self.workflow_type.button("receiving"))
         if self.application._debug:
             main_layout.addWidget(self.workflow_type.button("widgettest"))

@@ -19,8 +19,8 @@ from PyQt5 import QtWidgets as qtw
 
 class TransitComplete(PageWidget):
 
-    page_name = "Transit Workflow Complete"
-    page_short_name = "Transit Complete"
+    page_name = "In-Transit Workflow Complete"
+    page_short_name = "In-Transit Complete"
     _warn_before_closing = False
     
     def __init__(self, *args, **kwargs):

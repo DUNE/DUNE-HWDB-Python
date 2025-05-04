@@ -26,7 +26,7 @@ from PyQt5 import QtGui as qtg
 ###############################################################################
 
 STYLE_LARGE_BUTTON = """
-    font-size: 12pt;
+    font-size: 15pt;
     padding: 5px 15px;
 """
 
@@ -260,7 +260,7 @@ class TitleBar(qtw.QWidget):
 
         self.page_title = qtw.QLabel(self.page.page_name)
         self.page_title.setStyleSheet("""
-                font-size: 14pt;
+                font-size: 15pt;
                 font-weight: bold;
             """)
         self.page_title.setAlignment(qtc.Qt.AlignCenter)
@@ -272,6 +272,9 @@ class TitleBar(qtw.QWidget):
                         key='subtitle', 
                         source='attr:part_id',
                         default='[no part_id yet]')
+        self.page_subtitle.setStyleSheet("""
+                font-size: 15pt;
+            """)
         self.page_subtitle.setAlignment(qtc.Qt.AlignCenter)
         
         main_layout.addWidget(self.page_subtitle)

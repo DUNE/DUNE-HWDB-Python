@@ -16,7 +16,7 @@ from Sisyphus.Gui.Shipping.Widgets.PageWidget import PageWidget
 from PyQt5 import QtWidgets as qtw
 
 class PreShipping1(PageWidget):
-    page_name = "Pre-Shipping Workflow (1)"
+    page_name = "Pre-Shipping Workflow : Step 1"
     page_short_name = "Pre-Shipping (1)"
 
     def __init__(self, *args, **kwargs):
@@ -31,12 +31,15 @@ class PreShipping1(PageWidget):
         self.part_details.setMinimumSize(600, 400)        
 
         msg = "The list of components for this shipment is correct"
-        self.confirm_list_checkbox = zw.ZCheckBox(page=self, text=msg, key="confirm_list")
-        
 
-        msg = "All necessary QA/QC information for these components " \
-                    "has been stored in the HWDB"
-        self.confirm_hwdb_updated_checkbox = zw.ZCheckBox(page=self, text=msg, key="hwdb_updated")
+        self.confirm_list_checkbox = zw.ZCheckBox(page=self, text=msg, key="confirm_list")
+        self.confirm_list_checkbox.setStyleSheet("""
+                font-size: 15pt;
+            """)
+
+        #msg = "All necessary QA/QC information for these components " \
+        #            "has been stored in the HWDB"
+        #self.confirm_hwdb_updated_checkbox = zw.ZCheckBox(page=self, text=msg, key="hwdb_updated")
 
         
         # Create the actual layout and place the interactive widgets in it
@@ -78,14 +81,22 @@ class PreShipping1(PageWidget):
 
         ########################################
 
-        main_layout.addWidget(qtw.QLabel("Please affirm the following:"))
+        Affirmmess =  qtw.QLabel("Please affirm the following:")
+        Affirmmess.setWordWrap(True)
+        Affirmmess.setStyleSheet("""
+                font-size: 15pt;
+            """)
+        main_layout.addWidget(Affirmmess)
+
+        #main_layout.addWidget(qtw.QLabel("Please affirm the following:"))
 
         affirm_layout = qtw.QHBoxLayout()
         #affirm_layout.addSpacing(10)
 
         indented_layout = qtw.QVBoxLayout()
         indented_layout.addWidget(self.confirm_list_checkbox)
-        indented_layout.addWidget(self.confirm_hwdb_updated_checkbox)
+
+        #indented_layout.addWidget(self.confirm_hwdb_updated_checkbox)
         indented_widget = qtw.QWidget()
         indented_widget.setLayout(indented_layout)
         affirm_layout.addWidget(indented_widget)
@@ -126,8 +137,9 @@ class PreShipping1(PageWidget):
     def refresh(self):
         super().refresh()
 
-        if (self.page_state.get('confirm_list', False) 
-                    and self.page_state.get('hwdb_updated', False)):
+        #if (self.page_state.get('confirm_list', False) 
+        #            and self.page_state.get('hwdb_updated', False)):
+        if (self.page_state.get('confirm_list', False)):
             self.nav_bar.continue_button.setEnabled(True)
         else:
             self.nav_bar.continue_button.setEnabled(False)

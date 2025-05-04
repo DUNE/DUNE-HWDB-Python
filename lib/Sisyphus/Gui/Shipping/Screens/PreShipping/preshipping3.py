@@ -19,7 +19,7 @@ import json
 
 
 class PreShipping3(PageWidget):
-    page_name = "Pre-Shipping Workflow (3)"
+    page_name = "Pre-Shipping Workflow : Step 3"
     page_short_name = "Pre-Shipping (3)"
     
     def __init__(self, *args, **kwargs):
@@ -36,26 +36,50 @@ class PreShipping3(PageWidget):
         main_layout.addWidget(self.title_bar)
         ########################################
 
-        main_layout.addWidget(
-            qtw.QLabel("Provide the person's name and email address who has approved this shipment")
-        )
+        #main_layout.addWidget(
+        #    qtw.QLabel("Provide the person's name and email address who has approved this shipment")
+        #)
 
-        main_layout.addWidget(
-            qtw.QLabel("(For multiple email addresses, each address should be separated by a comma)")
-        )
+        POCmess = qtw.QLabel("Provide the name and email address the point of contact (POC) person for this shipment.")
+        POCmess.setStyleSheet("""
+                font-size: 15pt;
+            """)
+        POCmess.setWordWrap(True)
+        main_layout.addWidget(POCmess)
+        POCmess2 = qtw.QLabel("This POC will be also contacted in case of shipment failure.")
+        POCmess2.setStyleSheet("""
+                font-size: 15pt;
+            """)
+        POCmess2.setWordWrap(True)
+        main_layout.addWidget(POCmess2)
+
+        mulemailmess = qtw.QLabel("(For multiple email addresses, each address should be separated by a comma)")
+        mulemailmess.setWordWrap(True)
+        mulemailmess.setStyleSheet("""
+                font-size: 15pt;
+            """)
+        main_layout.addWidget(mulemailmess)
 
         ################
 
         contact_info_layout = qtw.QVBoxLayout()
 
         name_layout = qtw.QVBoxLayout()
-        name_layout.addWidget(qtw.QLabel("Name"))
+        myname = qtw.QLabel("Name")
+        myname.setStyleSheet("""
+                font-size: 15pt;
+            """)
+        name_layout.addWidget(myname)
         name_layout.addWidget(self.approver_name)
         name_layout_widget = qtw.QWidget(self)
         name_layout_widget.setLayout(name_layout)
         
         email_layout = qtw.QVBoxLayout()
-        email_layout.addWidget(qtw.QLabel("Email"))
+        myemail = qtw.QLabel("Email")
+        myemail.setStyleSheet("""
+                font-size: 15pt;
+            """)
+        email_layout.addWidget(myemail)
         email_layout.addWidget(self.approver_email)
         email_layout_widget = qtw.QWidget(self)
         email_layout_widget.setLayout(email_layout)

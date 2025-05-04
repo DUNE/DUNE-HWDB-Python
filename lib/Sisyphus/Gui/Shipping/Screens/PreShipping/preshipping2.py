@@ -19,7 +19,7 @@ import json
 
 
 class PreShipping2(PageWidget):
-    page_name = "Pre-Shipping Workflow (2)"
+    page_name = "Pre-Shipping Workflow : Step 2"
     page_short_name = "Pre-Shipping (2)"
     
     def __init__(self, *args, **kwargs):
@@ -38,27 +38,50 @@ class PreShipping2(PageWidget):
         main_layout.addWidget(self.title_bar)
         ########################################
 
-        main_layout.addWidget(
-            qtw.QLabel("Provide the name and email of the QA Rep")
-        )
+        #main_layout.addWidget(
+        #    qtw.QLabel("Provide the name and email address of your Consortium QA Representative "
+        #               "who has approved this shipment by setting the Consortium Certified Status flag in the HWDB.")
+        #)
+        QARepmess = qtw.QLabel("Provide the name and email address of your Consortium QA Representative "
+                       "who has approved this shipment by setting the Consortium Certified Status flag in the HWDB.")
+        QARepmess.setWordWrap(True)
+        QARepmess.setStyleSheet("""
+                font-size: 15pt;
+            """)
+        main_layout.addWidget(QARepmess)
 
-        main_layout.addWidget(
-            qtw.QLabel("(For multiple email addresses, each address should be separated by a comma)")
-        )
+        #main_layout.addWidget(
+        #    qtw.QLabel("(For multiple email addresses, each address should be separated by a comma)")
+        #)
+
+        MulEmailmess = qtw.QLabel("(For multiple email addresses, each address should be separated by a comma)")
+        MulEmailmess.setWordWrap(True)
+        MulEmailmess.setStyleSheet("""
+                font-size: 15pt;
+            """)
+        main_layout.addWidget(MulEmailmess)
 
         ################
 
         contact_info_layout = qtw.QVBoxLayout()
 
         name_layout = qtw.QVBoxLayout()
-        name_layout.addWidget(qtw.QLabel("Name"))
+        myname = qtw.QLabel("Name")
+        myname.setStyleSheet("""
+                font-size: 15pt;
+            """)
+        name_layout.addWidget(myname)
         #name_layout.addWidget(QLineEdit("Joe Schmoe"))
         name_layout.addWidget(self.qa_rep_name)
         name_layout_widget = qtw.QWidget(self)
         name_layout_widget.setLayout(name_layout)
         
         email_layout = qtw.QVBoxLayout()
-        email_layout.addWidget(qtw.QLabel("Email"))
+        myemail = qtw.QLabel("Email")
+        myemail.setStyleSheet("""
+                font-size: 15pt;
+            """)
+        email_layout.addWidget(myemail)
         email_layout.addWidget(self.qa_rep_email)
         email_layout_widget = qtw.QWidget(self)
         email_layout_widget.setLayout(email_layout)
@@ -77,6 +100,9 @@ class PreShipping2(PageWidget):
         test_info_label = qtw.QLabel("Provide information on where the corresponding QA/QC test results "
                 "can be found (e.g., link(s) to test results in the HWDB) and a EDMS or "
                 "doc-DB # of the corresponding documentation.")
+        test_info_label.setStyleSheet("""
+                font-size: 15pt;
+            """)
         test_info_label.setWordWrap(True)
         main_layout.addWidget(test_info_label)
 

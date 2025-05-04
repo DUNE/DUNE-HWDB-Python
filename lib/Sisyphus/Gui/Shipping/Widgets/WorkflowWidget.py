@@ -240,7 +240,7 @@ class WorkflowWidget(qtw.QWidget):
                 next_page_id = "PreShipping1"
             elif page_state['workflow_type'] == "shipping":
                 next_page_id = "Shipping1"
-            elif page_state['workflow_type'] == "transit":
+            elif page_state['workflow_type'] == "intransit":
                 next_page_id = "Transit1"
             elif page_state['workflow_type'] == "receiving":
                 next_page_id = "Receiving1"
