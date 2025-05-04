@@ -11,6 +11,7 @@ Author:
 from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
+
 from .RestApiSession import SessionManager
 
 from Sisyphus.Utils.Terminal.Style import Style
@@ -80,6 +81,7 @@ else:
 #
 ###############################################################################
 
+
 # Use this function when constructing a URL that uses some variable as 
 # part of the URL itself, e.g.,
 #    path = f"api/v1/components/{sanitize(part_id)}"
@@ -89,40 +91,6 @@ else:
 def sanitize(s, safe=""):
     return urllib.parse.quote(str(s), safe=safe)
 
-# Use this lock to prevent multiple threads from trying to refresh
-# the bearer token at the same time. If multiple threads tried to 
-# refresh, and each one tried to bring up a browser window, that would
-# be a problem. But once one of the threads has come back from the 
-# browser window, the other threads' attempts would succeed without
-# needing to bring up a browser window.
-authentication_lock = threading.Lock()
-
-log_lock = threading.Lock()
-log_request_json = True
-
-# Something happened with Python 3.12 with the GIL that caused seg faults when
-# multiple threads shared the same session object. To mitigate this, every time
-# one needs a session, one should request one by calling get_session(). It will
-# create a session for each thread and put it in threading.local(). Hopefully,
-# once the thread is done, the session will be garbage collected along with the
-# thread.
-
-thread_local = threading.local()
-bearer_header = None
-def get_session(use_config=None):
-
-    if use_config is None:
-        use_config = config
-
-    if not hasattr(thread_local, 'config'):
-        thread_local.config = use_config
-        new_session = True
-    else:
-        if thread_local.config == use_config:
-            new_session = False
-        else:
-            thread_local.config = use_config
-            new_session = True
 
 # This is just to keep multiple lines of log messages together, so they
 # won't get separated if two threads are trying to log a the same time.
@@ -136,6 +104,7 @@ def func_name():
     return sys._getframe(1).f_code.co_name
 
 #-----------------------------------------------------------------------------
+
 
 class retry:
     #{{{
@@ -501,7 +470,8 @@ def _request(method, url, *args, return_type="json", **kwargs):
                     extra_info.append(f"| exc_type: {exc_type.__name__}")
                     logger.info('\n'.join(extra_info))
                 raise exc_type(msg) from None       
-             else:
+ 
+            else:
                 msg = "The server response was not valid JSON. Check logs for details."
                 with log_lock:
                     exc_type = InvalidResponse
@@ -542,6 +512,7 @@ def _request(method, url, *args, return_type="json", **kwargs):
                 logger.info('\n'.join(extra_info))
             raise exc_type(msg)
 
+
         # Fallthrough if no other conditions raised an error
         msg = "The server returned an error. Check logs for details."
         with log_lock:
@@ -581,7 +552,6 @@ def _patch(url, data, *args, **kwargs):
 
 def get_hwitem_image_list(part_id, **kwargs):
     #{{{
-
     logger.debug(f"<{func_name()}>")
     profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/components/{sanitize(part_id)}/images"
@@ -616,6 +586,7 @@ def post_hwitem_image(part_id, data, filename, **kwargs):
         resp = _request("post", url, 
                 json=data, files=files, 
                 **kwargs)
+
     return resp
     #}}}
 
@@ -641,6 +612,7 @@ def post_component_type_image(part_type_id, image_payload, **kwargs):
     #}}}
 
 #-----------------------------------------------------------------------------
+
 
 def get_test_image_list(part_id, test_id, **kwargs):
     #{{{
@@ -720,6 +692,7 @@ def get_hwitem_barcode(part_id, write_to_file=None, **kwargs):
 
     return resp
     #}}}
+
 
 ##############################################################################
 #
@@ -1097,7 +1070,6 @@ def post_hwitem_location(part_id, data, **kwargs):
     """
     
     logger.debug(f"<post_hwitem_location> part_id={part_id}")
-
     profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/components/{sanitize(part_id)}/locations"
     url = f"https://{profile.rest_api}/{path}"
@@ -1465,6 +1437,7 @@ def post_test_type(part_type_id, data, **kwargs):
             'test_type_id': <int>}
         }
     """
+
 
     logger.debug(f"<{func_name()}> part_type_id={part_type_id}")
     profile = kwargs.get('profile', config.active_profile)

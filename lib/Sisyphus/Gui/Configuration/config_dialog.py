@@ -126,11 +126,19 @@ class ConfigDialog(qtw.QDialog):
         #  SERVER
         #
         #######################
+        #layout = server_other_layout = qtw.QHBoxLayout()
+        #layout.setContentsMargins(0, 0, 0, 0)
+        #layout.addWidget(self.server_other)
+        #layout.addWidget(self.server_other_text)
+        
         layout = server_layout = qtw.QVBoxLayout()
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(0)
         for radio_button, server_details in self.servers.items():
             layout.addWidget(radio_button)
+        #layout.addWidget(self.server_dev)
+        #layout.addWidget(self.server_prod)
+        #layout.addLayout(server_other_layout)
 
         frame = server_frame = qtw.QFrame()
         frame.setFrameStyle(qtw.QFrame.Box | qtw.QFrame.Sunken)
@@ -487,7 +495,9 @@ class ConfigDialog(qtw.QDialog):
     def config(self):
         return config.config_data
 
+
     def restore(self):
+
         default_profile_name = self.config.get(cfg.KW_ACTIVE_PROFILE, None)
         profiles = self.config[cfg.KW_PROFILES]
 
@@ -507,3 +517,5 @@ class ConfigDialog(qtw.QDialog):
         self.select_profile.blockSignals(False)
 
         self.populate_profile()
+
+

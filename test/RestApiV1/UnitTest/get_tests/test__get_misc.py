@@ -302,6 +302,7 @@ class Test__get_misc(unittest.TestCase):
             resp = get_systems(proj_id)
             
             self.assertEqual(resp["status"], "OK")
+            #self.assertIsInstance(resp["data"][0]["comments"], str)
             self.assertIn("comments", resp["data"][0])
         except AssertionError as err:
             logger.error(f"Assertion Error: {repr(err)}")
@@ -366,4 +367,3 @@ class Test__get_misc(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(argv=config.remaining_args)
-
