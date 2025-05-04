@@ -87,6 +87,7 @@ class PageWidget(qtw.QWidget):
             def __enter__(self):
                 page._wait_count += 1
                 page.start_waiting()
+                #time.sleep(5)
             def __exit__(self, type, value, traceback):
                 page._wait_count -= 1
                 if page._wait_count <= 0:
