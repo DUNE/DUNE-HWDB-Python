@@ -9,11 +9,15 @@ Author:
 from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
+HLD = highlight = "[bg=#999999,fg=#ffffff]"
+HLI = highlight = "[bg=#009900,fg=#ffffff]"
+HLW = highlight = "[bg=#999900,fg=#ffffff]"
+HLE = highlight = "[bg=#990000,fg=#ffffff]"
+
 from Sisyphus.Utils.Terminal.Style import Style
 from Sisyphus.Gui.Shipping import Widgets as zw
-from Sisyphus.Gui.Shipping.Widgets.PageWidget import PageWidget
-from Sisyphus.Gui.Shipping.Tasks.ShippingLabel import ShippingLabel
-from Sisyphus.Gui import DataModel as dm
+from Sisyphus.Gui.Shipping import Model as mdl
+from Sisyphus.Gui.Shipping.ShippingLabel import ShippingLabel
 
 from Sisyphus import RestApiV1 as ra
 from Sisyphus.RestApiV1 import Utilities as ut
@@ -26,9 +30,9 @@ import os
 import json
 
 
-class PreShipping7(PageWidget):
-    page_name = "Pre-Shipping Workflow (7)"
-    page_short_name = "Pre-Shipping (7)"
+class PreShipping6(zw.PageWidget):
+    page_name = "Pre-Shipping Workflow (6)"
+    page_short_name = "Pre-Shipping (6)"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -79,7 +83,7 @@ class PreShipping7(PageWidget):
         if self.pdf_full_filename is None:
             self.generate_shipping_sheet()
 
-        #print(self.pdf_full_filename)
+        print(self.pdf_full_filename)
 
         ws = self.workflow_state
         part_id = ws['part_info']['part_id']
@@ -102,10 +106,8 @@ class PreShipping7(PageWidget):
 
 
         ps_checklist = {
-            "QA Rep name": ws['PreShipping2']['qa_rep_name'],
-            "QA Rep Email": [s.strip() for s in ws['PreShipping2']['qa_rep_email'].split(',')],
-            "POC name": ws['PreShipping3']['approver_name'],
-            "POC Email": [s.strip() for s in ws['PreShipping3']['approver_email'].split(',')],
+            "POC name": ws['SelectPID']['user_name'],
+            "POC Email": [s.strip() for s in ws['SelectPID']['user_email'].split(',')],
             "System Name (ID)": f"{ws['part_info']['system_name']}"
                                f" ({ws['part_info']['system_id']})",
             "Subsystem Name (ID)":  f"{ws['part_info']['subsystem_name']}"
@@ -113,20 +115,21 @@ class PreShipping7(PageWidget):
             "Component Type Name (ID)": f"{ws['part_info']['part_type_name']}"
                                 f" ({ws['part_info']['part_type_id']})",
             "DUNE PID": part_id,
-            "HTS code": ws['PreShipping4a']['hts_code'] 
-                               if ws['PreShipping4a']['shipping_service_type'] 
+            "QA/QC related info Line 1": ws['PreShipping2']['test_info'],
+            "HTS code": ws['PreShipping3a']['hts_code'] 
+                               if ws['PreShipping3a']['shipping_service_type'] 
                                     != 'Domestic' else None ,
-            "Origin of this shipment": ws['PreShipping4a']['shipment_origin'],
-            "Dimension of this shipment": ws['PreShipping4a']['dimension'],
-            "Weight of this shipment": ws['PreShipping4a']['weight'],
-            "Freight Forwarder name": ws['PreShipping4b']['freight_forwarder'],
-            "Mode of Transportation": ws['PreShipping4b']['mode_of_transportation'],
-            "Expected Arrival Date (CT)": ws['PreShipping4b']['expected_arrival_time'],
-            "FD Logistics team acknoledgement (name)": ws['PreShipping6']['acknowledged_by'],
-            "FD Logistics team acknoledgement (date in CT)": ws['PreShipping6']['acknowledged_time'],
+            "Origin of this shipment": ws['PreShipping3a']['shipment_origin'],
+            "Dimension of this shipment": ws['PreShipping3a']['dimension'],
+            "Weight of this shipment": ws['PreShipping3a']['weight'],
+            "Freight Forwarder name": ws['PreShipping3b']['freight_forwarder'],
+            "Mode of Transportation": ws['PreShipping3b']['mode_of_transportation'],
+            "Expected Arrival Date (CT)": ws['PreShipping3b']['expected_arrival_time'],
+            "FD Logistics team acknoledgement (name)": ws['PreShipping5']['acknowledged_by'],
+            "FD Logistics team acknoledgement (date in CT)": ws['PreShipping5']['acknowledged_time'],
             "Visual Inspection (YES = no damage)": 
-                    'YES' if ws['PreShipping6']['damage_status']=='no damage' else 'NO',
-            "Visual Inspection Damage": ws['PreShipping6']['damage_description'],
+                    'YES' if ws['PreShipping5']['damage_status']=='no damage' else 'NO',
+            "Visual Inspection Damage": ws['PreShipping5']['damage_description'],
             "Image ID for this Shipping Sheet": image_id
         }
 
@@ -138,8 +141,7 @@ class PreShipping7(PageWidget):
             })
 
         # Get the current specifications and add to it
-        #item_resp = ut.fetch_hwitems(part_id=part_id)[part_id]
-        item_resp = {'Item': dm.HWItem(part_id=part_id).data}
+        item_resp = ut.fetch_hwitems(part_id=part_id)[part_id]
         logger.info(json.dumps(item_resp, indent=4))
         specs = item_resp['Item']['specifications'][-1]
 
@@ -152,7 +154,6 @@ class PreShipping7(PageWidget):
                     [ {k: v} for k, v in ps_checklist.items() ]
         specs['DATA']['SubPIDs'] = sub_pids
 
-        #if item_resp['Item']['manufacturer'] is not None:
         if item_resp['Item']['manufacturer'] is not None:
             manufacturer_node = {"id": item_resp['Item']['manufacturer']['id']}
         else:
@@ -170,19 +171,11 @@ class PreShipping7(PageWidget):
         resp = ra.patch_hwitem(part_id, update_data)
         logger.info(json.dumps(resp, indent=4))
 
-        # Refresh the data in the cache
-        # Note that we're not extracting the data, so the cache will be 
-        # silently refreshed in the background until someone else asks
-        # for it. (If it's not done yet, then at that time, it will block
-        # until the refresh is complete. But there's no reason to block now.)
-        item_future = dm.HWItem(part_id=part_id, refresh=True)
 
 
 
     def on_navigate_next(self):
         super().on_navigate_next()
 
-        with self.wait():
-            self.update_hwdb()        
-
+        self.update_hwdb()        
         return True

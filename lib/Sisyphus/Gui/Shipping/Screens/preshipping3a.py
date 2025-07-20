@@ -10,33 +10,32 @@ from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
 from Sisyphus.Gui.Shipping import Widgets as zw
-from Sisyphus.Gui.Shipping.Widgets.PageWidget import PageWidget
 
 from PyQt5 import QtCore as qtc
 from PyQt5 import QtWidgets as qtw
 
 ###############################################################################
 
-class PreShipping4a(PageWidget):
+class PreShipping3a(zw.PageWidget):
     
-    page_name = "Pre-Shipping Workflow (4a)"
-    page_short_name = "Pre-Shipping (4a)"
+    page_name = "Pre-Shipping Workflow (3a)"
+    page_short_name = "Pre-Shipping (3a)"
 
     def __init__(self, *args, **kwargs):
         #{{{
         super().__init__(*args, **kwargs)
 
         self.destination_type = zw.ZRadioButtonGroup(
-                page=self, key='shipping_service_type', default='Domestic')
+                owner=self, key='shipping_service_type', default='Domestic')
         self.destination_type.create_button("Domestic", "Domestic")
         self.destination_type.create_button("International", "International")
 
         
-        self.hts_code = zw.ZLineEdit(page=self, key='hts_code')
+        self.hts_code = zw.ZLineEdit(owner=self, key='hts_code')
         
-        self.shipment_origin = zw.ZLineEdit(page=self, key='shipment_origin')
-        self.dimension = zw.ZLineEdit(page=self, key='dimension')
-        self.weight = zw.ZLineEdit(page=self, key='weight')
+        self.shipment_origin = zw.ZLineEdit(owner=self, key='shipment_origin')
+        self.dimension = zw.ZLineEdit(owner=self, key='dimension')
+        self.weight = zw.ZLineEdit(owner=self, key='weight')
 
         self._setup_UI()
         #}}}
@@ -70,7 +69,7 @@ class PreShipping4a(PageWidget):
                 "Provide your Harmonized Tariff Schedule (HTS) code.\n"
                 " - Use the HTS code that your institution or lab used in the past successfully\n"
                 " - Else, for Equipment and Materials for the LBNF & DUNE Scientific Projects, "
-                    "use 8543.90.8845 (parts of particle accelerators)."
+                    "use 8543.90.8845 (parts of particle accelerators"
         )
         intl_label_2.setWordWrap(True)
         intl_label_2.setStyleSheet("""
@@ -132,13 +131,13 @@ class PreShipping4a(PageWidget):
         self.setLayout(main_layout)
         #}}}
 
-    def refresh(self):
+    def update(self):
         #{{{
-        super().refresh()
+        super().update()
 
         if self.page_state.get('shipping_service_type', None) == 'International':
             self.hts_code.setEnabled(True)
-            if len(self.hts_code.text()) == 0:
+            if len(self.hts_code.text()) > 0:
                 self.nav_bar.continue_button.setEnabled(False)
                 return
         else:

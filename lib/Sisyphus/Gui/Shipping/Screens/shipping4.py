@@ -9,19 +9,19 @@ Author:
 from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
+HLD = highlight = "[bg=#999999,fg=#ffffff]"
+HLI = highlight = "[bg=#009900,fg=#ffffff]"
+HLW = highlight = "[bg=#999900,fg=#ffffff]"
+HLE = highlight = "[bg=#990000,fg=#ffffff]"
+
 from Sisyphus.Gui.Shipping import Widgets as zw
-from Sisyphus.Gui.Shipping.Widgets.PageWidget import PageWidget
-from Sisyphus.Gui.Shipping.Tasks import Database as dbt
+from Sisyphus.Gui.Shipping import Model as mdl
 from PyQt5 import QtCore as qtc
 from PyQt5 import QtWidgets as qtw
-        
-import shutil, os
-from datetime import datetime
-        
 
 ###############################################################################
 
-class Shipping4(PageWidget):
+class Shipping4(zw.PageWidget):
     page_name = "Shipping Workflow (4)"
     page_short_name = "Shipping (4)"
 
@@ -30,16 +30,16 @@ class Shipping4(PageWidget):
         super().__init__(*args, **kwargs)
 
         self.received_approval = zw.ZCheckBox("Yes, I have received an approval",
-                    page=self, key='received_approval')
-        self.approved_by = zw.ZLineEdit(page=self, key='approved_by')
-        self.approved_time = zw.ZDateTimeEdit(page=self, key='approved_time')
-        self.approval_image = zw.ZFileSelectWidget(page=self, key='approved_image')
+                    owner=self, key='received_approval')
+        self.approved_by = zw.ZLineEdit(owner=self, key='approved_by')
+        self.approved_time = zw.ZDateTimeEdit(owner=self, key='approved_time')
+        self.approval_image = zw.ZFileSelectWidget(owner=self, key='approved_image')
 
         msg = "The DUNE Shipping Sheet has been securely attached to the shipment"
-        self.confirm_attached_sheet = zw.ZCheckBox(page=self, text=msg, key="confirm_attached_sheet")
+        self.confirm_attached_sheet = zw.ZCheckBox(owner=self, text=msg, key="confirm_attached_sheet")
 
         msg = "The cargo has been adequately insured for transit"
-        self.confirm_insured = zw.ZCheckBox(page=self, text=msg, key="confirm_insured")
+        self.confirm_insured = zw.ZCheckBox(owner=self, text=msg, key="confirm_insured")
 
         self._setup_UI()
         #}}}
@@ -107,19 +107,6 @@ class Shipping4(PageWidget):
         affirm_widget = qtw.QWidget()
         affirm_widget.setLayout(affirm_layout)
         main_layout.addWidget(affirm_widget)
-
-        main_layout.addSpacing(20)
-
-        self.upload_message = qtw.QLabel(f'''Click 'Continue' to upload the followings to the HWDB:\n\n'''\
-            f'''  1. The selected photo of the approved message\n'''\
-            f'''  2. Everything you have provided in this shipping checklist '''\
-        )
-        self.upload_message.setWordWrap(True)
-        self.upload_message.setStyleSheet("""
-                font-size: 14pt;
-            """)
-        main_layout.addWidget(self.upload_message)
-
         ################
 
         main_layout.addStretch()
@@ -127,9 +114,9 @@ class Shipping4(PageWidget):
         self.setLayout(main_layout)
         #}}}
 
-    def refresh(self):
+    def update(self):
         #{{{
-        super().refresh()
+        super().update()
 
         if not self.received_approval.isChecked():
             self.nav_bar.continue_button.setEnabled(False)
@@ -153,12 +140,15 @@ class Shipping4(PageWidget):
 
     def upload_files(self):
         #{{{
+        import shutil, os
+        from datetime import datetime
+        from Sisyphus.Gui.Shipping import Model as mdl
+        
         def rename(filename, prefix):
             username = self.application.whoami['username']
             timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M")
             file_ext = filename.split('.')[-1]
-            #new_filename = f"{prefix}-{username}-{timestamp}.{file_ext}"
-            new_filename = f"{prefix}-{timestamp}.{file_ext}"
+            new_filename = f"{prefix}-{username}-{timestamp}.{file_ext}"
             return new_filename
 
         def upload_file(filename, file_prefix, node_name):
@@ -166,7 +156,7 @@ class Shipping4(PageWidget):
             new_full_filename = os.path.join(self.workflow.working_directory, new_filename)
             shutil.copy(filename, new_full_filename)
 
-            image_id, checksum = dbt.upload_image(self.part_id, new_full_filename)
+            image_id, checksum = mdl.upload_image(self.part_id, new_full_filename)
             self.page_state[node_name] = {
                 "filename": new_filename,
                 "image_id": image_id,
@@ -175,24 +165,26 @@ class Shipping4(PageWidget):
             return True
 
         ok = upload_file(self.page_state['approved_image'], "LogisticsFinalApprovalEmail", "approval_info")
+        logger.debug(f"(upload_files return) ok: {ok}")
         return ok
         #}}}
     
     def update_hwdb(self):
-        with self.wait():
-            return dbt.upload_shipping(self.workflow_state)
+        return mdl.upload_shipping(self.workflow_state)
 
     def on_navigate_next(self):
         #{{{
         ok = super().on_navigate_next()
+        logger.debug(f"(from super()) ok: {ok}")
         if not ok:
             return False
 
         ok = self.upload_files()
+        logger.debug(f"(from upload_files) ok: {ok}")
         if not ok:
             return False
 
         ok = self.update_hwdb()
-        
+        logger.debug(f"(from update_hwdb) ok: {ok}")
         return ok
         #}}}

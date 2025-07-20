@@ -172,7 +172,8 @@ class ZPartDetails(qtw.QWidget, LinkedWidget):
                     subcomp = {
                         "Sub-component PID": "<empty>",
                         "Component Type Name": part_type_name,
-                        "Functional Position Name": func_pos
+                        "Functional Position Name": func_pos,
+                        "Status": "<empty>"
                     }
 
                 subcomp_pid_widget = qtw.QTableWidgetItem(subcomp['Sub-component PID'])
@@ -434,14 +435,8 @@ class ZInstitutionWidget(qtw.QWidget, LinkedWidget):
         ### Country Widget
         country_widget = self.country_widget = qtw.QComboBox()
         country_widget.setStyleSheet("width: 200px")
-        #country_widget.setEditable(True)
         country_widget.currentIndexChanged.connect(self.on_selectCountry)
         country_widget.setPlaceholderText("Select Country...")
-        #country_widget.setMaxVisibleItems(10)
-        #country_widget.setMaximumHeight(200)
-
-        #for country_code, country in self.get_countries().items():
-        #    country_widget.addItem(country, country_code)
 
         source_data = self.source()
         self.countries = source_data['countries']
@@ -450,8 +445,6 @@ class ZInstitutionWidget(qtw.QWidget, LinkedWidget):
         for country in self.countries.values():
             cn = f"({country['code']}) {country['name']}"
             country_widget.addItem(cn, country['code'])
-
-
 
         #country_widget.setCurrentIndex(-1)
         main_layout.addWidget(country_widget)

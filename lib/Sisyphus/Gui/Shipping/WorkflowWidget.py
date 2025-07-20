@@ -9,48 +9,58 @@ Author:
 from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
+HLD = highlight = "[bg=#999999,fg=#ffffff]"
+HLI = highlight = "[bg=#009900,fg=#ffffff]"
+HLW = highlight = "[bg=#999900,fg=#ffffff]"
+HLE = highlight = "[bg=#990000,fg=#ffffff]" 
+
 from PyQt5 import QtCore as qtc
 from PyQt5 import QtWidgets as qtw
 
 import os
 
 from Sisyphus.Gui.Shipping.Screens import (
-                General, Packing, PreShipping, Shipping, Transit, Receiving, WidgetTest)
-
+        SelectPID, SelectWorkflow,
+        Packing1, PackingComplete,
+        PreShipping1, PreShipping2, PreShipping3a, PreShipping3b, PreShipping4,
+            PreShipping5, PreShipping6, PreShippingComplete,
+        Shipping1, Shipping2, Shipping3, Shipping4, Shipping5, 
+            Shipping6, ShippingComplete,
+        Transit1, TransitComplete,
+        Receiving1, Receiving2, Receiving3, ReceivingComplete
+)
 
 ###############################################################################
 
 class WorkflowWidget(qtw.QWidget):
-    def __init__(self, *, application=None, uuid=None):
+    def __init__(self, *, owner=None, uuid=None):
         #{{{
-        super().__init__()
-        
         self._finished_init = False
-        
-        self.application = application
-        if application is None:
-            raise ValueError("required parameter: application")
+        if owner is None:
+            raise ValueError("required parameter: owner")
+        self.application = self.owner = owner
         
         if uuid is None:
             raise ValueError("required parameter: uuid")
         self.uuid = uuid
-        if uuid not in self.application.application_state['workflows']:
+        if uuid not in self.application.app_state['workflows']:
             raise ValueError("uuid not in workflows dict")
         
+        super().__init__()
 
-        logger.debug(f"WorkflowWidget parent: {self.parent()}")
+        logger.debug(f"{HLD}WorkflowWidget parent: {self.parent()}")
 
         self.create_page_stack()
         self._finished_init = True
         #}}}
 
     @property
-    def application_state(self):
-        return self.application.application_state
+    def app_state(self):
+        return self.application.app_state
 
     @property
     def workflow_state(self):
-        return self.application.application_state['workflows'][self.uuid]
+        return self.application.app_state['workflows'][self.uuid]
 
     @property
     def current_page_id(self):
@@ -61,10 +71,13 @@ class WorkflowWidget(qtw.QWidget):
         if self.workflow_state['current_page_id'] != new_page_id:
             self.workflow_state['current_page_id'] = new_page_id
             self.activate()
+            #current_page_widget = self._page_lookup[page_id]
+            #self.page_stack.setCurrentWidget(current_page_widget)
+            #current_page_widget.restore()
         return new_page_id
 
     def activate(self):
-        logger.debug(f"{self.__class__.__name__}.activate()")
+        logger.debug(f"{HLD}{self.__class__.__name__}.activate()")
         self.page_stack.setCurrentWidget(self._page_lookup[self.current_page_id])
         self.update_tab_title()
         self.current_page_widget.activate()
@@ -76,13 +89,24 @@ class WorkflowWidget(qtw.QWidget):
     def save(self):
         self.application.save_state()
 
+    #def restore(self):
+    #    self.page_stack.currentWidget().restore()
+
+    #def update_tab_title(self, title):
+    #    logger.info(f"{HLI}{self.__class__.__name__}.update_tab_title")
+    #    self.title = title
+    #    idx = self.application.tab_widget.indexOf(self)
+    #    self.application.tab_widget.setTabText(idx, title)
+
     def update_tab_title(self):
-         logger.debug(f"{self.__class__.__name__}.update_tab_title()")
+         logger.debug(f"{HLD}{self.__class__.__name__}.update_tab_title()")
          tab_index = self.application.tab_widget.indexOf(self)
-         logger.debug(f"(finished_init: {self._finished_init}, "
+         logger.debug(f"{HLD}(finished_init: {self._finished_init}, "
                     f" tab_index: {tab_index}, "
                     f" current_page_id: {self.current_page_widget.__class__.__name__}")
+         #self.application.tab_widget.setTabText(tab_index, self.current_page_widget.page_short_name)
          self.application.tab_widget.setTabText(tab_index, self.current_page_widget.tab_title)
+
 
     def create_page_stack(self):
         #{{{
@@ -91,40 +115,36 @@ class WorkflowWidget(qtw.QWidget):
 
         logger.info("creating pages...")
         self._page_lookup = {
-            "SelectPID": General.SelectPID(workflow=self),
-            "SelectWorkflow": General.SelectWorkflow(workflow=self),
+            "SelectPID": SelectPID(owner=self),
+            "SelectWorkflow": SelectWorkflow(owner=self),
 
-            "Packing1": Packing.Packing1(workflow=self),
-            "PackingComplete": Packing.PackingComplete(workflow=self),
+            "Packing1": Packing1(owner=self),
+            "PackingComplete": PackingComplete(owner=self),
 
-            "PreShipping1": PreShipping.PreShipping1(workflow=self),
-            "PreShipping2": PreShipping.PreShipping2(workflow=self),
-            "PreShipping3": PreShipping.PreShipping3(workflow=self),
-            "PreShipping4a": PreShipping.PreShipping4a(workflow=self),
-            "PreShipping4b": PreShipping.PreShipping4b(workflow=self),
-            "PreShipping5": PreShipping.PreShipping5(workflow=self),
-            "PreShipping6": PreShipping.PreShipping6(workflow=self),
-            "PreShipping7": PreShipping.PreShipping7(workflow=self),
-            "PreShippingComplete": PreShipping.PreShippingComplete(workflow=self),
+            "PreShipping1": PreShipping1(owner=self),
+            "PreShipping2": PreShipping2(owner=self),
+            "PreShipping3a": PreShipping3a(owner=self),
+            "PreShipping3b": PreShipping3b(owner=self),
+            "PreShipping4": PreShipping4(owner=self),
+            "PreShipping5": PreShipping5(owner=self),
+            "PreShipping6": PreShipping6(owner=self),
+            "PreShippingComplete": PreShippingComplete(owner=self),
 
-            "Shipping1": Shipping.Shipping1(workflow=self),
-            "Shipping2": Shipping.Shipping2(workflow=self),
-            "Shipping3": Shipping.Shipping3(workflow=self),
-            "Shipping4": Shipping.Shipping4(workflow=self),
-            "Shipping5": Shipping.Shipping5(workflow=self),
-            "Shipping6": Shipping.Shipping6(workflow=self),
-            "ShippingComplete": Shipping.ShippingComplete(workflow=self),
+            "Shipping1": Shipping1(owner=self),
+            "Shipping2": Shipping2(owner=self),
+            "Shipping3": Shipping3(owner=self),
+            "Shipping4": Shipping4(owner=self),
+            "Shipping5": Shipping5(owner=self),
+            "Shipping6": Shipping6(owner=self),
+            "ShippingComplete": ShippingComplete(owner=self),
 
-            "Transit1": Transit.Transit1(workflow=self),
-            "TransitComplete": Transit.TransitComplete(workflow=self),
+            "Transit1": Transit1(owner=self),
+            "TransitComplete": TransitComplete(owner=self),
 
-            "Receiving1": Receiving.Receiving1(workflow=self),
-            "Receiving2": Receiving.Receiving2(workflow=self),
-            "Receiving3": Receiving.Receiving3(workflow=self),
-            "ReceivingComplete": Receiving.ReceivingComplete(workflow=self),
-
-            "WidgetTest1": WidgetTest.WidgetTest1(workflow=self),
-            "WidgetTestComplete": WidgetTest.WidgetTestComplete(workflow=self),
+            "Receiving1": Receiving1(owner=self),
+            "Receiving2": Receiving2(owner=self),
+            "Receiving3": Receiving3(owner=self),
+            "ReceivingComplete": ReceivingComplete(owner=self),
         }
         logger.info("...finished creating pages")
 
@@ -139,14 +159,13 @@ class WorkflowWidget(qtw.QWidget):
             "PackingComplete": None,
 
             "PreShipping1": "PreShipping2",
-            "PreShipping2": "PreShipping3",
-            "PreShipping3": "PreShipping4a",
-            "PreShipping4a": "PreShipping4b",
-            "PreShipping4b": "PreShipping5",
+            "PreShipping2": "PreShipping3a",
+            "PreShipping3a": "PreShipping3b",
+            "PreShipping3b": "PreShipping4",
+            "PreShipping4": "PreShipping5",
             "PreShipping5": "PreShipping6",
-            "PreShipping6": "PreShipping7",
-            "PreShipping7": "PreShippingComplete",
-            "PreShippingComplete": "Shipping1",
+            "PreShipping6": "PreShippingComplete",
+            "PreShippingComplete": None,
 
             "Shipping1": "Shipping2",
             "Shipping2": "Shipping3",
@@ -164,9 +183,6 @@ class WorkflowWidget(qtw.QWidget):
             "Receiving2": "Receiving3",
             "Receiving3": "ReceivingComplete",
             "ReceivingComplete": None,
-
-            "WidgetTest1": "WidgetTestComplete",
-            "WidgetTestComplete": None,
         }
 
         self._prev_page = {
@@ -178,15 +194,14 @@ class WorkflowWidget(qtw.QWidget):
 
             "PreShipping1": "SelectWorkflow",
             "PreShipping2": "PreShipping1",
-            "PreShipping3": "PreShipping2",
-            "PreShipping4a": "PreShipping3",
-            "PreShipping4b": "PreShipping4a",
-            "PreShipping5": "PreShipping4b",
+            "PreShipping3a": "PreShipping2",
+            "PreShipping3b": "PreShipping3a",
+            "PreShipping4": "PreShipping3b",
+            "PreShipping5": "PreShipping4",
             "PreShipping6": "PreShipping5",
-            "PreShipping7": "PreShipping6",
-            #"PreShippingComplete": "PreShipping7
             "PreShippingComplete": None,
-            
+            #"PreShippingComplete": "PreShipping6",
+
             "Shipping1": "SelectWorkflow",
             "Shipping2": "Shipping1",
             "Shipping3": "Shipping2",
@@ -203,9 +218,6 @@ class WorkflowWidget(qtw.QWidget):
             "Receiving2": "Receiving1",
             "Receiving3": "Receiving2",
             "ReceivingComplete": None,
-
-            "WidgetTest1": "SelectWorkflow",
-            "WidgetTestComplete": "WidgetTest1",
         }
 
         #self.test_widget = qtw.QLabel("Test Widget")
@@ -244,10 +256,8 @@ class WorkflowWidget(qtw.QWidget):
                 next_page_id = "Transit1"
             elif page_state['workflow_type'] == "receiving":
                 next_page_id = "Receiving1"
-            elif page_state['workflow_type'] == "widgettest":
-                next_page_id = "WidgetTest1"
             else:
-                logger.warning(f"unrecognized workflow type {page_state['workflow_type']}")
+                logger.warning(f"unrecognized workflow type {self.workflow_type}")
                 next_page_id = "SelectWorkflow"
 
             self.set_current_page(next_page_id)
@@ -261,8 +271,10 @@ class WorkflowWidget(qtw.QWidget):
 
         prev_page_id = self._prev_page[self.current_page_id]
         if prev_page_id is not None:
+            #self.set_page(prev_page)
             self.set_current_page(prev_page_id)
             return
+        #print("special handling code")
 
     @property
     def part_id(self):
@@ -277,16 +289,6 @@ class WorkflowWidget(qtw.QWidget):
                     os.path.join(self.application.working_directory, self.part_id))
         os.makedirs(retval, exist_ok=True)
         return retval
-
-
-    def close_tab_requested(self):
-        # The application is asking to close this tab. Return True if it's okay
-        # to close it, otherwise return False
-        # Delegate this to the page that's currently showing.
-        return self.current_page_widget.close_tab_requested()
-
-    def get_page_by_id(self, page_id):
-        return self._page_lookup.get(page_id, None) 
 
 
     #}}}

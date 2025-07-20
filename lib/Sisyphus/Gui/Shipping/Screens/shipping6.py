@@ -10,19 +10,16 @@ from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
 from Sisyphus.Gui.Shipping import Widgets as zw
-from Sisyphus.Gui.Shipping.Widgets.PageWidget import PageWidget
 
 from PyQt5 import QtCore as qtc
 from PyQt5 import QtWidgets as qtw
 
 ###############################################################################
 
-class TransitComplete(PageWidget):
+class Shipping6(zw.PageWidget):
+    page_name = "Shipping Workflow (6)"
+    page_short_name = "Shipping (6)"
 
-    page_name = "Transit Workflow Complete"
-    page_short_name = "Transit Complete"
-    _warn_before_closing = False
-    
     def __init__(self, *args, **kwargs):
         #{{{
         super().__init__(*args, **kwargs)
@@ -35,15 +32,18 @@ class TransitComplete(PageWidget):
         main_layout = qtw.QVBoxLayout()
         main_layout.addWidget(self.title_bar)
 
-        ########################################
+        #############################
 
-        main_layout.addWidget(qtw.QLabel(f"{self.__class__.__name__}"))
-        
+        main_layout.addWidget(
+            qtw.QLabel("(Optional)\n"
+                    "A CSV file [TBD] has been saved in your working directory.\n"
+                    "You may wish to email it and other documents to your collaborators."))
+
         main_layout.addStretch()
 
         main_layout.addWidget(self.nav_bar)
-        self.nav_bar.set_buttons(['close'])
-
         self.setLayout(main_layout)
         #}}}
 
+    def update(self):
+        self.nav_bar.continue_button.setText("Finish")

@@ -99,7 +99,7 @@ class SelectPID(PageWidget):
     def lookup_pid(self):
         #{{{
 
-        part_id = self.page_state['search_part_id']
+        part_id = self.page_state['search_part_id'] or ""
 
         with self.wait():
             wfst = _executor.submit(
@@ -112,7 +112,6 @@ class SelectPID(PageWidget):
             #                        part_id,
             #                        refresh=True, # don't use the cache
             #                        status_callback=self.application.update_status)
-            self.application.processEvents()
             workflow_state = wfst.result()
 
         # If the part was not found, download_part_info will return a dict

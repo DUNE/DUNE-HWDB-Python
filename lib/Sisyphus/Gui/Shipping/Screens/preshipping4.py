@@ -10,12 +10,12 @@ from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
 from Sisyphus.Gui.Shipping import Widgets as zw
-from Sisyphus.Gui.Shipping.Widgets.PageWidget import PageWidget
+from Sisyphus.Gui.Shipping.ShippingLabel import ShippingLabel
 
 from PyQt5 import QtCore as qtc
 from PyQt5 import QtWidgets as qtw
 
-from datetime import datetime
+
 import csv
 import json
 import smtplib
@@ -23,18 +23,18 @@ import os
 
 ###############################################################################
 
-class PreShipping5(PageWidget):
+class PreShipping4(zw.PageWidget):
     
-    page_name = "Pre-Shipping Workflow (5)"
-    page_short_name = "Pre-Shipping (5)"
+    page_name = "Pre-Shipping Workflow (4)"
+    page_short_name = "Pre-Shipping (4)"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.email_contents = zw.ZTextEdit(page=self, key='email_contents')
+        self.email_contents = zw.ZTextEdit(owner=self, key='email_contents')
         
         self.confirm_email_contents = zw.ZCheckBox('I have sent the email',
-                        page=self, key='confirm_email_contents')
+                        owner=self, key='confirm_email_contents')
         self.instructions = qtw.QLabel('Paste the following into an email message and '
                     'send it to the FD Logistics team:')
         self.instructions.setWordWrap(True)
@@ -111,14 +111,13 @@ class PreShipping5(PageWidget):
                     'send it to the FD Logistics team:')
         self.instructions.setText(instructions) 
 
-        qarep_name = workflow_state['PreShipping2']['qa_rep_name']
-        qarep_email = workflow_state['PreShipping2']['qa_rep_email']
 
-        poc_email = (f"{workflow_state['PreShipping3']['approver_name']} "
-                    f"&lt;{workflow_state['PreShipping3']['approver_email']}&gt;")
 
-        email_from = (f"{self.application.user_full_name} "
-                    f"&lt;{self.application.user_email}&gt;")
+        poc_email = (f"{workflow_state['PreShipping2']['approver_name']} "
+                    f"&lt;{workflow_state['PreShipping2']['approver_email']}&gt;")
+
+        email_from = (f"{workflow_state['SelectPID']['user_name']} "
+                    f"&lt;{workflow_state['SelectPID']['user_email']}&gt;")
         email_to = f"FD Logistics Team &lt;sdshipments@fnal.gov&gt;"
         email_subject = "Request an acknowledgement for a new shipment"
         
@@ -130,27 +129,17 @@ class PreShipping5(PageWidget):
             f"""<tr><td colspan="2">&nbsp;</td></tr>"""
             f"""<tr><td colspan="2">"""
 
+
             f"Dear FD Logistics team,<br/>\n<br/>\n"
-            f"I would like to request a new shipment.<br/>\n"
-            f"This shipment has been approved by the Consortium QA Representative, {qarep_name} ({qarep_email}).<br/>\n<br/>\n"
+            f"I would like to request a new shipment. "
             f"Please find the attached csv file, {self.csv_filename}, that contains the "
-            f"required information for this shipment. <br/>\n<br/>\nShould there be any issue with this "
+            f"required information for this shipment. Should there be any issue with this "
             f"shipment, email to:\n"
             f"<ul><li>{poc_email}</li></ul>\n"
             f"Sincerely,<br/>\n<br/>\n"
-            f"{self.application.user_full_name}<br/>\n<br/>\n"
+            f"{workflow_state['SelectPID']['user_name']}<br/>\n"
+            f"{workflow_state['SelectPID']['user_email']}<br/>\n"
             f"Attachment: {self.csv_filename}\n"
-
-            #f"Dear FD Logistics team,<br/>\n<br/>\n"
-            #f"I would like to request a new shipment. "
-            #f"Please find the attached csv file, {self.csv_filename}, that contains the "
-            #f"required information for this shipment. Should there be any issue with this "
-            #f"shipment, email to:\n"
-            #f"<ul><li>{poc_email}</li></ul>\n"
-            #f"Sincerely,<br/>\n<br/>\n"
-            #f"{self.application.user_full_name}<br/>\n"
-            #f"{self.application.user_email}<br/>\n"
-            #f"Attachment: {self.csv_filename}\n"
 
             f"""</td>"""            
             f"""</table>"""
@@ -162,11 +151,9 @@ class PreShipping5(PageWidget):
 
     def generate_csv(self):
         #{{{
-        #print("Creating CSV...")
+        print("Creating CSV...")
 
-        #self.csv_filename = f"{self.workflow_state['part_info']['part_id']}-preshipping.csv"
-        mycurrenttime = datetime.now().strftime("%Y-%m-%d-%H-%M")
-        self.csv_filename = f"{self.workflow_state['part_info']['part_id']}-preshipping-{mycurrenttime}.csv"
+        self.csv_filename = f"{self.workflow_state['part_info']['part_id']}-preshipping.csv"
         self.csv_full_filename = os.path.join(
                 self.workflow.working_directory, self.csv_filename)
 
@@ -175,49 +162,49 @@ class PreShipping5(PageWidget):
 
             csvwriter.writerow([
                 "Dimension",
-                self.workflow_state['PreShipping4a']['dimension']
+                self.workflow_state['PreShipping3a']['dimension']
             ])
             csvwriter.writerow([
                 "Weight",
-                self.workflow_state['PreShipping4a']['weight']
+                self.workflow_state['PreShipping3a']['weight']
             ])
             csvwriter.writerow([
                 "Freight Forwarder name",
-                self.workflow_state['PreShipping4b']['freight_forwarder']
+                self.workflow_state['PreShipping3b']['freight_forwarder']
             ])
             csvwriter.writerow([
                 "Mode of Transportation",
-                self.workflow_state['PreShipping4b']['mode_of_transportation']
+                self.workflow_state['PreShipping3b']['mode_of_transportation']
             ])
             csvwriter.writerow([
                 "Expected Arrival Date (CST)",
-                self.workflow_state['PreShipping4b']['expected_arrival_time']
+                self.workflow_state['PreShipping3b']['expected_arrival_time']
             ])
             csvwriter.writerow([
                 "Shipment's origin",
-                self.workflow_state['PreShipping4a']['shipment_origin']
+                self.workflow_state['PreShipping3a']['shipment_origin']
             ])
             csvwriter.writerow([
                 "HTS code",
-                self.workflow_state['PreShipping4a']['hts_code']
+                self.workflow_state['PreShipping3a']['hts_code']
             ])
             csvwriter.writerow([])
-            #csvwriter.writerow([
-            #    "QA/QC related information for this shipment can be found here",
-            #    self.workflow_state['PreShipping2']['test_info']
-            #])
-            #csvwriter.writerow([])
+            csvwriter.writerow([
+                "QA/QC related information for this shipment can be found here",
+                self.workflow_state['PreShipping2']['test_info']
+            ])
+            csvwriter.writerow([])
             csvwriter.writerow([
                 "System Name (ID)",
-                f"{self.workflow_state['part_info']['system_name']} ({self.workflow_state['part_info']['system_id']})"
+                "TBD"
             ])
             csvwriter.writerow([
                 "Subsystem Name (ID)",
-                f"{self.workflow_state['part_info']['subsystem_name']} ({self.workflow_state['part_info']['subsystem_id']})"
+                "TBD"
             ])
             csvwriter.writerow([
                 "Component Type Name (ID)",
-                f"{self.workflow_state['part_info']['part_type_name']} ({self.workflow_state['part_info']['part_type_id']})"
+                "TBD"
             ])
             csvwriter.writerow([
                 "DUNE PID",
@@ -237,8 +224,8 @@ class PreShipping5(PageWidget):
                 ])
         #}}}
 
-    def refresh(self):
-        super().refresh()
+    def update(self):
+        super().update()
 
         if self.confirm_email_contents.isChecked():
             self.nav_bar.continue_button.setEnabled(True)

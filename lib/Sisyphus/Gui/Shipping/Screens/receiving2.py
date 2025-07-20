@@ -10,27 +10,28 @@ from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
 from Sisyphus.Gui.Shipping import Widgets as zw
-from Sisyphus.Gui.Shipping.Widgets.PageWidget import PageWidget
-from Sisyphus.Gui.Shipping.Tasks import Database as dbt
+from Sisyphus.Gui.Shipping import Model as mdl
 from PyQt5 import QtCore as qtc
 from PyQt5 import QtWidgets as qtw
 
+HLD = highlight = "[bg=#999999,fg=#ffffff]"
+HLI = highlight = "[bg=#009900,fg=#ffffff]"
+HLW = highlight = "[bg=#999900,fg=#ffffff]"
+HLE = highlight = "[bg=#990000,fg=#ffffff]"
+
 ###############################################################################
 
-class Transit1(PageWidget):
-    page_name = "Transit Workflow"
-    page_short_name = "Transit"
+class Receiving2(zw.PageWidget):
+    page_name = "Receiving Workflow (2)"
+    page_short_name = "Receiving (2)"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
-        self.location_history = zw.ZLocationHistory(page=self, 
-                            key='location_history', source='workflow:part_info')
-        self.new_location = zw.ZInstitutionWidget(page=self, 
-                            key='location', source='application:attr:locations')
-        self.arrival_time = zw.ZDateTimeEdit(page=self, key='arrived')
-        self.comments = zw.ZLineEdit(page=self, key='comments')
-        self.affirm_update = zw.ZCheckBox(page=self, 
+
+        self.new_location = zw.ZInstitutionWidget(owner=self, key='location')        
+        self.arrival_time = zw.ZDateTimeEdit(owner=self, key='arrived')
+        self.comments = zw.ZLineEdit(owner=self, key='comments')
+        self.affirm_update = zw.ZCheckBox(owner=self, 
                         text="Yes, update the location now", key='affirm_update')
 
         self._setup_UI()
@@ -41,9 +42,6 @@ class Transit1(PageWidget):
         main_layout.addWidget(self.title_bar)        
 
         ########################################
-
-        main_layout.addWidget(self.location_history)
-
 
         main_layout.addWidget(
             qtw.QLabel("Please update the Location record for this shipment."))
@@ -76,9 +74,9 @@ class Transit1(PageWidget):
         self.setLayout(main_layout)
         #}}}
 
-    def refresh(self):
+    def update(self):
         #{{{
-        super().refresh()
+        super().update()
 
         if not self.new_location.institution_id:
             self.nav_bar.continue_button.setEnabled(False)
@@ -92,12 +90,11 @@ class Transit1(PageWidget):
         #}}}
 
     def update_location(self):
-        with self.wait():
-            ok = dbt.update_location(
-                            part_id=self.part_id, 
-                            location=self.page_state["location"]["institution_id"],
-                            arrived=self.page_state["arrived"],
-                            comments=self.page_state["comments"])
+        ok = mdl.update_locations_and_detach(
+                        part_id=self.part_id, 
+                        location=self.page_state["location"],
+                        arrived=self.page_state["arrived"],
+                        comments=self.page_state["comments"])
         return True
 
     def on_navigate_next(self):

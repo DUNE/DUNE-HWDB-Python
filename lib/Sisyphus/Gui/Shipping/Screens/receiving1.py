@@ -11,33 +11,31 @@ logger = config.getLogger(__name__)
 
 from Sisyphus.Utils.Terminal.Style import Style
 from Sisyphus.Gui.Shipping import Widgets as zw
-from Sisyphus.Gui.Shipping.Widgets.PageWidget import PageWidget
+from Sisyphus.Gui.Shipping.ShippingLabel import ShippingLabel
 
 from PyQt5 import QtWidgets as qtw
 
-class PreShipping1(PageWidget):
-    page_name = "Pre-Shipping Workflow (1)"
-    page_short_name = "Pre-Shipping (1)"
+class Receiving1(zw.PageWidget):
+    page_name = "Receiving Workflow (1)"
+    page_short_name = "Receiving (1)"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         # Create the interactive widgets on this page
 
-        self.part_details = zw.ZPartDetails(
-                                    page=self, 
-                                    key='part_details', 
-                                    source='workflow:part_info')
-        self.part_details.setMinimumSize(600, 400)        
+        self.subcomp_caption = qtw.QLabel("Contents")
+
+        self.table = qtw.QTableWidget(0, 3)
+        self.table.verticalHeader().setVisible(False)
 
         msg = "The list of components for this shipment is correct"
-        self.confirm_list_checkbox = zw.ZCheckBox(page=self, text=msg, key="confirm_list")
+        self.confirm_list_checkbox = zw.ZCheckBox(owner=self, text=msg, key="confirm_list")
         
 
         msg = "All necessary QA/QC information for these components " \
                     "has been stored in the HWDB"
-        self.confirm_hwdb_updated_checkbox = zw.ZCheckBox(page=self, text=msg, key="hwdb_updated")
-
+        self.confirm_hwdb_updated_checkbox = zw.ZCheckBox(owner=self, text=msg, key="hwdb_updated")
         
         # Create the actual layout and place the interactive widgets in it
         self._setup_UI()
@@ -54,14 +52,13 @@ class PreShipping1(PageWidget):
         main_layout.addWidget(self.title_bar)
         ########################################
 
-        '''
         subcomp_list_layout = qtw.QVBoxLayout()
         subcomp_list_layout.addWidget( self.subcomp_caption )
         subcomp_list_layout.addSpacing(5)
         horizontal_header = self.table.horizontalHeader()
         horizontal_header.resizeSection(0, 200)
-        horizontal_header.resizeSection(1, 260)
-        horizontal_header.resizeSection(2, 260)
+        horizontal_header.resizeSection(1, 275)
+        horizontal_header.resizeSection(2, 275)
         self.table.setHorizontalHeaderLabels(['Sub-component PID',
                             'Component Type Name', 'Functional Position Name'])
         subcomp_list_layout.addWidget(self.table)
@@ -69,19 +66,14 @@ class PreShipping1(PageWidget):
         subcomp_list_widget.setLayout(subcomp_list_layout)
         main_layout.addWidget(subcomp_list_widget)
         main_layout.addSpacing(10)
-        '''
 
         ########################################
 
-        main_layout.addWidget(self.part_details)
-        main_layout.addSpacing(10)
-
-        ########################################
 
         main_layout.addWidget(qtw.QLabel("Please affirm the following:"))
 
         affirm_layout = qtw.QHBoxLayout()
-        #affirm_layout.addSpacing(10)
+        affirm_layout.addSpacing(10)
 
         indented_layout = qtw.QVBoxLayout()
         indented_layout.addWidget(self.confirm_list_checkbox)
@@ -95,19 +87,17 @@ class PreShipping1(PageWidget):
 
         ########################################
 
-        #main_layout.addWidget(self.my_text_box)
         main_layout.addStretch()
 
         main_layout.addWidget(self.nav_bar)
 
         self.setLayout(main_layout)
-        #}}}z
+        #}}}
 
     def restore(self):
         super().restore()
-        #self.populate_subcomps()
+        self.populate_subcomps()
 
-    '''
     def populate_subcomps(self):
 
         if self.workflow_state.get('part_info', None) is None:
@@ -121,10 +111,9 @@ class PreShipping1(PageWidget):
             self.table.setItem(idx, 0, qtw.QTableWidgetItem(subcomp['Sub-component PID']))
             self.table.setItem(idx, 1, qtw.QTableWidgetItem(subcomp['Component Type Name']))
             self.table.setItem(idx, 2, qtw.QTableWidgetItem(subcomp['Functional Position Name']))
-    '''    
-
-    def refresh(self):
-        super().refresh()
+    
+    def update(self):
+        super().update()
 
         if (self.page_state.get('confirm_list', False) 
                     and self.page_state.get('hwdb_updated', False)):

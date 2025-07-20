@@ -56,21 +56,14 @@ class Application(qtw.QApplication):
                                 config.active_profile.profile_dir, "shipping_conf.json")
 
         self._whoami = dm.WhoAmI()
-        self.current_style = 'dark'
+        self.current_style = 'light'
         self.load_state()
         self.load_institutions()
 
-        #if self.application_state.setdefault('style', 'light') == 'light':
-        #    self.setStyleSheet_light()
-        #elif self.application_state['style'] == 'dark':
-        #    self.setStyleSheet_dark() 
-        #else:
-        #    self.setStyleSheet_sisyphus()
-
-        if self.application_state.setdefault('style', 'dark') == 'dark':
-            self.setStyleSheet_dark()
-        elif self.application_state['style'] == 'light':
-            self.setStyleSheet_light() 
+        if self.application_state.setdefault('style', 'light') == 'light':
+            self.setStyleSheet_light()
+        elif self.application_state['style'] == 'dark':
+            self.setStyleSheet_dark() 
         else:
             self.setStyleSheet_sisyphus()
 
@@ -441,6 +434,4 @@ class Application(qtw.QApplication):
         new_widget = qtw.QLabel("Test Widget")
         self.tab_widget.addTab(new_widget, "Test!")
     #}}}
-
-
 
