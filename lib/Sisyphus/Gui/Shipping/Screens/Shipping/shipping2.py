@@ -43,8 +43,41 @@ class Shipping2(PageWidget):
         #############################
 
 
-        main_layout.addWidget(
-                qtw.QLabel("Select Bill of Lading image file:"))
+
+        #main_layout.addWidget(
+        #        qtw.QLabel("Select Bill of Lading image file:"))
+        
+        Departmess = qtw.QLabel("If it is your shipping department who interacts with the Freight Forwarder office on behalf of you, " \
+        "make sure to make them to follow the procedure below.")
+        Departmess.setWordWrap(True)
+        #Departmess.setStyleSheet("""
+        #        font-size: 14pt;
+        #    """)
+        main_layout.addWidget(Departmess)
+
+        BoLTypemess = qtw.QLabel("For this Bill of Lading (BoL), request your carrier to employ a BoL type,"\
+        "\"Through Seaway BoL\" or \"Through BoL with an express release\".")
+        BoLTypemess.setWordWrap(True)
+        #BoLTypemess.setStyleSheet("""
+        #        font-size: 14pt;
+        #    """)
+        main_layout.addWidget(BoLTypemess)
+
+        BoLRequestmess = qtw.QLabel("- Request your carrier to include the shipment PID and its Component Type Name in its BoL.\n" \
+        "- Request them to send you the finalized BoL electronically. The image type must be jpg, png, or pdf.")
+        BoLRequestmess.setWordWrap(True)
+        #BoLRequestmess.setStyleSheet("""
+        #        font-size: 14pt;
+        #    """)
+        main_layout.addWidget(BoLRequestmess)
+
+        SelectBoLmess = qtw.QLabel("Select Bill of Lading image file:")
+        SelectBoLmess.setWordWrap(True)
+        #SelectBoLmess.setStyleSheet("""
+        #        font-size: 14pt;
+        #    """)
+        main_layout.addWidget(SelectBoLmess)
+
         main_layout.addWidget(self.bol_file)
        
         main_layout.addSpacing(20)
@@ -52,6 +85,18 @@ class Shipping2(PageWidget):
 
         proforma_layout = qtw.QVBoxLayout()
         proforma_layout.setContentsMargins(0, 0, 0, 0)
+
+        proforma_layout.addSpacing(20)
+        Proformamess = qtw.QLabel("- For an international shipment, a Proforma Invoice (i.e., commercial invoice) is " \
+        "required additionally.\n- Again, make sure to request your carrier to include the shipment PID and its Component " \
+        "Type Name in the invoice.\n- Request them to send you the finalized invoice electronically. " \
+        "The image type must be jpg, png, or pdf.")
+        Proformamess.setWordWrap(True)
+        #Proformamess.setStyleSheet("""
+        #        font-size: 14pt;
+        #    """)
+        proforma_layout.addWidget(Proformamess)
+
         self.proforma_container.setLayout(proforma_layout)
         main_layout.addWidget(self.proforma_container)
 
@@ -61,6 +106,18 @@ class Shipping2(PageWidget):
         proforma_layout.addWidget(
                 qtw.QLabel("Select Proforma image file:"))
         proforma_layout.addWidget(self.proforma_file)
+
+
+        main_layout.addSpacing(40)
+
+        self.upload_message = qtw.QLabel(f"Click 'Continue' to upload the selected shipping documentation(s)"\
+                                         f" to the HWDB.")
+        self.upload_message.setWordWrap(True)
+        #self.upload_message.setStyleSheet("""
+        #        font-size: 14pt;
+        #    """)
+        main_layout.addWidget(self.upload_message)
+
 
 
         #############################
@@ -105,7 +162,8 @@ class Shipping2(PageWidget):
             username = self.application.whoami['username']
             timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M")
             file_ext = filename.split('.')[-1]
-            new_filename = f"{prefix}-{username}-{timestamp}.{file_ext}"
+            #new_filename = f"{prefix}-{username}-{timestamp}.{file_ext}"
+            new_filename = f"{prefix}-{timestamp}.{file_ext}"
             return new_filename
 
         def upload_file(filename, file_prefix, node_name):

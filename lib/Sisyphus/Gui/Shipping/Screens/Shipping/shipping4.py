@@ -107,6 +107,19 @@ class Shipping4(PageWidget):
         affirm_widget = qtw.QWidget()
         affirm_widget.setLayout(affirm_layout)
         main_layout.addWidget(affirm_widget)
+
+        main_layout.addSpacing(20)
+
+        self.upload_message = qtw.QLabel(f'''Click 'Continue' to upload the followings to the HWDB:\n\n'''\
+            f'''  1. The selected photo of the approved message\n'''\
+            f'''  2. Everything you have provided in this shipping checklist '''\
+        )
+        self.upload_message.setWordWrap(True)
+        self.upload_message.setStyleSheet("""
+                font-size: 14pt;
+            """)
+        main_layout.addWidget(self.upload_message)
+
         ################
 
         main_layout.addStretch()
@@ -144,7 +157,8 @@ class Shipping4(PageWidget):
             username = self.application.whoami['username']
             timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M")
             file_ext = filename.split('.')[-1]
-            new_filename = f"{prefix}-{username}-{timestamp}.{file_ext}"
+            #new_filename = f"{prefix}-{username}-{timestamp}.{file_ext}"
+            new_filename = f"{prefix}-{timestamp}.{file_ext}"
             return new_filename
 
         def upload_file(filename, file_prefix, node_name):

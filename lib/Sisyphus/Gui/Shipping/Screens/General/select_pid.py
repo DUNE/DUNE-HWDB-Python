@@ -99,7 +99,7 @@ class SelectPID(PageWidget):
     def lookup_pid(self):
         #{{{
 
-        part_id = self.page_state['search_part_id']
+        part_id = self.page_state['search_part_id'] or ""
 
         with self.wait():
             wfst = _executor.submit(

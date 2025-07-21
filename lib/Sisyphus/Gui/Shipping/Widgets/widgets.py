@@ -172,7 +172,8 @@ class ZPartDetails(qtw.QWidget, LinkedWidget):
                     subcomp = {
                         "Sub-component PID": "<empty>",
                         "Component Type Name": part_type_name,
-                        "Functional Position Name": func_pos
+                        "Functional Position Name": func_pos,
+                        "Status": "<empty>"
                     }
 
                 subcomp_pid_widget = qtw.QTableWidgetItem(subcomp['Sub-component PID'])

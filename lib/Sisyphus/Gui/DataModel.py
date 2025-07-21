@@ -65,7 +65,8 @@ class HWDBObject:
         if None in constructor_kwargs.values():
             logger.debug(f"{cls.__name__}: returning empty object")
             cls._statistics['empty'] += 1
-            return super().__new__()
+            print(kwargs)
+            return super().__new__(cls)
 
         # Prevent two different threads from accessing the cache at the
         # same time. If two threads come trying to create the same

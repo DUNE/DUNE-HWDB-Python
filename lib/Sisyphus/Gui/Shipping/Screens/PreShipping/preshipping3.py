@@ -36,9 +36,21 @@ class PreShipping3(PageWidget):
         main_layout.addWidget(self.title_bar)
         ########################################
 
-        main_layout.addWidget(
-            qtw.QLabel("Provide the person's name and email address who has approved this shipment")
-        )
+        #main_layout.addWidget(
+        #    qtw.QLabel("Provide the person's name and email address who has approved this shipment")
+        #)
+        POCmess = qtw.QLabel("Provide the name and email address the point of contact (POC) person for this shipment.")
+        #POCmess.setStyleSheet("""
+        #        font-size: 14pt;
+        #    """)
+        POCmess.setWordWrap(True)
+        main_layout.addWidget(POCmess)
+        POCmess2 = qtw.QLabel("This POC will be also contacted in case of shipment failure.")
+        #POCmess2.setStyleSheet("""
+        #        font-size: 14pt;
+        #    """)
+        POCmess2.setWordWrap(True)
+        main_layout.addWidget(POCmess2)
 
         main_layout.addWidget(
             qtw.QLabel("(For multiple email addresses, each address should be separated by a comma)")

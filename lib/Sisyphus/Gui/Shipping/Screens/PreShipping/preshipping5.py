@@ -15,7 +15,7 @@ from Sisyphus.Gui.Shipping.Widgets.PageWidget import PageWidget
 from PyQt5 import QtCore as qtc
 from PyQt5 import QtWidgets as qtw
 
-
+from datetime import datetime
 import csv
 import json
 import smtplib
@@ -111,7 +111,8 @@ class PreShipping5(PageWidget):
                     'send it to the FD Logistics team:')
         self.instructions.setText(instructions) 
 
-
+        qarep_name = workflow_state['PreShipping2']['qa_rep_name']
+        qarep_email = workflow_state['PreShipping2']['qa_rep_email']
 
         poc_email = (f"{workflow_state['PreShipping3']['approver_name']} "
                     f"&lt;{workflow_state['PreShipping3']['approver_email']}&gt;")
@@ -129,17 +130,27 @@ class PreShipping5(PageWidget):
             f"""<tr><td colspan="2">&nbsp;</td></tr>"""
             f"""<tr><td colspan="2">"""
 
-
             f"Dear FD Logistics team,<br/>\n<br/>\n"
-            f"I would like to request a new shipment. "
+            f"I would like to request a new shipment.<br/>\n"
+            f"This shipment has been approved by the Consortium QA Representative, {qarep_name} ({qarep_email}).<br/>\n<br/>\n"
             f"Please find the attached csv file, {self.csv_filename}, that contains the "
-            f"required information for this shipment. Should there be any issue with this "
+            f"required information for this shipment. <br/>\n<br/>\nShould there be any issue with this "
             f"shipment, email to:\n"
             f"<ul><li>{poc_email}</li></ul>\n"
             f"Sincerely,<br/>\n<br/>\n"
-            f"{self.application.user_full_name}<br/>\n"
-            f"{self.application.user_email}<br/>\n"
+            f"{self.application.user_full_name}<br/>\n<br/>\n"
             f"Attachment: {self.csv_filename}\n"
+
+            #f"Dear FD Logistics team,<br/>\n<br/>\n"
+            #f"I would like to request a new shipment. "
+            #f"Please find the attached csv file, {self.csv_filename}, that contains the "
+            #f"required information for this shipment. Should there be any issue with this "
+            #f"shipment, email to:\n"
+            #f"<ul><li>{poc_email}</li></ul>\n"
+            #f"Sincerely,<br/>\n<br/>\n"
+            #f"{self.application.user_full_name}<br/>\n"
+            #f"{self.application.user_email}<br/>\n"
+            #f"Attachment: {self.csv_filename}\n"
 
             f"""</td>"""            
             f"""</table>"""
@@ -153,7 +164,9 @@ class PreShipping5(PageWidget):
         #{{{
         #print("Creating CSV...")
 
-        self.csv_filename = f"{self.workflow_state['part_info']['part_id']}-preshipping.csv"
+        #self.csv_filename = f"{self.workflow_state['part_info']['part_id']}-preshipping.csv"
+        mycurrenttime = datetime.now().strftime("%Y-%m-%d-%H-%M")
+        self.csv_filename = f"{self.workflow_state['part_info']['part_id']}-preshipping-{mycurrenttime}.csv"
         self.csv_full_filename = os.path.join(
                 self.workflow.working_directory, self.csv_filename)
 
@@ -189,22 +202,22 @@ class PreShipping5(PageWidget):
                 self.workflow_state['PreShipping4a']['hts_code']
             ])
             csvwriter.writerow([])
-            csvwriter.writerow([
-                "QA/QC related information for this shipment can be found here",
-                self.workflow_state['PreShipping2']['test_info']
-            ])
-            csvwriter.writerow([])
+            #csvwriter.writerow([
+            #    "QA/QC related information for this shipment can be found here",
+            #    self.workflow_state['PreShipping2']['test_info']
+            #])
+            #csvwriter.writerow([])
             csvwriter.writerow([
                 "System Name (ID)",
-                "TBD"
+                f"{self.workflow_state['part_info']['system_name']} ({self.workflow_state['part_info']['system_id']})"
             ])
             csvwriter.writerow([
                 "Subsystem Name (ID)",
-                "TBD"
+                f"{self.workflow_state['part_info']['subsystem_name']} ({self.workflow_state['part_info']['subsystem_id']})"
             ])
             csvwriter.writerow([
                 "Component Type Name (ID)",
-                "TBD"
+                f"{self.workflow_state['part_info']['part_type_name']} ({self.workflow_state['part_info']['part_type_id']})"
             ])
             csvwriter.writerow([
                 "DUNE PID",

@@ -113,7 +113,6 @@ class PreShipping7(PageWidget):
             "Component Type Name (ID)": f"{ws['part_info']['part_type_name']}"
                                 f" ({ws['part_info']['part_type_id']})",
             "DUNE PID": part_id,
-            "QA/QC related info Line 1": ws['PreShipping2']['test_info'],
             "HTS code": ws['PreShipping4a']['hts_code'] 
                                if ws['PreShipping4a']['shipping_service_type'] 
                                     != 'Domestic' else None ,

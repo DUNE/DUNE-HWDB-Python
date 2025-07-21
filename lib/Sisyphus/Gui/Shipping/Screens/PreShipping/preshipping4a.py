@@ -70,7 +70,7 @@ class PreShipping4a(PageWidget):
                 "Provide your Harmonized Tariff Schedule (HTS) code.\n"
                 " - Use the HTS code that your institution or lab used in the past successfully\n"
                 " - Else, for Equipment and Materials for the LBNF & DUNE Scientific Projects, "
-                    "use 8543.90.8845 (parts of particle accelerators"
+                    "use 8543.90.8845 (parts of particle accelerators)."
         )
         intl_label_2.setWordWrap(True)
         intl_label_2.setStyleSheet("""
