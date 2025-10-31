@@ -47,32 +47,35 @@ class PreShipping6(PageWidget):
 
         ########################################
 
-        label1 = qtw.QLabel(
+        self.label1 = qtw.QLabel(
                 "An email has been sent to the FD Logistics Team."
                 "Do not continue until you have received an acknowledgement from them."
         )
-        label1.setWordWrap(True)
-        main_layout.addWidget(label1)
+        self.label1.setWordWrap(True)
+        main_layout.addWidget(self.label1)
         main_layout.addSpacing(15)
 
-
+        self.mess_label = qtw.QLabel("Have you received an acknowledgement from the FD Logistics team?")
         main_layout.addWidget(
-            qtw.QLabel("Have you received an acknowledgement from the FD Logistics team?")
+            self.mess_label 
         )
 
         main_layout.addWidget(
             self.received_acknowledgement
         )
 
-        main_layout.addWidget(qtw.QLabel("Acknowledged by whom?"))
+        self.mess_label2 = qtw.QLabel("Acknowledged by whom?")
+        main_layout.addWidget(self.mess_label2)
         main_layout.addWidget(self.acknowledged_by)
 
-        main_layout.addWidget(qtw.QLabel("When acknowledged (date/time in Central Time)?"))
+        self.mess_label3 = qtw.QLabel("When acknowledged (date/time in Central Time)?")
+        main_layout.addWidget(self.mess_label3)
         main_layout.addWidget(self.acknowledged_time)
 
         main_layout.addSpacing(15)
+        self.mess_label4 = qtw.QLabel("Is there any visually obvious damage on the shipment?")
         main_layout.addWidget(
-            qtw.QLabel("Is there any visually obvious damage on the shipment?")
+            self.mess_label4
         )
 
         main_layout.addWidget(self.damage_status.button('no damage'))
@@ -94,17 +97,41 @@ class PreShipping6(PageWidget):
     def refresh(self):
         super().refresh()
 
+        # --- dynamically show/hide things ---
+        select_pid_state = self.workflow_state.get("SelectPID", {})
+        is_surf = select_pid_state.get("confirm_surf", False)
+
+        if not is_surf:
+            self.label1.hide()
+            self.mess_label.hide()
+            self.received_acknowledgement.hide()
+            self.acknowledged_by.hide()
+            self.mess_label2.hide()
+            self.mess_label3.hide()
+            self.acknowledged_time.hide()
+            self.mess_label4.hide()
+        else:
+            self.label1.show()
+            self.mess_label.show()
+            self.received_acknowledgement.show()
+            self.acknowledged_by.show()
+            self.mess_label2.show()
+            self.mess_label3.show()
+            self.acknowledged_time.show()
+
+        
         if self.page_state.get('damage_status', None) == 'no damage':
             self.damage_description.setEnabled(False)
         else:
             self.damage_description.setEnabled(True)
 
-        if not self.received_acknowledgement.isChecked():
-            self.nav_bar.continue_button.setEnabled(False)
-            return
+        if is_surf:
+            if not self.received_acknowledgement.isChecked():
+                self.nav_bar.continue_button.setEnabled(False)
+                return
 
-        if len(self.acknowledged_by.text()) == 0:
-            self.nav_bar.continue_button.setEnabled(False)
+            if len(self.acknowledged_by.text()) == 0:
+                self.nav_bar.continue_button.setEnabled(False)
             return
 
         if (self.page_state.get('damage_status', None) == 'damage' 

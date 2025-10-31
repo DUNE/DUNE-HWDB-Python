@@ -34,9 +34,13 @@ class PreShipping1(PageWidget):
         self.confirm_list_checkbox = zw.ZCheckBox(page=self, text=msg, key="confirm_list")
         
 
+        # show this only if shipping to SURF
+        #select_pid_state = self.workflow_state.get("SelectPID", {})
+        #if select_pid_state.get("confirm_surf", False):
         msg = "All necessary QA/QC information for these components " \
-                    "has been stored in the HWDB"
+          "has been stored in the HWDB"
         self.confirm_hwdb_updated_checkbox = zw.ZCheckBox(page=self, text=msg, key="hwdb_updated")
+        self.confirm_hwdb_updated_checkbox.hide()   # start hidden
 
         
         # Create the actual layout and place the interactive widgets in it
@@ -85,7 +89,12 @@ class PreShipping1(PageWidget):
 
         indented_layout = qtw.QVBoxLayout()
         indented_layout.addWidget(self.confirm_list_checkbox)
-        indented_layout.addWidget(self.confirm_hwdb_updated_checkbox)
+        
+        # show this only if shipping to SURF
+        #select_pid_state = self.workflow_state.get("SelectPID", {})
+        #if select_pid_state.get("confirm_surf", False):
+        indented_layout.addWidget(self.confirm_hwdb_updated_checkbox)  # always added, just hidden
+            
         indented_widget = qtw.QWidget()
         indented_widget.setLayout(indented_layout)
         affirm_layout.addWidget(indented_widget)
@@ -126,9 +135,28 @@ class PreShipping1(PageWidget):
     def refresh(self):
         super().refresh()
 
-        if (self.page_state.get('confirm_list', False) 
-                    and self.page_state.get('hwdb_updated', False)):
-            self.nav_bar.continue_button.setEnabled(True)
-        else:
-            self.nav_bar.continue_button.setEnabled(False)
+        # Redraw them?
 
+        
+        # show this only if shipping to SURF
+        select_pid_state = self.workflow_state.get("SelectPID", {})
+        is_surf = select_pid_state.get("confirm_surf", False)
+        # --- dynamically show/hide the checkbox ---
+        if is_surf:
+            self.confirm_hwdb_updated_checkbox.show()
+        else:
+            self.confirm_hwdb_updated_checkbox.hide()
+
+
+        # --- enable/disable Continue button logic ---
+        if is_surf:
+            if (self.page_state.get('confirm_list', False) 
+                    and self.page_state.get('hwdb_updated', False)):
+                self.nav_bar.continue_button.setEnabled(True)
+            else:
+                self.nav_bar.continue_button.setEnabled(False)
+        else:
+            if (self.page_state.get('confirm_list', False)):
+                self.nav_bar.continue_button.setEnabled(True)
+            else:
+                self.nav_bar.continue_button.setEnabled(False)

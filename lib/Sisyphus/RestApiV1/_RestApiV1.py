@@ -787,12 +787,21 @@ def get_hwitem(part_id, **kwargs):
 
 #-----------------------------------------------------------------------------
 
+#def get_hwitems(part_type_id, *,
+#                page=None, size=None, fields=None, serial_number=None, part_id=None, **kwargs):
 def get_hwitems(part_type_id, *,
-                page=None, size=None, fields=None, serial_number=None, part_id=None, **kwargs):
+                page=None, size=None, fields=None, serial_number=None, part_id=None, comments=None,
+                manufacturer=None,creator=None,country_of_origin=None,resp_institution=None,
+                status=None,location=None,certified_qaqc=None,qaqc_uploaded=None,is_installed=None,**kwargs):
     #{{{
     logger.debug(f"<{func_name()}> part_type_id={part_type_id},"
                 f"page={page}, size={size}, fields={fields}, "
-                f"serial_number={serial_number}, part_id={part_id}")
+                f"serial_number={serial_number}, part_id={part_id}, comments={comments},"
+                f"manufacturer={manufacturer}, creator={creator},"
+                f"country_of_origin={country_of_origin}, resp_institution={resp_institution},"
+                f"status={status}, location={location}, certified_qaqc={certified_qaqc},"
+                f"qaqc_uploaded={qaqc_uploaded}, is_installed={is_installed}")
+    
     profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/component-types/{sanitize(part_type_id)}/components"
     url = f"https://{profile.rest_api}/{path}"
@@ -806,10 +815,32 @@ def get_hwitems(part_type_id, *,
         params.append(("serial_number", serial_number))
     if part_id is not None:
         params.append(("part_id", part_id))
+    if comments is not None:
+        params.append(("comments", comments))
     ## *** currently broken in REST API
     if fields is not None:
         params.append(("fields", ",".join(fields)))
 
+    if manufacturer is not None:
+        params.append(("manufacturer", manufacturer))
+    if creator is not None:
+        params.append(("creator", creator))
+    if country_of_origin is not None:
+        params.append(("country_of_origin", country_of_origin))
+    if resp_institution is not None:
+        params.append(("resp_institution", resp_institution))
+    if status is not None:
+        params.append(("status", status))
+    if location is not None:
+        params.append(("location", location))
+    if certified_qaqc is not None:
+        params.append(("certified_qaqc", certified_qaqc))
+    if qaqc_uploaded is not None:
+        params.append(("qaqc_uploaded", qaqc_uploaded))
+    if is_installed is not None:
+        params.append(("is_installed", is_installed))
+
+        
     resp = _get(url, params=params, **kwargs) 
     return resp
     #}}}

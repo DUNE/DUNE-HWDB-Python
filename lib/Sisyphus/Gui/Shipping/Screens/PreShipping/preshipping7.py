@@ -100,35 +100,57 @@ class PreShipping7(PageWidget):
             raise
         image_id = resp['image_id']
 
-
-        ps_checklist = {
-            "QA Rep name": ws['PreShipping2']['qa_rep_name'],
-            "QA Rep Email": [s.strip() for s in ws['PreShipping2']['qa_rep_email'].split(',')],
-            "POC name": ws['PreShipping3']['approver_name'],
-            "POC Email": [s.strip() for s in ws['PreShipping3']['approver_email'].split(',')],
-            "System Name (ID)": f"{ws['part_info']['system_name']}"
-                               f" ({ws['part_info']['system_id']})",
-            "Subsystem Name (ID)":  f"{ws['part_info']['subsystem_name']}"
-                               f" ({ws['part_info']['subsystem_id']})",
-            "Component Type Name (ID)": f"{ws['part_info']['part_type_name']}"
-                                f" ({ws['part_info']['part_type_id']})",
-            "DUNE PID": part_id,
-            "HTS code": ws['PreShipping4a']['hts_code'] 
-                               if ws['PreShipping4a']['shipping_service_type'] 
-                                    != 'Domestic' else None ,
-            "Origin of this shipment": ws['PreShipping4a']['shipment_origin'],
-            "Dimension of this shipment": ws['PreShipping4a']['dimension'],
-            "Weight of this shipment": ws['PreShipping4a']['weight'],
-            "Freight Forwarder name": ws['PreShipping4b']['freight_forwarder'],
-            "Mode of Transportation": ws['PreShipping4b']['mode_of_transportation'],
-            "Expected Arrival Date (CT)": ws['PreShipping4b']['expected_arrival_time'],
-            "FD Logistics team acknoledgement (name)": ws['PreShipping6']['acknowledged_by'],
-            "FD Logistics team acknoledgement (date in CT)": ws['PreShipping6']['acknowledged_time'],
-            "Visual Inspection (YES = no damage)": 
+        # --- update ps_checklist based on SelectPID state ---
+        select_pid_state = self.workflow_state.get("SelectPID", {})
+        is_surf = select_pid_state.get("confirm_surf", False)
+        if is_surf:
+            ps_checklist = {
+                "QA Rep name": ws['PreShipping2']['qa_rep_name'],
+                "QA Rep Email": [s.strip() for s in ws['PreShipping2']['qa_rep_email'].split(',')],
+                "POC name": ws['PreShipping3']['approver_name'],
+                "POC Email": [s.strip() for s in ws['PreShipping3']['approver_email'].split(',')],
+                "System Name (ID)": f"{ws['part_info']['system_name']}"
+                    f" ({ws['part_info']['system_id']})",
+                "Subsystem Name (ID)":  f"{ws['part_info']['subsystem_name']}"
+                    f" ({ws['part_info']['subsystem_id']})",
+                "Component Type Name (ID)": f"{ws['part_info']['part_type_name']}"
+                    f" ({ws['part_info']['part_type_id']})",
+                "DUNE PID": part_id,
+                "HTS code": ws['PreShipping4a']['hts_code'] 
+                    if ws['PreShipping4a']['shipping_service_type'] != 'Domestic' else None ,
+                "Origin of this shipment": ws['PreShipping4a']['shipment_origin'],
+                "Destination of this shipment": ws['PreShipping4a']['shipment_destination'],
+                "Dimension of this shipment": ws['PreShipping4a']['dimension'],
+                "Weight of this shipment": ws['PreShipping4a']['weight'],
+                "Freight Forwarder name": ws['PreShipping4b']['freight_forwarder'],
+                "Mode of Transportation": ws['PreShipping4b']['mode_of_transportation'],
+                "Expected Arrival Date (CT)": ws['PreShipping4b']['expected_arrival_time'],
+                "FD Logistics team acknoledgement (name)": ws['PreShipping6']['acknowledged_by'],
+                "FD Logistics team acknoledgement (date in CT)": ws['PreShipping6']['acknowledged_time'],
+                "Visual Inspection (YES = no damage)": 
                     'YES' if ws['PreShipping6']['damage_status']=='no damage' else 'NO',
-            "Visual Inspection Damage": ws['PreShipping6']['damage_description'],
-            "Image ID for this Shipping Sheet": image_id
-        }
+                "Visual Inspection Damage": ws['PreShipping6']['damage_description'],
+                "Image ID for this Shipping Sheet": image_id
+            }
+        else:
+            ps_checklist = {
+                "POC name": ws['PreShipping3']['approver_name'],
+                "POC Email": [s.strip() for s in ws['PreShipping3']['approver_email'].split(',')],
+                "System Name (ID)": f"{ws['part_info']['system_name']}"
+                    f" ({ws['part_info']['system_id']})",
+                "Subsystem Name (ID)":  f"{ws['part_info']['subsystem_name']}"
+                    f" ({ws['part_info']['subsystem_id']})",
+                "Component Type Name (ID)": f"{ws['part_info']['part_type_name']}"
+                    f" ({ws['part_info']['part_type_id']})",
+                "DUNE PID": part_id,
+                "Origin of this shipment": ws['PreShipping4a']['shipment_origin'],
+                "Destination of this shipment": ws['PreShipping4a']['shipment_destination'],
+                "Visual Inspection (YES = no damage)": 
+                    'YES' if ws['PreShipping6']['damage_status']=='no damage' else 'NO',
+                "Visual Inspection Damage": ws['PreShipping6']['damage_description'],
+                "Image ID for this Shipping Sheet": image_id
+            }
+            
 
         sub_pids = []
         for k, v in ws['part_info']['subcomponents'].items():

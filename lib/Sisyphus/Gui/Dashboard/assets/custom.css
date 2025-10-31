@@ -1,0 +1,74 @@
+/* =============== */
+/* TAB BASE STYLES */
+/* =============== */
+
+.custom-tab {
+    /* Layout and shape */
+    background: linear-gradient(180deg, #f7f9fc 0%, #e0e6ed 100%);
+    border: 1px solid #c3c9d4;
+    border-radius: 10px 10px 0 0;
+    padding: 10px 25px;
+    margin-right: 6px;
+
+    /* Typography */
+    font-family: "Arial", sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: #2c3e50;
+
+    /* Effects */
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    transition: all 0.25s ease-in-out;
+}
+
+/* Hover effect – adds depth and interactivity */
+/*
+.custom-tab:hover {
+    background: linear-gradient(180deg, #ffffff 0%, #dfe6f2 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.25);
+}
+*/
+
+/* ================== */
+/* SELECTED TAB STYLE */
+/* ================== */
+
+.custom-tab--selected {
+    background: linear-gradient(180deg, #80b3ff 0%, #4d94ff 100%);
+    color: #ffffff;                     /* white text for clear contrast */
+    font-weight: 800;
+    border-bottom: 3px solid #007acc;
+
+    /* subtle glow & lift */
+    box-shadow:
+        inset 0 3px 6px rgba(0, 0, 0, 0.15),
+        0 2px 8px rgba(0, 122, 204, 0.3);
+    transform: translateY(-1px);
+    text-shadow: 0 1px 3px rgba(0, 122, 204, 0.3);
+}
+
+/* Hover on selected tab (keeps tone but slightly brightens) */
+/*
+.custom-tab--selected:hover {
+    background: linear-gradient(180deg, #001a33 0%, #000d1a 100%);
+    color: #cce6ff;                     /* faint bluish white */
+    border-bottom: 3px solid #000a14;
+    box-shadow:
+        inset 0 3px 6px rgba(0, 0, 0, 0.4),
+        0 4px 16px rgba(0, 64, 128, 0.8);  /* bluish outer glow */
+    transform: translateY(-2px);
+    text-shadow: 0 1px 5px rgba(0, 64, 128, 0.8);
+}
+ */
+
+/* ================= */
+/* TAB CONTAINER FIX */
+/* ================= */
+
+.dash-tabs {
+    background-color: transparent !important;
+    border: none !important;
+}

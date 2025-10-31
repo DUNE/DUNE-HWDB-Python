@@ -179,25 +179,41 @@ def upload_shipping(workflow_state):
     ws = workflow_state
     part_id = ws['part_info']['part_id']
 
-    shipping_checklist = {
-        "POC name":  ws['PreShipping3']['approver_name'],
-        "POC Email": [s.strip() for s in ws['PreShipping3']['approver_email'].split(',')],
-        "System Name (ID)": f"{ws['part_info']['system_name']}"
-                               f" ({ws['part_info']['system_id']})",
-        "Subsystem Name (ID)":  f"{ws['part_info']['subsystem_name']}"
-                               f" ({ws['part_info']['subsystem_id']})",
-        "Component Type Name (ID)":  f"{ws['part_info']['part_type_name']}"
-                                f" ({ws['part_info']['part_type_id']})",
-        "DUNE PID": part_id,
-        "Image ID for BoL": ws['Shipping2']['bol_info']['image_id'],
-        "Image ID for Proforma Invoice": ws['Shipping2'].get('proforma_info', {}).get('image_id', None),
-        "Image ID for the final approval message": ws['Shipping4']['approval_info']['image_id'],
-        "FD Logistics team final approval (name)": ws['Shipping4']['approved_by'],
-        "FD Logistics team final approval (date in CST)": ws['Shipping4']['approved_time'],
-        "DUNE Shipping Sheet has been attached": ws['Shipping4']['confirm_attached_sheet'],
-        "This shipment has been adequately insured for transit": ws['Shipping4']['confirm_insured']
-    }
+    # --- dynamically show/hide things ---
+    select_pid_state = workflow_state.get("SelectPID", {})
+    is_surf = select_pid_state.get("confirm_surf", False)
 
+    if is_surf:
+        shipping_checklist = {
+            "POC name":  ws['PreShipping3']['approver_name'],
+            "POC Email": [s.strip() for s in ws['PreShipping3']['approver_email'].split(',')],
+            "System Name (ID)": f"{ws['part_info']['system_name']}"
+                f" ({ws['part_info']['system_id']})",
+            "Subsystem Name (ID)":  f"{ws['part_info']['subsystem_name']}"
+                f" ({ws['part_info']['subsystem_id']})",
+            "Component Type Name (ID)":  f"{ws['part_info']['part_type_name']}"
+                f" ({ws['part_info']['part_type_id']})",
+            "DUNE PID": part_id,
+            "Image ID for BoL": ws['Shipping2']['bol_info']['image_id'],
+            "Image ID for Proforma Invoice": ws['Shipping2'].get('proforma_info', {}).get('image_id', None),
+            "Image ID for the final approval message": ws['Shipping4']['approval_info']['image_id'],
+            "FD Logistics team final approval (name)": ws['Shipping4']['approved_by'],
+            "FD Logistics team final approval (date in CST)": ws['Shipping4']['approved_time'],
+            "DUNE Shipping Sheet has been attached": ws['Shipping4']['confirm_attached_sheet'],
+            "This shipment has been adequately insured for transit": ws['Shipping4']['confirm_insured']
+        }
+    else:
+        shipping_checklist = {
+            "POC name":  ws['PreShipping3']['approver_name'],
+            "POC Email": [s.strip() for s in ws['PreShipping3']['approver_email'].split(',')],
+            "System Name (ID)": f"{ws['part_info']['system_name']}"
+                f" ({ws['part_info']['system_id']})",
+            "Subsystem Name (ID)":  f"{ws['part_info']['subsystem_name']}"
+                f" ({ws['part_info']['subsystem_id']})",
+            "Component Type Name (ID)":  f"{ws['part_info']['part_type_name']}"
+                f" ({ws['part_info']['part_type_id']})",
+            "DUNE PID": part_id
+        }
     #print(json.dumps(shipping_checklist, indent=4))
 
     # Get the current specifications and add to it

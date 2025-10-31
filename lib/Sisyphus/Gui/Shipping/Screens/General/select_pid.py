@@ -54,7 +54,54 @@ class SelectPID(PageWidget):
         self.find_button.setStyleSheet(zw.STYLE_SMALL_BUTTON)
         self.find_button.clicked.connect(self.lookup_pid)
         
+
+        # ----------------------------------------------------------------------
+        # Create checkboxes
+        # ----------------------------------------------------------------------
+        msg = "Shipping to SURF: Shipping directly to the SD warehouse/SURF."
+        self.confirm_surf_checkbox = zw.ZCheckBox(page=self, text=msg, key="confirm_surf")
+        
+        msg = "Shipping to non-SURF: Shipping to a place that is not warehouse/SURF."
+        self.confirm_non_surf_checkbox = zw.ZCheckBox(page=self, text=msg, key="confirm_non_surf")
+
+        msg = ("Transshipping to SURF: Shipping to an intermediate non-SURF location.\n"
+              "Then without opening the shipping box, it will be sent to SURF sometime in the future.")
+        self.confirm_transshipping_checkbox = zw.ZCheckBox(page=self, text=msg, key="confirm_transshipping")
+        # ----------------------------------------------------------------------
+        # Restore from workflow_state if available
+        # ----------------------------------------------------------------------
+        select_pid_state = self.workflow_state.get("SelectPID", {})
+        surf_state  = select_pid_state.get("confirm_surf")
+        non_state   = select_pid_state.get("confirm_non_surf")
+        trans_state = select_pid_state.get("confirm_transshipping")
+        if any(v is True or v is False for v in (surf_state, non_state, trans_state)):
+            # At least one saved value exists — use stored states
+            self.confirm_surf_checkbox.setChecked(bool(surf_state))
+            self.confirm_non_surf_checkbox.setChecked(bool(non_state))
+            self.confirm_transshipping_checkbox.setChecked(bool(trans_state))
+        else:
+            # No saved values yet — use defaults
+            self.confirm_surf_checkbox.setChecked(True)
+            self.confirm_non_surf_checkbox.setChecked(False)
+            self.confirm_transshipping_checkbox.setChecked(False)
+    
+
+
+        
+        # Now that states are clean, build the layout
         self._setup_UI()
+
+        # --- Connect exclusivity enforcement AFTER layout creation ---
+        for cb in (
+                self.confirm_surf_checkbox,
+                self.confirm_non_surf_checkbox,
+                self.confirm_transshipping_checkbox,
+        ):
+            cb.stateChanged.connect(self._enforce_single_checkbox)
+
+       
+        
+        #self._setup_UI()
 
         #}}}
 
@@ -84,6 +131,41 @@ class SelectPID(PageWidget):
         main_layout.addLayout(get_pid_layout)
         main_layout.addSpacing(10)
         ############
+        # The shipping route selection
+        
+        #affirm_layout = qtw.QHBoxLayout()
+        #affirm_layout.addSpacing(10)
+
+        surf_layout = qtw.QVBoxLayout()
+        surf_layout.addWidget(self.confirm_surf_checkbox)
+        surf_layout.setContentsMargins(0, 0, 0, 0)
+        surf_layout.setSpacing(0)
+        surf_widget = qtw.QWidget()
+        surf_widget.setLayout(surf_layout)
+
+        nonsurf_layout = qtw.QVBoxLayout()
+        nonsurf_layout.addWidget(self.confirm_non_surf_checkbox)
+        nonsurf_layout.setContentsMargins(0, 0, 0, 0)
+        nonsurf_layout.setSpacing(0)
+        nonsurf_widget = qtw.QWidget()
+        nonsurf_widget.setLayout(nonsurf_layout)
+
+        transshipping_layout = qtw.QVBoxLayout()
+        transshipping_layout.addWidget(self.confirm_transshipping_checkbox)
+        transshipping_layout.setContentsMargins(0, 0, 0, 0)
+        transshipping_layout.setSpacing(0)
+        transshipping_widget = qtw.QWidget()
+        transshipping_widget.setLayout(transshipping_layout)
+        
+        #affirm_layout.addWidget(surf_widget)
+        #affirm_widget = qtw.QWidget()
+        #affirm_widget.setLayout(affirm_layout)
+        #main_layout.addWidget(affirm_widget)
+        main_layout.addWidget(surf_widget)
+        main_layout.addWidget(nonsurf_widget)
+        main_layout.addWidget(transshipping_widget)
+        main_layout.addSpacing(10)
+        ############
 
         main_layout.addWidget(self.part_details)
 
@@ -96,6 +178,47 @@ class SelectPID(PageWidget):
 
         #}}}
 
+    def _enforce_single_checkbox(self, state):
+        """Ensure only one checkbox can be checked at a time."""
+        if getattr(self, "_enforcing", False):
+            return
+    
+        sender = self.sender()
+
+        if state:  # only run when something is checked
+            self._enforcing = True  # start guard
+            for cb in (
+                    self.confirm_surf_checkbox,
+                    self.confirm_non_surf_checkbox,
+                    self.confirm_transshipping_checkbox,
+            ):
+                if cb is not sender:
+                    cb.setChecked(False)  # allow signal to fire normally
+            self._enforcing = False  # end guard
+        
+        '''
+        if state:  # only react when something was checked
+            for cb in (
+                self.confirm_surf_checkbox,
+                self.confirm_non_surf_checkbox,
+                self.confirm_transshipping_checkbox,
+            ):
+                if cb is not sender:
+                    cb.blockSignals(True)
+                    cb.setChecked(False)
+                    cb.blockSignals(False)
+        else:
+            # if user tries to uncheck the only one, re-check it
+            if not any(cb.isChecked() for cb in (
+                self.confirm_surf_checkbox,
+                self.confirm_non_surf_checkbox,
+                self.confirm_transshipping_checkbox,
+            )):
+                sender.blockSignals(True)
+                sender.setChecked(True)
+                sender.blockSignals(False)
+        '''
+        
     def lookup_pid(self):
         #{{{
 
@@ -154,6 +277,16 @@ class SelectPID(PageWidget):
         
         self.workflow_state['search_part_id'] = self.pid_text_box.text().strip()
 
+
+        # Explicitly read and normalize checkbox states
+        surf = self.confirm_surf_checkbox.isChecked()
+        non_surf = self.confirm_non_surf_checkbox.isChecked()
+        trans = self.confirm_transshipping_checkbox.isChecked()
+        # Force exclusivity truth logic at save time
+        self.workflow_state['confirm_surf'] = surf and not (non_surf or trans)
+        self.workflow_state['confirm_non_surf'] = non_surf and not (surf or trans)
+        self.workflow_state['confirm_transshipping'] = trans and not (surf or non_surf)
+    
         '''
         self.workflow_state['user_name'] = self.name_text_box.text().strip()
         self.workflow_state['user_email'] = self.email_text_box.text().strip()
