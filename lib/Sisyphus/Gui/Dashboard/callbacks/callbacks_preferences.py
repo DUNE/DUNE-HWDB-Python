@@ -3,6 +3,7 @@ from dash import Input, Output, State, ctx, html
 import dash
 import os
 from pathlib import Path
+from datetime import datetime
 from Sisyphus.Gui.Dashboard.utils.config import switch_profile
 from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
@@ -139,6 +140,7 @@ def register_preferences_callbacks(app):
         [
             Output("db-version-toggle", "value", allow_duplicate=True),
             Output("db-version-display", "children", allow_duplicate=True),
+            Output("version-change-signal", "data", allow_duplicate=True),
         ],
         Input("db-version-toggle", "value"),
         prevent_initial_call=True
@@ -156,5 +158,6 @@ def register_preferences_callbacks(app):
         
         logger.info(f"[Switch] Active profile set to {selected_version}")
         logger.info(f"[Config] REST API = {config.active_profile.rest_api}")
-        
-        return selected_version, message
+
+        # send a signal with a unique timestamp
+        return selected_version, message, {"timestamp": datetime.now().isoformat()}

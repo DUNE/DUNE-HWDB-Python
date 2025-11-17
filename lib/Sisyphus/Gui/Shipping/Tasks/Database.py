@@ -61,6 +61,7 @@ def download_part_info(part_id, refresh=False, status_callback=None):
             'subsystem_name': hwitem.subsystem.subsystem_name,
             'subsystem': f"{hwitem.subsystem.subsystem_name} ({hwitem.subsystem.subsystem_id})",
             'qr_code': hwitem.qr_code,
+            'bar_code': hwitem.bar_code,
             'connectors': hwitem.component_type.data['connectors'],
             'subcomponents': {},
             'locations': hwitem.locations,

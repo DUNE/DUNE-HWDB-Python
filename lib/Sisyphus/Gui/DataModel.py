@@ -340,6 +340,10 @@ class HWItem(HWDBObject):
                                 ra.get_hwitem_qrcode,
                                 part_id=part_id_decomp['part_id'],
                                 **self.fwd_kwargs),
+            "bar_code": _executor.submit(
+                                ra.get_hwitem_barcode,
+                                part_id=part_id_decomp['part_id'],
+                                **self.fwd_kwargs),
             "component_obj": _executor.submit(
                                 ComponentType, 
                                 part_type_id=part_id_decomp["part_type_id"],
@@ -383,6 +387,44 @@ class HWItem(HWDBObject):
                 self._data["qr_code_processed"] = qr_code
             return self._data.get("qr_code_processed", None) 
         #}}}
+
+    @property
+    def bar_code(self):
+        with self._instance_lock:
+            if self._data.get("bar_code_processed") is None:
+
+                content = self._get_results("bar_code").content
+
+                try:
+                    # Load the image directly
+                    img_obj = PIL.Image.open(io.BytesIO(content))
+
+                    # If needed, you may crop or scale here (optional)
+                    # For many barcodes, no cropping is required.
+
+                    # Upscale using nearest-neighbor (no blur)
+                    w, h = img_obj.size
+                    scale_factor = 5
+                    img_obj = img_obj.resize((w * scale_factor, h * scale_factor), PIL.Image.NEAREST)
+
+                    
+
+
+                    obj_bytes = io.BytesIO()
+                    img_obj.save(obj_bytes, format="PNG")
+
+                    # Encode PNG as base85 string
+                    bar_code_b85 = base64.b85encode(obj_bytes.getvalue()).decode("utf-8")
+
+                except Exception as exc:
+                    logger.error("Problem with barcode returned from REST API: "
+                                f"{type(exc)}: {exc}")
+                    logger.info(f"The content returned was: {content}")
+                    raise
+
+                self._data["bar_code_processed"] = bar_code_b85
+
+            return self._data.get("bar_code_processed", None)
     
     @property
     def data(self):

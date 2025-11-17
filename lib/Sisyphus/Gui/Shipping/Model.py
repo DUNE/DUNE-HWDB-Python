@@ -91,6 +91,7 @@ def download_part_info(part_id, status_callback=None):
         'subsystem_id': hwitem.subsystem.subsystem_id,
         'subsystem_name': hwitem.subsystem.subsystem_name,
         'qr_code': hwitem.qr_code,
+        'bar_code': hwitem.bar_code,
         'subcomponents': {}
     }
 

@@ -9,7 +9,7 @@ Author: Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
 import os
 
 #version = 'v1.3.0.rel.2025.07.21a'
-version = 'v1.4.1.rel.2025.10.30b'
+version = 'v1.5.2.rel.2025.11.17a'
 
 project_root = os.path.realpath(os.path.join(os.path.dirname(__file__), "../.."))
 

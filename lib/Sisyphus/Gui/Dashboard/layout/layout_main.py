@@ -1,9 +1,11 @@
-from dash import dcc, html, Input, Output, State, ctx
-from ..utils.config import APP_VERSION
+from dash import dcc, html, Input, Output, State, ctx, dash_table
+from Sisyphus.Gui.Dashboard.utils.config import APP_VERSION
 import dash_bootstrap_components as dbc
 
 from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
+
+from Sisyphus.Gui.Dashboard.layout.layout_typegetter import typegetter_layout
 
 # =========================
 # Preferences
@@ -302,7 +304,9 @@ prefilter_panel = html.Div(
 # =========================
 # CONTENTS FOR EACH TAB
 # =========================
-# Pre-render both tab layouts
+# Pre-render tab layouts
+
+# The Plots tab
 plot_tab_layout = html.Div(
     id="plot-tab-content",
     children=[
@@ -400,6 +404,37 @@ plot_tab_layout = html.Div(
                         #accept=".json,.pkl",
                         accept=".pkl,.pickle,.csv",
                     ),
+                    dcc.Upload(
+                        id="upload-overlay",
+                        children=html.Button(
+                            "Select a csv to overlay",
+                            style={
+                                "fontSize":"20px",
+                                "padding":"14px 32px",
+                                "backgroundColor":"#9C27B0",
+                                "color":"white",
+                                "border":"none",
+                                "borderRadius":"8px",
+                                "cursor":"pointer",
+                                "transition":"all 0.2s ease-in-out",
+                                "marginRight": "50px",
+                            },
+                        ),
+                        multiple=False,
+                        accept=".csv",
+                        #style={
+                        #    #"border":"2px dashed #9C27B0",
+                        #    #"borderRadius":"10px",
+                        #    #"padding":"15px",
+                        #    "textAlign":"center",
+                        #    # "backgroundColor":"#fafafa",
+                        #    "width":"300px",
+                        #},
+                    ),
+                    #----------------------------------------------------
+                    #Select file to overlay
+                    dcc.Store(id="overlay-store"),
+                    #----------------------------------------------------
                     
                 ],
                 style={"display": "flex", "alignItems": "center", "marginBottom": "1px"},
@@ -436,6 +471,7 @@ plot_tab_layout = html.Div(
                     id="chart-type",
                     options=[
                         {"label": "Histogram", "value": "histogram"},
+                        {"label": "Histogram (log-Y)", "value": "histogram_log"},
                         {"label": "Cumulative Histogram", "value": "cumhist"},
                         {"label": "Scatter", "value": "scatter"},
                         {"label": "Line", "value": "line"},
@@ -557,6 +593,13 @@ plot_tab_layout = html.Div(
                             "marginLeft": "10px",
                         },
                     ),
+                    dbc.Checklist(
+                        id="invert-selection-toggle",
+                        options=[{"label": "Exclude selected bins", "value": "exclude"}],
+                        value=[],
+                        switch=True,  # makes it a toggle switch instead of a checkbox
+                        style={"marginLeft": "15px", "marginTop": "6px"},
+                    ),
                 ], 
                 id="filter-container", style={"display": "none", "marginLeft": "10px",}, 
             ),
@@ -609,23 +652,6 @@ plot_tab_layout = html.Div(
                         "marginRight": "30px",
                     }
                 ),
-                #html.Button(
-                #    "Load conditions",
-                #    id="load-conditions",
-                #    n_clicks=0,
-                #    style={
-                #        "fontSize": "20px",
-                #        "padding": "14px 32px",
-                #        "backgroundColor": "#2196F3",
-                #        "color": "white",
-                #        "border": "none",
-                #        "borderRadius": "8px",
-                #        "cursor": "pointer",
-                #        #"boxShadow": "0 4px 6px rgba(0,0,0,0.3)"
-                #        "transition": "all 0.2s ease-in-out",
-                #        "font-family": "Arial, sans-serif",
-                #    }
-                #),
                 dcc.Upload(
                     id="upload-conditions",
                     children=html.Button(
@@ -772,11 +798,570 @@ plot_tab_layout = html.Div(
             #dcc.Store(id="data-store", storage_type="memory"),
             dcc.Store(id="data-store", storage_type="local"),
             dcc.Store(id="filtered-store", storage_type="memory"), # This needs to be right after dcc.Store(id="data-store")!
+            dcc.Store(id="plot-config-store", storage_type="memory"), # Nov 12
     ],
     style={"display": "block"}  # visible by default
 )
 
-# The 2nd tab
+
+
+
+# The Shipment Tracker tab
+shipment_tab_layout = html.Div(
+    id="shipment-tab-content",
+    style={"padding": "15px"},
+    children=[
+
+        dcc.Store(id="fetch-shipments-trigger", storage_type="memory"),
+        dcc.Store(id="shipments-selected-pid",data={"pid": None},storage_type="local"),   # ✅ persist selection
+        dcc.Store(id="fetch-shipments-store", storage_type="memory"),  # persist synced shipment data until refresh
+        dcc.Store(id="shippinglabel-id-store"),
+        dcc.Store(id="bol-id-store"),
+        # Title
+        #html.H2(
+        #    "Shipment Tracker",
+        #    style={
+        #        "textAlign": "center",
+
+        #        "fontWeight": "bold",
+        #        "marginBottom": "20px",
+        #    },
+        #),
+
+        html.Div(style={"marginTop": "40px"}), 
+        
+        # Row 1: Controls and Filters
+        html.Div(
+            #style={"display": "flex", "flexWrap": "wrap", "justifyContent": "center", "gap": "10px"},
+            children=[
+                dcc.Input(
+                    id="shipment-typeid",
+                    type="text",
+                    placeholder="Enter Component Type ID",
+                    className="text-center",
+                    style={
+                        "width": "250px",         # make it wider
+                        "height": "45px",         # make it taller
+                        "fontSize": "16px",       # larger text
+                        "fontWeight": "400",
+                        "padding": "10px 15px",
+                        "borderRadius": "12px",   # rounded corners
+                        "border": "2px solid #007BFF",
+                        #"boxShadow": "2px 2px 8px rgba(0, 0, 0, 0.2)",  # 3D effect
+                        "marginLeft": "10px",
+                        "marginRight": "50px", # spacing between the input and the button
+                        "textAlign": "center",
+                    },
+                    #style={
+                    #    "width": "280px",
+                    #    "height": "40px",
+                    #    "padding": "5px 10px",
+                    #    "borderRadius": "8px",
+                    #    "border": "none",
+                    #    "backgroundColor": "#D9DDDC",
+                    #    "color": "gray",
+                    #    "fontSize": "18px",
+                    #},
+                ),
+                dbc.Button(
+                    "Sync to the HWDB",
+                    id="fetch-shipments",
+                    n_clicks=0,
+                    color="primary",
+                    #className="tg-sync-btn",
+                    style = {
+                        "fontSize": "20px",            # Larger text
+                        "padding": "14px 32px",        # Larger button size
+                        "backgroundColor": "#4CAF50",  # 
+                        "color": "white",
+                        "border": "none",
+                        "borderRadius": "8px",
+                        "justifyContent": "center",
+                        "gap": "15px",
+                        "cursor": "pointer",
+                        #"boxShadow": "0 6px 10px rgba(0, 0, 0, 0.3)",  # 3D effect
+                        "transition": "all 0.2s ease-in-out",
+                        "marginRight": "50px",
+                    }
+                ),
+                
+                #html.Button(
+                #    "🖨️ Generate All Labels",
+                #    id="generate-all-labels",
+                #    n_clicks=0,
+                #    style={
+                #        "height": "40px",
+                #        "borderRadius": "8px",
+                #        "border": "none",
+                #        "backgroundColor": "#00897B",
+                #        "color": "white",
+                #        "fontSize": "18px",
+                #        "padding": "0px 18px",
+                #        "cursor": "pointer",
+                #        "transition": "all 0.2s ease-in-out",
+                #    },
+                #),
+            ],
+            style={"display": "flex", "alignItems": "center","justifyContent": "center", "marginBottom": "1px"},
+        ),
+
+        html.Br(),
+
+        # Row 2: Summary Cards
+        html.Div(
+            id="shipment-summary-cards",
+            style={
+                "display": "flex",
+                "flexWrap": "wrap",
+                "justifyContent": "center",
+                "gap": "15px",
+                "marginBottom": "25px",
+            },
+            children=[
+                html.Div("📦 Total Boxes: —", id="summary-total", className="summary-card"),
+                html.Div("🚚 In-Transit: —", id="summary-transit", className="summary-card"),
+                html.Div("📍 Delivered: —", id="summary-delivered", className="summary-card"),
+            ],
+        ),
+
+        # Row 3: Main Table
+        html.Div(
+            style={
+                "backgroundColor": "#F3F3F3",
+                "padding": "10px",
+                "borderRadius": "12px",
+                "boxShadow": "0 2px 6px rgba(0, 0, 0, 0.15)",
+                "marginBottom": "20px",
+                "marginRight": "10px",
+            },
+            children=[
+                html.H4("List of shipping boxes", style={"color": "#004C99", "marginLeft": "10px"}),
+                dash_table.DataTable(
+                    id="shipment-table",
+                    columns=[
+                        {"name": "Box PID", "id": "box_pid"},
+                        {"name": "Certificed", "id": "certified"},          # narrow placeholder column
+                        {"name": "Uploaded", "id": "docuploaded"},          # another narrow column
+                        {"name": "Latest Location", "id": "location"},
+                        {"name": "Shipped Date", "id": "shipped_date"},
+                        {"name": "Received Date", "id": "received_date"},
+                        {"name": "Shipper", "id": "shipper"},
+                        {"name": "Receiver", "id": "receiver"},
+                        {"name": "Status", "id": "status"},
+                    ],
+                    data=[], #<=== the data!!
+                    fixed_rows={"headers": True},     # keeps the header row fixed
+                    #data=fake_shipments, # for testing purpose only!!
+                    css=[
+                        # highlight the whole row on hover
+                        {"selector": "tr:hover", "rule": "background-color: #E3F2FD !important; cursor: pointer;"},
+                        {"selector": "tr:hover td", "rule": "background-color: #E3F2FD !important;"},
+                    ],
+                    style_table={
+                        "height": "30vh",
+                        "overflowY": "auto",
+                        #"overflowX": "auto",
+                        "overflowX": "hidden",     # disables horizontal scrolling
+                        "tableLayout": "fixed",    # keeps columns within container width
+                        "width": "100%",           # ensures table stays within container
+                        "tableLayout": "fixed",   # Force respect of fixed column widths
+                    },
+                    style_cell={
+                        "textAlign": "center",
+                        "height": "600px",
+                        "fontFamily": "Arial, sans-serif",
+                        "fontSize": "16px",
+                        "padding": "5px",
+                        "height": "auto",       # dynamic cell height (not fixed!)
+                        "whiteSpace": "normal", # allows text wrapping if needed
+                    },
+                    style_header={
+                        "backgroundColor": "#4A90E2",
+                        "color": "white",
+                        "fontWeight": "bold",
+                        "fontSize": "17px",
+                        "position": "sticky",
+                        "top": 0,
+                        "zIndex": 1,
+                    },
+                    # Column-specific widths
+                    style_cell_conditional=[
+                        {"if": {"column_id": "box_pid"},       "width": "120px", "minWidth": "120px", "maxWidth": "120px"},
+                        {"if": {"column_id": "certified"},     "width": "50px", "minWidth": "50px", "maxWidth": "50px"},
+                        {"if": {"column_id": "docuploaded"},   "width": "50px", "minWidth": "50px", "maxWidth": "50px"},
+                        {"if": {"column_id": "location"},      "width": "200px", "minWidth": "200px", "maxWidth": "200px"},
+                        {"if": {"column_id": "shipped_date"},  "width": "90px", "minWidth": "90px", "maxWidth": "90px"},
+                        {"if": {"column_id": "received_date"}, "width": "90px", "minWidth": "90px", "maxWidth": "90px"},
+                        {"if": {"column_id": "shipper"},       "width": "180px"},
+                        {"if": {"column_id": "receiver"},      "width": "180px"},
+                        {"if": {"column_id": "status"},        "width": "70px", "minWidth": "70px", "maxWidth": "70px"},
+                    ],
+                    style_data_conditional=[
+                        
+                        # highlight delivered and in-transit colors
+                        {"if": {"column_id": "Status", "filter_query": "{Status} eq 'Delivered'"},
+                         "backgroundColor": "#C8E6C9"},
+                        {"if": {"column_id": "Status", "filter_query": "{Status} eq 'In-Transit'"},
+                         "backgroundColor": "#FFF9C4"},
+
+               
+                        # --- Selected (persisting) row highlight ---
+                        {
+                            "if": {"state": "selected"},
+                            "backgroundColor": "#D1E9FF",
+                            "border": "1px solid #4A90E2",
+                        },
+
+                        # --- Fix for the single clicked (active) cell ---
+                        {
+                            "if": {"state": "active"},
+                            "backgroundColor": "#D1E9FF",
+                            "border": "1px solid #4A90E2",
+                        },
+                        
+                    ],
+                    #row_selectable="single",  # enable entire-row interaction
+                ),
+            ],
+        ),
+
+        html.Div(style={"marginBottom": "40px"}), # some space
+        
+        # Row 4: Timeline
+        html.Div(
+            id="shipment-details-section",
+            style={
+                "display": "none",  # hidden until a row is selected
+                "flexDirection": "row",  # stack horizontally
+                "marginTop": "20px",
+                #"marginBottom": "30px",
+                "display": "flex",
+                "gap": "25px",
+                "justifyContent": "space-between",
+            },
+            children=[
+                # --- Left: History Table ---
+                html.Div(
+                    id="shipment-history-container",
+                    style={
+                        "flex": "1 1 50%",
+                        "width": "50%",
+                        "backgroundColor": "#FAFAFA",
+                        "padding": "10px",
+                        "borderRadius": "12px",
+                        "boxShadow": "0 2px 6px rgba(0, 0, 0, 0.1)",
+                        "overflowY": "auto",
+                        "maxHeight": "45vh",
+                        "marginLeft": "10px",
+                        #"marginRight": "10px",
+                    },
+                    children=[
+                        html.H4(
+                            "Shipment History",
+                            id="shipment-history-title",
+                            style={"color": "#004C99", "marginLeft": "10px"},
+                        ),
+                        dash_table.DataTable(
+                            id="shipment-history-table",
+                            cell_selectable=False,  # disables focus/active selection
+                            css=[                   # kill hover & any cell focus styles
+                                {"selector": "tr:hover", "rule": "background-color: inherit !important; cursor: default;"},
+                                {"selector": "tr:hover td", "rule": "background-color: inherit !important;"},
+                                {"selector": "td.dash-cell.focused", "rule": "background-color: inherit !important; box-shadow: none !important;"},
+                                {"selector": "td.cell--active", "rule": "background-color: inherit !important;"},
+                                {"selector": "td.cell--selected", "rule": "background-color: inherit !important;"},
+                            ],
+                            columns=[
+                                {"name": "Date", "id": "date"},
+                                {"name": "Shipper / Receiver", "id": "person"},
+                                {"name": "Location", "id": "location"},
+                                {"name": "Comments", "id": "comments"},
+                            ],
+                            data=[],
+                            fixed_rows={"headers": True},
+                            style_table={
+                                "height": "40vh",
+                                "overflowY": "auto",
+                                "overflowX": "auto", 
+                                "tableLayout": "fixed",
+                                "width": "100%",
+                            },
+                            style_cell={
+                                "textAlign": "center",
+                                "fontFamily": "Arial, sans-serif",
+                                "fontSize": "15px",
+                                "whiteSpace": "normal",
+                                "padding": "6px",
+                            },
+                            style_header={
+                                "backgroundColor": "#4A90E2",
+                                "color": "white",
+                                "fontWeight": "bold",
+                                "fontSize": "15px",
+                                "whiteSpace": "normal",
+                                "position": "sticky",
+                                "top": 0,
+                                "zIndex": 1,
+                            },
+                            style_cell_conditional=[
+                                {"if": {"column_id": "date"},       "width": "50px", "minWidth": "50px", "maxWidth": "50px"},
+                                {"if": {"column_id": "person"},     "width": "50px", "minWidth": "50px", "maxWidth": "50px"},
+                                {"if": {"column_id": "location"},   "width": "100px"},
+                                {"if": {"column_id": "comments"},   "width": "100px"},
+                            ],
+                            style_data_conditional=[ # Zebra striping
+                                {
+                                    "if": {"row_index": "odd"},
+                                    "backgroundColor": "#F9F9F9",
+                                },
+                                {
+                                    "if": {"row_index": "even"},
+                                    "backgroundColor": "white",
+                                },
+                                {"if": {"state": "active"},   "backgroundColor": "inherit", "border": "inherit"},
+                                {"if": {"state": "selected"}, "backgroundColor": "inherit", "border": "inherit"},
+                                # Optional hover highlight
+                                #{
+                                #    "if": {"state": "active"},
+                                #    "backgroundColor": "#E3F2FD",
+                                #    "border": "1px solid #4A90E2",
+                                #},
+                            ],
+                        ),
+                    ],
+                ),
+
+                # --- Right: Info Boxes ---
+                html.Div(
+                    id="shipment-info-cards",
+                    #style={
+                    #    "display": "grid",
+                    #    "gridTemplateColumns": "repeat(2, auto)", # define the grid
+                    #    "gap": "18px",
+                    #    "alignItems": "start",
+                    #    "marginLeft": "10px",
+                    #    "marginRight": "10px",
+                    #},
+                    style={
+                        "flex": "1 1 50%",
+                        "width": "50%",
+                        #"marginLeft": "10px",
+                        "marginRight": "10px",
+                        "marginTop": "10px",
+                    },
+                    children=[
+
+                        html.H4("📦 Shipment Details", style={"color": "#004C99", "marginBottom": "10px"}),
+
+                        # --- Download Label Button (compact, top) ---
+                        html.Div(
+                            [
+                                html.Button(
+                                    "⬇️ Download Shipping Label",
+                                    id={"type": "download-button", "index": "shippinglabel"},
+                                    n_clicks=0,
+                                    className="shiplabel-btn",
+                                ),
+                                dcc.Store(id={"type": "image-id-store", "index": "shippinglabel"}),
+                                dcc.Store(id={"type": "image-status-store", "index": "shippinglabel"}), 
+                            ],
+                            style={
+                                "display": "flex",
+                                "justifyContent": "center",
+                                "marginBottom": "12px"
+                            },
+                        ),
+    
+                        dbc.Accordion(
+                            [
+                                # ────────────────────────────────
+                                # 1️Contents: Sub-components
+                                # ────────────────────────────────
+                                html.Div(
+                                    dbc.AccordionItem(
+                                        [
+                                            dash_table.DataTable(
+                                                id="subcomp-info-table",
+                                                cell_selectable=False,
+                                                css=[
+                                                    {"selector": "tr:hover", "rule": "background-color: inherit !important; cursor: default;"},
+                                                    {"selector": "tr:hover td", "rule": "background-color: inherit !important;"},
+                                                    {"selector": "td.dash-cell.focused", "rule": "background-color: inherit !important; box-shadow: none !important;"},
+                                                    {"selector": "td.cell--active", "rule": "background-color: inherit !important;"},
+                                                    {"selector": "td.cell--selected", "rule": "background-color: inherit !important;"},
+                                                ],
+                                                columns=[
+                                                    {"name": "Type Name" , "id": "subtype"},
+                                                    {"name": "Func. Pos.", "id": "subfunc"},
+                                                    {"name": "PID"       , "id": "subpid"},
+                                                ],
+                                                data=[],
+                                                style_table={
+                                                    "width": "100%",
+                                                    "overflowX": "hidden",
+                                                    "borderRadius": "8px",
+                                                },
+                                                style_cell={
+                                                    "textAlign": "left",
+                                                    "fontFamily": "Arial, sans-serif",
+                                                    "fontSize": "15px",
+                                                    "padding": "6px 10px",
+                                                },
+                                                style_header={
+                                                    "backgroundColor": "#4A90E2",
+                                                    "color": "white",
+                                                    "fontWeight": "bold",
+                                                    "fontSize": "16px",
+                                                },
+                                                style_data={
+                                                    "backgroundColor": "white",
+                                                },
+                                                style_cell_conditional=[
+                                                    {"if": {"column_id": "field"}, "width": "30%", "fontWeight": "bold"},
+                                                    {"if": {"column_id": "value"}, "width": "70%"},
+                                                ],
+                                                style_data_conditional=[
+                                                    {"if": {"state": "active"},   "backgroundColor": "inherit", "border": "inherit"},
+                                                    {"if": {"state": "selected"}, "backgroundColor": "inherit", "border": "inherit"},
+                                                ],
+                                            ),
+                                        ],
+                                        title="Contents (sub-components):",
+                                        item_id="subcomp-info",
+                                    ),
+                                    style={"marginBottom": "16px"},
+                                ),
+
+                                # ────────────────────────────────
+                                # 2️Pre-shipping
+                                # ────────────────────────────────
+                                html.Div(
+                                    dbc.AccordionItem(
+                                        [
+                                            html.Div("Consortium QA Rep: —"    , id="info-box-qarep", className="info-card"),
+                                            html.Div("POC: —"                  , id="info-box-poc"  , className="info-card"),
+                                            html.Div("Origin: —"               , id="info-box-ori"  , className="info-card"),
+                                            html.Div("Destination: —"          , id="info-box-des"  , className="info-card"),
+                                            html.Div("Dimension: —"            , id="info-box-dim"  , className="info-card"),
+                                            html.Div("Weight: —"               , id="info-box-wei"  , className="info-card"),
+                                            html.Div("FF name: —"              , id="info-box-ffn"  , className="info-card"),
+                                            html.Div("Mode of Trans.: —"       , id="info-box-mod"  , className="info-card"),
+                                            html.Div("Expected Arrival Date: —", id="info-box-exd"  , className="info-card"),
+                                            html.Div("Acknowledged by who?: —" , id="info-box-acn"  , className="info-card"),
+                                            html.Div("When acknowledged?: —"   , id="info-box-act"  , className="info-card"),
+                                            html.Div("Visual Inspection: —"    , id="info-box-vis"  , className="info-card"),
+                                        ],
+                                        title="Pre-shipping",
+                                        item_id="preshipping",
+                                    ),
+                                    style={"marginBottom": "16px"},
+                                ),
+
+                                # ────────────────────────────────
+                                # 3️Shipping
+                                # ────────────────────────────────
+                                html.Div(
+                                    dbc.AccordionItem(
+                                        [
+                                            html.Div(
+                                                [
+                                                    html.Button(
+                                                        "⬇️ Download Bill of Lading",
+                                                        id={"type": "download-button", "index": "bol"},
+                                                        n_clicks=0,
+                                                        className="bol-btn",
+                                                    ),
+                                                    dcc.Store(id={"type": "image-id-store", "index": "bol"}),
+                                                    dcc.Store(id={"type": "image-status-store", "index": "bol"}), 
+                                                ],
+                                                style={
+                                                    "display": "flex",
+                                                    "justifyContent": "center",
+                                                    "marginBottom": "12px"
+                                                },
+                                            ),
+                                            html.Div(
+                                                [
+                                                    html.Button(
+                                                        "⬇️ Download Proforma Invoice",
+                                                        id={"type": "download-button", "index": "proforma"},
+                                                        n_clicks=0,
+                                                        className="proforma-btn",
+                                                    ),
+                                                    dcc.Store(id={"type": "image-id-store", "index": "proforma"}),
+                                                    dcc.Store(id={"type": "image-status-store", "index": "proforma"}), 
+                                                ],
+                                                style={
+                                                    "display": "flex",
+                                                    "justifyContent": "center",
+                                                    "marginBottom": "12px"
+                                                },
+                                            ),
+                                            html.Div(
+                                                [
+                                                    html.Button(
+                                                        "⬇️ Download final approval message",
+                                                        id={"type": "download-button", "index": "approval"},
+                                                        n_clicks=0,
+                                                        className="approval-btn",
+                                                    ),
+                                                    dcc.Store(id={"type": "image-id-store", "index": "approval"}),
+                                                    dcc.Store(id={"type": "image-status-store", "index": "approval"}), 
+                                                ],
+                                                style={
+                                                    "display": "flex",
+                                                    "justifyContent": "center",
+                                                    "marginBottom": "12px"
+                                                },
+                                            ),
+                                            html.Div("Final approved by who?: —"  , id="info-box-appwho", className="info-card"),
+                                            html.Div("Final approved when?: —"    , id="info-box-apptime", className="info-card"),
+                                            html.Div("Shipping label attached?: —", id="info-box-attached", className="info-card"),
+                                            html.Div("Shipment insured?: —"       , id="info-box-insured", className="info-card"),
+                                        ],
+                                        title="Shipping",
+                                        item_id="shipping",
+                                    ),
+                                    style={"marginBottom": "16px"},
+                                ),
+
+                                # ────────────────────────────────
+                                # 4️Warehouse
+                                # ────────────────────────────────
+                                html.Div(
+                                    dbc.AccordionItem(
+                                        [
+                                            html.Div("SKU: —"               , id="info-wh-sku", className="info-card"),
+                                            html.Div("PalletID: —"          , id="info-wh-pal", className="info-card"),
+                                            html.Div("Scanned date/time: —" , id="info-wh-tim", className="info-card"),
+                                            html.Div("Person received: —"   , id="info-wh-per", className="info-card"),
+                                            html.Div("Visual inspection: —" , id="info-wh-vis", className="info-card"),
+                                        ],
+                                        title="Info @ Warehouse",
+                                        item_id="warehouse",
+                                    ),
+                                    style={"marginBottom": "16px"},
+                                ),
+
+                            ],
+                            start_collapsed=True,  # all closed initially
+                            #flush=True,            # flat edges, no borders between items
+                            always_open=True,      # allows multiple open at once
+                            id="shipment-info-accordion",
+                        ),
+
+                    ],
+                ),
+            ],
+        ),
+
+
+        
+
+    ],
+)
+
+# The next project tab
 down_tab_layout = html.Div(
     id="down-tab-content",
     children=[
@@ -798,149 +1383,116 @@ down_tab_layout = html.Div(
 # --------------- LAYOUT --------------------
 
 layout = html.Div([
-
-    # --- Preferences ---
-    dcc.Store(id="preferences-store", storage_type="local"),
-    dcc.Interval(id="init-trigger", n_intervals=0, max_intervals=1),
-    preferences_section,
-
-
-    # --- Title / Header ---
+    
+    # --- Preferences + Header + Tabs pinned together ---
     html.Div(
-        [
-            html.Img(
-                src="/assets/IconBig.png",
-                style={
-                    "height": "5.5vw",      # scales with viewport width
-                    "maxHeight": "800px",   # don’t let it grow too large
-                    "minHeight": "35px",    # don’t let it shrink too small
-                    "margin-right": "1vw",
-                    "marginRight": "12px",
-                    "flexShrink": "0",
-                    "object-fit": "contain",
-                },
-            ),
-            html.H1(
-                "HWDB Dashboard",
-                style={
-                    "fontSize": "6vw",   # responsive font size
-                    "font-family": "Arial, sans-serif",
-                    "maxFontSize": "40px",
-                    "minFontSize": "18px",
-                    "color": "#2C3E50",
-                    #"textShadow": "2px 2px 6px rgba(0,0,0,0.3)",  # 3D effect
-                    "margin": "0",
-                    "line-height": "5.5vw", # matches image height
-                    "whiteSpace": "nowrap"
-                },
-            ),
+        id="header-container",
+        children=[
             
+            # --- Preferences ---
+            dcc.Store(id="preferences-store", storage_type="local"),
+            dcc.Store(id="version-change-signal", storage_type="session"),
+            dcc.Interval(id="init-trigger", n_intervals=0, max_intervals=1),
+            preferences_section,
+
+
+            # --- Title / Header ---
+            html.Div(
+                [
+                    html.Img(
+                        src="/assets/IconBig.png",
+                        style={
+                            "height": "5.5vw",      # scales with viewport width
+                            "maxHeight": "800px",   # don’t let it grow too large
+                            "minHeight": "35px",    # don’t let it shrink too small
+                            "margin-right": "1vw",
+                            "marginRight": "12px",
+                            "flexShrink": "0",
+                            "object-fit": "contain",
+                        },
+                    ),
+                    html.H1(
+                        "HWDB Dashboard",
+                        style={
+                            "fontSize": "4vw",   # responsive font size
+                            "font-family": "Arial, sans-serif",
+                            "maxFontSize": "40px",
+                            "minFontSize": "18px",
+                            "color": "#2C3E50",
+                            #"textShadow": "2px 2px 6px rgba(0,0,0,0.3)",  # 3D effect
+                            "margin": "0",
+                            "line-height": "5.5vw", # matches image height
+                            "whiteSpace": "nowrap"
+                        },
+                    ),
+                    
+                ],
+                style={
+                    "display": "flex",
+                    "justifyContent": "center",
+                    "alignItems": "center",
+                    "flexWrap": "wrap",   # allow wrapping on small screens
+                    "marginBottom": "5px",
+                    "textAlign": "center"
+                },
+            ),
+            html.Div( # Display the version of the HWDB in use
+                id="db-version-display",
+                style={
+                    "textAlign": "center",
+                    "marginTop": "5px",
+                    "fontSize": "18px",
+                    "font-family": "Arial, sans-serif",
+                    "color": "#0074D9",  # blue
+                    "fontWeight": "400",
+                }
+            ),
+    
+            html.Div(style={"marginBottom": "20px"}), # some space...
+
+    
+            # --- Tabs ---
+            dcc.Tabs(
+                id="tabs",
+                value="plot-tab",  # Initial tab
+                children=[
+                    dcc.Tab(label="Type Getter", value="tab-typegetter", className="custom-tab"),
+                    dcc.Tab(label="Plots", value="plot-tab", className="custom-tab"),
+                    dcc.Tab(label="Shipment Tracker", value="shipment-tab", className="custom-tab"),
+                    dcc.Tab(label="The next project", value="down-tab", className="custom-tab"),
+                ],
+            ),
         ],
         style={
-            "display": "flex",
-            "justifyContent": "center",
-            "alignItems": "center",
-            "flexWrap": "wrap",   # allow wrapping on small screens
-            "marginBottom": "5px",
-            "textAlign": "center"
+            "position": "fixed",         # 🧷 stays pinned
+            "top": "0",
+            "left": "0",
+            "width": "100%",
+            "zIndex": "1000",
+            "backgroundColor": "rgba(255, 255, 255, 0.9)",
+            "backdropFilter": "blur(10px)",     # 💎 nice frosted-glass effect
+            "boxShadow": "0 2px 10px rgba(0,0,0,0.2)",
+            "paddingBottom": "8px",
         },
     ),
-    html.Div( # Display the version of the HWDB in use
-        id="db-version-display",
-        style={
-            "textAlign": "center",
-            "marginTop": "5px",
-            "fontSize": "18px",
-            "font-family": "Arial, sans-serif",
-            "color": "#0074D9",  # blue
-            "fontWeight": "400",
-        }
-    ),
-    
-    html.Div(style={"marginBottom": "40px"}), # some space...
 
-    
-    # --- Tabs ---
-    dcc.Tabs(
-        id="tabs",
-        value="plot-tab",
-        children=[
-            dcc.Tab(
-                label="Plots",
-                value="plot-tab",
-                style={ 
-                    #"backgroundColor": "#f0f0f0", # Let css handle this
-                    #"border": "1px solid #ccc",
-                    #"borderRadius": "8px 8px 0 0",
-                    #"boxShadow": "0 4px 8px rgba(0,0,0,0.2)",
-                    #"padding": "10px",
-                    #"marginRight": "5px",
-                    "fontWeight": "900",
-                    "fontSize": "19px",
-                    "font-family": "Arial, sans-serif",
-                    #"color": "#222",
-                    "textShadow": "none",
-                    "cursor": "pointer",
-                    "transition": "all 0.5s ease-in-out",
-                    "marginLeft": "10px",
-                },
-                selected_style={ # Let css handle this
-                    #"backgroundColor": "#ffffff",
-                    #"borderBottom": "3px solid #007acc",
-                    #"boxShadow": "inset 0 3px 6px rgba(0,0,0,0.25)",
-                    #"color": "#007acc",
-                    "fontWeight": "900",
-                    "fontSize": "19px",
-                    "font-family": "Arial, sans-serif",
-                    "textShadow": "none",
-                    "transform": "translateY(1px)",
-                    "marginLeft": "10px",
-                },
-                className="custom-tab",
-                selected_className="custom-tab--selected",
-            ),
-            dcc.Tab(
-                label="The next project",
-                value="down-tab",
-                style={
-                    #"backgroundColor": "#f0f0f0",
-                    #"border": "1px solid #ccc",
-                    #"borderRadius": "8px 8px 0 0",
-                    #"boxShadow": "0 4px 8px rgba(0,0,0,0.2)",
-                    #"padding": "10px",
-                    #"marginRight": "5px",
-                    "fontWeight": "900",
-                    "fontSize": "19px",
-                    "font-family": "Arial, sans-serif",
-                    #"color": "#222",
-                    "textShadow": "none",
-                    "cursor": "pointer",
-                    "transition": "all 0.5s ease-in-out",
-                    "marginRight": "10px",
-                },
-                selected_style={
-                    #"backgroundColor": "#ffffff",
-                    #"borderBottom": "3px solid #007acc",
-                    #"boxShadow": "inset 0 3px 6px rgba(0,0,0,0.15)",
-                    #"color": "#007acc",
-                    "fontWeight": "900",
-                    "fontSize": "19px",
-                    "font-family": "Arial, sans-serif",
-                    "textShadow": "none",
-                    "transform": "translateY(1px)",
-                    "marginRight": "10px",
-                },
-                className="custom-tab",
-                selected_className="custom-tab--selected",
-            ),
-        ],
-    ),
+    # Spacer so page content starts *below* fixed header
+    html.Div(style={"height": "230px"}),   # adjust if header height changes
 
-    # this will display the selected tab’s layout
-    #html.Div(id="tabs-content"),
-    # both tabs are already rendered
+
+    # --------------- Tabs content ----------------
+    
+    html.Div(
+        id="tab-typegetter-content",
+        children=[typegetter_layout()],
+        style={"display": "none"},  # hidden initially; switch_tabs() will show it
+    ),
     plot_tab_layout,
+    shipment_tab_layout,
     down_tab_layout,
+
+    # Dynamic tab content placeholder
+    #html.Div(id="tabs-content", style={"marginTop": "20px"}),
 
     # Version label in bottom-left corner
     html.Div(style={"marginTop": "80px"}),
@@ -977,12 +1529,23 @@ layout = html.Div([
 # ---------------------------
 def register_layout_callbacks(app):
     @app.callback(
-        [Output("plot-tab-content", "style"),
-        Output("down-tab-content", "style")],
-        Input("tabs", "value")
+        [
+            Output("tab-typegetter-content", "style"),
+            Output("plot-tab-content", "style"),
+            Output("shipment-tab-content", "style"),
+            Output("down-tab-content", "style"),
+        ],
+        Input("tabs", "value"),
     )
-    def switch_tabs(tab):
-        if tab == "plot-tab":
-            return {"display": "block"}, {"display": "none"}
-        else:
-            return {"display": "none"}, {"display": "block"}
+    def switch_tabs(active_tab):
+        visible_map = {
+            "tab-typegetter": "tab-typegetter-content",
+            "plot-tab": "plot-tab-content",
+            "shipment-tab": "shipment-tab-content",
+            "down-tab": "down-tab-content",
+        }
+        return tuple(
+            {"display": "block"} if tab == active_tab else {"display": "none"}
+            for tab in visible_map.keys()
+        )
+    

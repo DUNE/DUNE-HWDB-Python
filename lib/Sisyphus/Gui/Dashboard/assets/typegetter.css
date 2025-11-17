@@ -1,0 +1,247 @@
+.tg-page-title {
+  text-align: center;
+  margin: 0;
+  color: #003366;
+}
+.tg-header-right {
+  justify-self: end;
+}
+.tg-sync-btn {
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  border-radius: 10px;
+}
+
+/* Breadcrumb-ish helper text */
+.tg-crumbs {
+  font-family: Arial, sans-serif;
+  font-size: 16px;                  /* larger text */
+  font-weight: 500;                 /* semi-bold for readability */
+  color: #004a99;                   /* DUNE blue tone */
+  background-color: #f9fafc;        /* subtle background */
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+
+  /* --- Wrapping behavior --- */
+  white-space: normal;          /* allow wrapping */
+  word-wrap: break-word;        /* break long words if needed */
+  overflow-wrap: anywhere;      /* modern way — works for long IDs */
+  max-width: 100%;              /* stay within the container */
+  line-height: 1.4;             /* add spacing between wrapped lines */
+}
+
+/* Copied message */
+.tg-typeid-status {
+  margin-top: 10px;
+  font-weight: 600;
+  color: #0066cc;
+}
+
+/* --- DataTable visibility fixes --- */
+.dash-table-container {
+  background-color: #ffffff !important;
+}
+
+.dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner tr {
+  background-color: #ffffff;
+  color: #111111;
+}
+
+.dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner tr:nth-child(even) td {
+  background-color: #f8f8f8 !important;
+}
+
+/* Selected row highlight */
+.dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner tr.is-selected td {
+  background-color: rgba(0, 123, 255, 0.15) !important;
+  color: #000;
+  border-color: rgba(0, 123, 255, 0.25) !important;
+}
+
+/* Remove extra borders */
+.dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner td.cell--selected,
+.dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner td.focused {
+  box-shadow: none !important;
+  border-color: rgba(0,0,0,0.1) !important;
+}
+
+/* Hover row effect */
+.dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner tr:hover td {
+  background-color: rgba(0,0,0,0.04) !important;
+}
+
+
+/* === TypeGetter visible-page fix (keeps sliding intact) === */
+
+/* Outer wrapper — the visible viewport */
+#typegetter-root {
+  position: relative;
+  overflow: hidden;   /* hide off-screen pages */
+  width: 100%;
+  height: auto;
+}
+
+/* Sliding strip containing 4 pages */
+.tg-container {
+  display: flex;
+  flex-direction: row;
+  transition: transform 0.35s ease-in-out;
+  transform: translateX(0%);  /* Show "Projects" page initially */
+  width: 400%;
+  overflow: hidden;           /* key: hide horizontal scrollbars */
+}
+
+/* Each page occupies full viewport width */
+.tg-page {
+  flex: 0 0 100%;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px 20px;
+  background-color: #ffffff;
+  color: #111111;
+  overflow-y: auto;            /* allow vertical scrolling inside page */
+}
+
+/* Header bar with Sync button */
+.tg-page-header {
+  position: sticky;
+  top: 0;
+  background-color: #f0f0f0;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.tg-header-right {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+}
+
+
+
+/* --- FIX: Ensure visible first page and keep slide mechanics intact --- */
+#typegetter-root {
+  /* overflow-x: auto !important; */   /* ❌ */
+  /* overflow-y: visible !important; */ /* ❌ */
+}
+
+.tg-container {
+  max-width: 100%;              /* prevent invisible overflow clipping */
+  box-sizing: border-box;
+}
+
+.tg-page-header {
+  overflow: visible;            /* ensure Sync button isn't clipped */
+}
+
+/* hover background ONLY for Name column */
+.dash-table-container td[data-dash-column="name"]:hover {
+  background-color: rgba(0, 123, 255, 0.08) !important;
+  cursor: pointer;
+}
+
+/* ensure ID column does NOT change on hover */
+.dash-table-container td[data-dash-column="id"]:hover {
+  background-color: transparent !important;
+  cursor: default !important;
+}
+
+/* --- FIX: Ensure later pages (systems, subsystems, types) are not clipped --- */
+.tg-page {
+  min-width: 100%;
+  flex-shrink: 0;
+}
+
+.tg-container {
+    /* overflow: visible !important; */   /* ❌ */
+}
+
+#typegetter-root {
+    /* overflow: visible !important; */   /* ❌ */
+}
+
+/* --- Disable hover effect for ID column in TypeGetter tables --- */
+/* Remove hover highlight from all ID cells */
+#tg-table-projects td:first-child,
+#tg-table-systems td:first-child,
+#tg-table-subsystems td:first-child,
+#tg-table-types td:first-child {
+  background-color: #ffffff !important;
+  transition: background-color 0.15s ease-in-out;
+}
+
+/* Prevent ID column from changing even when its row is hovered */
+#tg-table-projects tr:hover td:first-child,
+#tg-table-systems tr:hover td:first-child,
+#tg-table-subsystems tr:hover td:first-child,
+#tg-table-types tr:hover td:first-child {
+  background-color: #ffffff !important;
+  cursor: default !important;
+}
+
+/* Optional: make Name column hover slightly blue to emphasize clickability */
+#tg-table-projects tr:hover td:nth-child(2),
+#tg-table-systems tr:hover td:nth-child(2),
+#tg-table-subsystems tr:hover td:nth-child(2),
+#tg-table-types tr:hover td:nth-child(2) {
+  background-color: rgba(0, 123, 255, 0.08) !important;
+  cursor: pointer;
+}
+
+/* Keep off-screen pages hidden, no horizontal panning */
+#typegetter-root {
+  overflow-x: hidden !important;
+  overflow-y: visible;                 /* vertical scroll is fine */
+  touch-action: pan-y !important;      /* block horizontal gesture */
+}
+
+.tg-container {
+  overflow: hidden !important;         /* DO NOT reveal the other pages */
+  overscroll-behavior-x: none !important;
+  scrollbar-width: none;
+}
+.tg-container::-webkit-scrollbar { display: none; }
+
+/* Each page still fills one viewport width */
+.tg-page {
+  flex: 0 0 100%;
+  min-width: 100%;
+  max-width: 100%;
+}
+
+/* === Fix: keep later TypeGetter pages visible during slide === */
+.tg-container {
+  overflow: visible !important;     /* allow the next page to slide in */
+}
+
+#typegetter-root {
+  overflow-x: hidden !important;    /* still no manual scrolling */
+  overflow-y: visible !important;   /* keep vertical scroll working */
+}
+/*
+#tg-clipboard {
+  display: none !important;
+}
+*/
+/* Copied message fade */
+#tg-typeid-status {
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  color: #0066cc;
+  margin-top: 8px;
+}
+
+#tg-typeid-text {
+  opacity: 1;
+  transition: opacity 1.5s ease-out;
+}
+
+#tg-typeid-text.fade-out {
+  opacity: 0;
+}

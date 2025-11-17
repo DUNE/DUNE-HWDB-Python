@@ -120,10 +120,10 @@ class PreShipping6(PageWidget):
             self.acknowledged_time.show()
 
         
-        if self.page_state.get('damage_status', None) == 'no damage':
-            self.damage_description.setEnabled(False)
-        else:
-            self.damage_description.setEnabled(True)
+        #if self.page_state.get('damage_status', None) == 'no damage':
+        #    self.damage_description.setEnabled(False)
+        #else:
+        #    self.damage_description.setEnabled(True)
 
         if is_surf:
             if not self.received_acknowledgement.isChecked():
@@ -132,13 +132,21 @@ class PreShipping6(PageWidget):
 
             if len(self.acknowledged_by.text()) == 0:
                 self.nav_bar.continue_button.setEnabled(False)
-            return
+                return
 
-        if (self.page_state.get('damage_status', None) == 'damage' 
-                and len(self.page_state.get('damage_description', '')) == 0):
-            self.nav_bar.continue_button.setEnabled(False)
+            if (self.page_state.get('damage_status', None) == 'damage' 
+                    and len(self.page_state.get('damage_description', '')) == 0):
+                self.nav_bar.continue_button.setEnabled(False)
+                return
             
-        self.nav_bar.continue_button.setEnabled(True)
-    
-
-
+            self.nav_bar.continue_button.setEnabled(True)
+        else:
+            if (self.page_state.get('damage_status', None) == 'damage' 
+                    and len(self.page_state.get('damage_description', '')) == 0):
+                self.nav_bar.continue_button.setEnabled(False)
+                return
+            
+            self.nav_bar.continue_button.setEnabled(True)
+            
+            
+        

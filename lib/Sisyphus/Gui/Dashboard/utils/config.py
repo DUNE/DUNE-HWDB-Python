@@ -1,4 +1,11 @@
-APP_VERSION = "v0.9.2"
+try:
+    # Import version from top-level Sisyphus package
+    from Sisyphus import version as SISYPHUS_VERSION
+    APP_VERSION = SISYPHUS_VERSION
+except Exception:
+    APP_VERSION = "v?.?.?"  # fallback if not found
+
+
 
 # Sisyphus
 from Sisyphus.Configuration import config
@@ -50,40 +57,4 @@ def switch_profile(profile_name: str, persist: bool = True):
     else:
         logger.info(f"⚡ Temporarily switched to {profile_name} (no file saved)")
         
-def restart(silent: bool = True, delay: float = 0.5):
-    """
-    Safely restart the current Dashboard module.
-
-    Parameters
-    ----------
-    silent : bool
-        If True, suppresses terminal output (default True)
-    delay : float
-        Delay in seconds before restarting to let UI callbacks settle
-    """
-
-    now = time.time()
-    if now - _last_restart_time[0] < 3:
-        # Prevent accidental double restart (e.g. double-click)
-        return
-    _last_restart_time[0] = now
-
-    if not silent:
-        logger.info(f"[Dashboard] Restarting in {delay:.1f} sec...")
-        logger.info(sys.executable, "-m", "Sisyphus.Gui.Dashboard")
-
-    # Use a background thread so Dash callback can finish returning before quit
-    def _delayed_restart():
-        time.sleep(delay)
-        #os.execv(sys.executable, [sys.executable, "-m", "Sisyphus.Gui.Dashboard"])
-        import subprocess
-        subprocess.Popen(
-            [sys.executable, "-m", "Sisyphus.Gui.Dashboard"],
-            close_fds=True,
-            stdout=None if silent else sys.stdout,
-            stderr=None if silent else sys.stderr,
-        )
-        os._exit(0)  # ensure current process quits immediately
-
-    threading.Thread(target=_delayed_restart, daemon=True).start()
 
