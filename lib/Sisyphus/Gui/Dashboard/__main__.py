@@ -19,6 +19,7 @@ from Sisyphus.Gui.Dashboard.layout.layout_main import layout, register_layout_ca
 from Sisyphus.Gui.Dashboard.callbacks.callbacks_preferences import register_preferences_callbacks
 from Sisyphus.Gui.Dashboard.callbacks.callbacks_jsonselect import register_jsonselect_callbacks
 from Sisyphus.Gui.Dashboard.callbacks.callbacks_typegetter import register_typegetter_callbacks
+from Sisyphus.Gui.Dashboard.callbacks.callbacks_downloader import register_downloader_callbacks
 
 from Sisyphus.Gui.Dashboard.callbacks import (
     register_conditions_callbacks,
@@ -51,6 +52,7 @@ app.layout = layout
 register_layout_callbacks(app)
 
 # Register all callback modules
+register_downloader_callbacks(app)
 register_typegetter_callbacks(app)
 register_preferences_callbacks(app)
 register_conditions_callbacks(app)

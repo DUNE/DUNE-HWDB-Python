@@ -27,18 +27,18 @@ class Test__post_hwitems_bulk(unittest.TestCase):
     
     def setUp(self):
         self.start_time = time.time()
-        print(f"\nTest #{getattr(self, 'test_number', 'N/A')}: {self.__class__.__name__}.{self._testMethodName}")
-        print(f"Test started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        #print(f"\nTest #{getattr(self, 'test_number', 'N/A')}: {self.__class__.__name__}.{self._testMethodName}")
+        #print(f"Test started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
     def tearDown(self):
         end_time = time.time()
         duration = end_time - self.start_time
-        print(f"Test ended at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"Test duration: {duration:.2f} seconds")
+        #print(f"Test ended at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        #print(f"Test duration: {duration:.2f} seconds")
     
     def test_post_hwitems_bulk(self):
-        print("\n=== Testing to post multiple Items in bulk ===")
-        print("POST /api/v1/component-types/{part_type_id}/bulk-add")
+        #print("\n=== Testing to post multiple Items in bulk ===")
+        #print("POST /api/v1/component-types/{part_type_id}/bulk-add")
 
 
         part_type_id = "Z00100300001"
@@ -58,17 +58,41 @@ class Test__post_hwitems_bulk(unittest.TestCase):
             #"status": {"id": 3} # bulk doesn't allow this yet.
         }
 
-        logger.info(f"Posting bulk components: part_type_id={part_type_id}")
-        resp = post_hwitems_bulk(part_type_id, data)
-        logger.info(f"Response from post: {resp}")
+        self.test_info["endpoint"] = f"POST : /component-types/{part_type_id}/bulk-add"
+        self.test_info["description"] = f"Create multiple Items in bulk under Type ID = {part_type_id}"
+        self.test_info["check"] = "if two new Items are indeed created"
 
-        self.assertEqual(resp["status"], "OK")
+        try:
 
-        part_id1 = resp["data"][0]["part_id"]
-        part_id2 = resp["data"][1]["part_id"]
+            logger.info(f"Posting bulk components: part_type_id={part_type_id}")
+            resp = post_hwitems_bulk(part_type_id, data)
+            logger.info(f"Response from post: {resp}")
 
-        logger.info(f"New parts result: part_id1={part_id1}, part_id2={part_id2}")
-        print(f"Two new Items have been created with part_ids: {part_id1} and {part_id2}")
+            self.assertEqual(resp["status"], "OK")
+
+            part_id1 = resp["data"][0]["part_id"]
+            part_id2 = resp["data"][1]["part_id"]
+
+            logger.info(f"New parts result: part_id1={part_id1}, part_id2={part_id2}")
+            #print(f"Two new Items have been created with part_ids: {part_id1} and {part_id2}")
+        except Exception as e:
+            # Try to get raw server response if available
+            api_resp = getattr(e, "response", None)
+
+            if api_resp is not None:
+                # If the API wrapper supports .json(), use it
+                try:
+                    self.test_info["error"] = json.dumps(api_resp.json(), indent=4)
+                except Exception:
+                    # Fallback: raw string body
+                    self.test_info["error"] = api_resp.text
+            else:
+                # Nothing from server, probably client-side issue
+                self.test_info["error"] = str(e)
+
+            # Preserve traceback for summary
+            logger.error(f"Exception: {repr(e)}")
+            raise
 
 #=================================================================================
 

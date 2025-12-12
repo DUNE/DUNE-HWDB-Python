@@ -10,17 +10,241 @@ from Sisyphus.RestApiV1 import get_hwitem, get_hwitems, get_hwitem_test
 from Sisyphus.Configuration import config
 from pathlib import Path
 import os
+import time
+import threading
 
 logger = config.getLogger(__name__)
 
+_plot_jobs = {}
+
+def _plot_sync_worker(job_id):
+    from Sisyphus.RestApiV1 import Utilities as ra_util
+    executor = ra_util._executor
+
+    job = _plot_jobs[job_id]
+    args = job["args"]
+    typeid = job["typeid"]
+    testtype = job["testtype"]
+
+    try:
+        resp = get_hwitems(**args)
+        items = resp["data"]
+        total = len(items)
+        job["total"] = total
+
+        results = []
+
+        # --- Fetch TestLog per item (PROGRESS LOOP) ---
+        futures = [executor.submit(GETTestLog, it, testtype) for it in items]
+        for idx, f in enumerate(futures):
+            try:
+                results.append(f.result())
+            except Exception as e:
+                logger.error(f"[Plots] GETTestLog failed: {e}")
+                results.append({})
+            job["processed"] = idx + 1
+
+        # --- Convert raw results to DataFrame ---
+        data = load_data(results)
+
+        # --- Drop unwanted keys ---
+        unwanted_keys = [
+            "category","link","link_href","link_rel","status","component_id",
+            "ITEM: category","ITEM: batch_id","ITEM: batch_received","ITEM: component_id",
+            "ITEM: component_type_name","ITEM: component_type_part_type_id","ITEM: specs_version",
+            "TEST: id","TEST: images","TEST: link_href","TEST: link_rel","TEST: methods_0_rel",
+            "TEST: methods_0_href","TEST: test_spec_version","TEST: test_type_id","TEST: test_type_name",
+        ]
+        data = data.drop(columns=[c for c in data.columns if c in unwanted_keys], errors="ignore")
+
+        # --- Sort columns exactly like before ---
+        priority_item = [...]
+        priority_test = [...]
+
+        item_cols = sorted([c for c in data.columns if c.startswith("ITEM: ")])
+        test_cols = sorted([c for c in data.columns if c.startswith("TEST: ")])
+        other_cols = [c for c in data.columns if c not in item_cols + test_cols]
+
+        item_cols = [c for c in priority_item if c in item_cols] + sorted([c for c in item_cols if c not in priority_item])
+        test_cols = [c for c in priority_test if c in test_cols] + sorted([c for c in test_cols if c not in priority_test])
+        other_cols = [c for c in priority_item if c in other_cols] + sorted([c for c in other_cols if c not in priority_item])
+
+        sorted_cols = list(dict.fromkeys(item_cols + test_cols + other_cols))
+        data = data[sorted_cols]
+
+        # --- Save pickle locally (unchanged logic) ---
+        from pathlib import Path
+        pref_file = Path(config.active_profile.profile_dir) / "dash_user_preferences.txt"
+        if pref_file.exists():
+            working_dir = pref_file.read_text().strip()
+            if not os.path.isdir(working_dir):
+                working_dir = os.getcwd()
+        else:
+            working_dir = os.getcwd()
+
+        save_dir = Path(working_dir) / typeid
+        save_dir.mkdir(parents=True, exist_ok=True)
+
+        ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        pickle_filename = f"HWDB_downloaded_{typeid}_{ts}.pkl"
+        if testtype:
+            pickle_filename = f"HWDB_downloaded_{typeid}_{testtype}_{ts}.pkl"
+
+        pickle_path = save_dir / pickle_filename
+        import pickle
+        with open(pickle_path, "wb") as f:
+            pickle.dump(data, f)
+
+        # --- Store result & mark done ---
+        job["data"] = data.to_dict("records")
+        job["done"] = True
+
+    except Exception as e:
+        job["error"] = str(e)
+        job["done"] = True
+
+
+
 # --- Load the JSON and reset button text after finish ---
 def register_callbacks(app):
+
+    # --------------------------------------------------------
+    # Poll background job status
+    # --------------------------------------------------------
+    @app.callback(
+        Output("load-json", "children", allow_duplicate=True),
+        Output("load-json", "style", allow_duplicate=True),
+        Output("load-json", "disabled", allow_duplicate=True),
+        Output("data-store", "data", allow_duplicate=True),
+        Output("downloaded-output", "children", allow_duplicate=True),
+        Output("plots-interval", "disabled", allow_duplicate=True),
+        Input("plots-interval", "n_intervals"),
+        State("plots-job-id", "data"),
+        prevent_initial_call=True,
+    )
+    def poll_plots_job(n, job_id):
+        job = _plot_jobs.get(job_id)
+        if not job:
+            raise PreventUpdate
+
+        if job.get("error"):
+            red = {"backgroundColor": "#e74c3c", "color": "white"}
+            return f"Error: {job['error']}", red, False, None, "", True
+
+        processed = job["processed"]
+        total = job["total"]
+        pct = int(processed * 100 / total)
+
+        if not job["done"]:
+            orange = {
+                "fontSize": "20px",
+                "padding": "14px 32px",
+                "backgroundColor": "#f39c12",
+                "color": "white",
+                "border": "none",
+                "borderRadius": "8px",
+                "cursor": "not-allowed",
+                "animation": "pulse 1.5s infinite",
+                "gap": "15px",
+                "marginRight": "50px",
+            }
+            return f"{pct}% completed...", orange, True, None, "", False
+
+        # DONE — restore button
+        green = {
+            "fontSize": "20px",
+            "padding": "14px 32px",
+            "backgroundColor": "#4CAF50",
+            "color": "white",
+            "border": "none",
+            "borderRadius": "8px",
+            "cursor": "pointer",
+            "gap": "15px",
+            "marginRight": "50px",
+        }
+        msg = f"Loaded {total} Items from the HWDB"
+        data = job["data"]
+        _plot_jobs.pop(job_id, None)
+        return "Sync to the HWDB", green, False, data, msg, True
+
+    # --------------------------------------------------------
+    # Display the progress
+    # --------------------------------------------------------
+    @app.callback(
+        [
+            Output("load-json", "children", allow_duplicate=True),
+            Output("load-json", "style", allow_duplicate=True),
+            Output("load-json", "disabled", allow_duplicate=True),
+            Output("data-store", "data", allow_duplicate=True),
+            Output("downloaded-output", "children", allow_duplicate=True),
+            Output("plot-sync-interval", "disabled", allow_duplicate=True),
+        ],
+        Input("plot-sync-interval", "n_intervals"),
+        State("plot-sync-job-id", "data"),
+        prevent_initial_call=True,
+    )
+    def update_sync_progress(n, job_id):
+        if not job_id or job_id not in _plot_jobs:
+            raise PreventUpdate
+
+        job = _plot_jobs[job_id]
+        processed = job["processed"]
+        total = job["total"]
+        pct = int(100 * processed / total) if total else 0
+
+        # update % text while job is running
+        if not job["done"]:
+            return (
+                f"{pct}% completed...",
+                {
+                    "fontSize": "20px",
+                    "padding": "14px 32px",
+                    "backgroundColor": "#f39c12",
+                    "color": "white",
+                    "border": "none",
+                    "borderRadius": "8px",
+                    "cursor": "not-allowed",
+                    "transition": "all 0.2s ease-in-out",
+                    "gap": "15px",
+                    "marginRight": "50px",
+                },
+                True,
+                dash.no_update,
+                "",
+                False,  # keep interval alive
+            )
+
+        # job finished → restore button + save data
+        data = job.get("data", [])
+        msg = html.Div(f"Loaded {total} Items from the HWDB",
+                    style={"fontSize": "20px", "color": "red"})
+
+        green = {
+            "fontSize": "20px",
+            "padding": "14px 32px",
+            "backgroundColor": "#4CAF50",
+            "color": "white",
+            "border": "none",
+            "borderRadius": "8px",
+            "cursor": "pointer",
+            "gap": "15px",
+            "marginRight": "50px",
+        }
+
+        return "Sync to the HWDB", green, False, data, msg, True,
+
+    # --------------------------------------------------------
+    # Download DATA
+    # --------------------------------------------------------
     @app.callback(
         [Output("data-store", "data", allow_duplicate=True),
          Output("load-json", "children"),
          Output("downloaded-output", "children", allow_duplicate=True), # The downloaded message
          Output("load-json", "style"),
-         Output("load-json", "disabled")],
+         Output("load-json", "disabled"),
+         Output("plot-sync-job-id", "data"),
+         Output("plot-sync-interval", "disabled"),
+        ],
         Input("load-json", "n_clicks"), # The Sync to the HWDB button
         Input("upload-json", "contents"), # for loading a local file
         State("upload-json", "filename"), # for loading a local file
@@ -73,13 +297,18 @@ def register_callbacks(app):
         
         # No Component Type ID was provided...
         if not user_string:
-            return dash.no_update, "Sync to the HWDB", "", style, False
+            return dash.no_update, "Sync to the HWDB", "", style, False, None, False
+
+        
+
         
         #------------------------------------------
         # Case A: user clicked “Sync to the HWDB”
         #------------------------------------------
         if trig == "load-json":
-            logger.info("[Sync] ⏳ Fetching data from HWDB…")
+            #logger.info("[Sync] ⏳ Fetching data from HWDB…")
+
+            logger.info("[Sync] Starting background job for HWDB sync...")
             
             # Load the data
             try:
@@ -161,120 +390,58 @@ def register_callbacks(app):
 
 
                 
-                #------------------------------------------------
-
+                # REST call
                 #resp = get_hwitems(user_string, size=99999)
                 resp = get_hwitems(**args)
-            
-                totalentry = len(resp["data"])
+                #totalentry = len(resp["data"])
+                all_items = resp["data"]
+                total = len(all_items)
 
-                if len(resp["data"])>0:
-                
-                    # for Test Log
-                    if testtype_string:
+                # Register job
+                job_id = f"PLOT-{int(time.time()*1000)}"
+                global _plot_jobs
+                _plot_jobs[job_id] = {
+                    "processed": 0,
+                    "total": total,
+                    "done": False,
+                    "error": None,
+                    "typeid": user_string,
+                    "testtype": testtype_string,
+                    "args": args  # store filters
+                }
 
-                        #with ThreadPoolExecutor(max_workers=50) as executor:
-                        #    results = list(executor.map(lambda d: GETTestLog(d, testtype_string), resp["data"]))
-                        #    data = load_data(results)
-
-                        # Let's use the global, persistent HWDB session pool used by all other Sisyphus REST utilities:
-                        from Sisyphus.RestApiV1 import Utilities as ra_util
-                        executor = ra_util._executor
-                        results = list(executor.map(lambda d: GETTestLog(d, testtype_string), resp["data"]))
-                        data = load_data(results)
-                        
-                    else:
-                        data = load_data(resp["data"])
-                #------------------------------------------------
-                # Filter unwanted columns
-                unwanted_keys = [
-                    "category", "link", "link_href", "link_rel", "status", "component_id",                            # for Item list
-                    "ITEM: category", "ITEM: batch_id", "ITEM: batch_received", "ITEM: component_id",                 # for each Items
-                    "ITEM: component_type_name", "ITEM: component_type_part_type_id", "ITEM: specs_version",          # for each Items
-                    "TEST: id", "TEST: images", "TEST: link_href", "TEST: link_rel", "TEST: methods_0_rel",           # for each Tests
-                    "TEST: methods_0_href", "TEST: test_spec_version", "TEST: test_type_id", "TEST: test_type_name"]  # for each Tests
-                data = data.drop(columns=[c for c in data.columns if c in unwanted_keys], errors="ignore")
-            
-                # Sort the columns
-                priority_item = ["part_id"             , "parent_part_id"      , "country_code"      , "institution_id"        , "institution_name"      ,
-                                 "ITEM: part_id"       , "ITEM: parent_part_id", "ITEM: country_code", "ITEM: institution_id"  , "ITEM: institution_name", 
-                                 "created"             , "creator_id"          , "creator_name"      , "creator_username"      , "manufacturer_id"       , "manufacturer_name",
-                                 "ITEM: created"       , "ITEM: creator_id"    , "ITEM: creator_name", "ITEM: creator_username", "ITEM: manufacturer_id" , "ITEM: manufacturer_name",
-                                 "serial_number"       , "location"            , "status_id"         , "status_name"           ,
-                                 "ITEM: serial_number" , "ITEM: location"      , "ITEM: status_id"   , "ITEM: status_name"     ,
-                                 "certified_qaqc"      , "qaqc_uploaded"       , "is_installed"      , "comments"              ,
-                                 "ITEM: certified_qaqc", "ITEM: qaqc_uploaded" , "ITEM: is_installed", "ITEM: comments"
-                ]
-                priority_test = ["TEST: created"       , "TEST: creator_id"    , "TEST: creator_name", "TEST: creator_username", "TEST: comments"]
-                # Group columns by prefix
-                item_cols = sorted([c for c in data.columns if c.startswith("ITEM: ")])
-                test_cols = sorted([c for c in data.columns if c.startswith("TEST: ")])
-                other_cols = [c for c in data.columns if c not in item_cols + test_cols] # this is actually when a Test Type Name is not given
-            
-                # Combine in the following order:
-                # Apply priority order within each group
-                item_cols = (
-                    [c for c in priority_item if c in item_cols] +
-                    sorted([c for c in item_cols if c not in priority_item])
+                # Launch background thread
+                thread = threading.Thread(
+                    target=_plot_sync_worker,
+                    args=(job_id,),
+                    daemon=True,
                 )
-                test_cols = (
-                    [c for c in priority_test if c in test_cols] +
-                    sorted([c for c in test_cols if c not in priority_test])
-                )
-                other_cols = (
-                    [c for c in priority_item if c in other_cols] +
-                    sorted([c for c in other_cols if c not in priority_item])
-                )
+                thread.start()
+        
+                # start polling + disable button + show 0%
+                orange = {
+                    "fontSize": "20px",
+                    "padding": "14px 32px",
+                    "backgroundColor": "#f39c12",
+                    "color": "white",
+                    "border": "none",
+                    "borderRadius": "8px",
+                    "cursor": "not-allowed",
+                    "animation": "pulse 1.5s infinite",
+                    "gap": "15px",
+                    "marginRight": "50px",
+                }
 
-                # Final column order
-                sorted_cols = (
-                    item_cols +
-                    test_cols +
-                    other_cols
-                )
+                return dash.no_update, "0% completed...", "", orange, True, job_id, False
 
-                # Remove possible duplicates while keeping order
-                sorted_cols = list(dict.fromkeys(sorted_cols))
-
-                # Reorder the DataFrame
-                data = data[sorted_cols]
-
-                    
-                #--- Also, save the loaded data locally ---
-                # Determine working directory
-                pref_file = Path(config.active_profile.profile_dir) / "dash_user_preferences.txt"
-                if pref_file.exists():
-                    working_dir = pref_file.read_text().strip()
-                    if not os.path.isdir(working_dir):
-                        working_dir = os.getcwd()
-
-                # Create subdirectory based on typeid
-                if user_string:
-                    sub_dir = os.path.join(working_dir, str(user_string))
-                    os.makedirs(sub_dir, exist_ok=True)  # Create folder if it doesn't exist
-                    save_dir = sub_dir  # redirect save target
-
-                # Generate timestamped file name
-                ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-                pickle_filename = f"HWDB_downloaded_{user_string}_{ts}.pkl"
-                if testtype_string:
-                     pickle_filename = f"HWDB_downloaded_{user_string}_{testtype_string}_{ts}.pkl"
-                pickle_path = Path(save_dir) / pickle_filename
-
-                # Save the Pickle data
-                try:
-                    with open(pickle_path, "wb") as f:
-                        #pickle.dump(resp, f)
-                        pickle.dump(data, f)
-                except Exception as e:
-                    logger.error(f"[Sync] ⚠️ Failed to save JSON: {e}")
-
-
-                return data.to_dict("records"),"Sync to the HWDB",html.Div(f"Loaded {totalentry} Items from the HWDB",style={"fontSize": "20px", "color": "red","font-family": "Arial, sans-serif"}), style, False
-                    
             except Exception as e:
-                return dash.no_update, "Sync to the HWDB", html.Div(f"Error: {e}",style={"fontSize": "20px", "color": "red","font-family": "Arial, sans-serif"}), style, False
-
+                logger.error(f"[Sync] ERROR while preparing sync job: {e}")
+                red = style.copy()
+                red["backgroundColor"] = "#FF0000"
+                return dash.no_update, "Sync to the HWDB", html.Div(
+                    f"Error: {e}",
+                    style={"fontSize": "20px", "color": "red"}
+                    ), red, False, None, False
         
         #------------------------------------------
         # Case B: user uploaded (read) a file
@@ -300,9 +467,9 @@ def register_callbacks(app):
                 totalentry = len(data)
 
                 # Convert to JSON for storage
-                return data.to_dict("records"),"Sync to the HWDB",html.Div(f"Loaded {totalentry} Items from {upload_name}",style={"fontSize": "20px", "color": "red","font-family": "Arial, sans-serif"}), style, False
+                return data.to_dict("records"),"Sync to the HWDB",html.Div(f"Loaded {totalentry} Items from {upload_name}",style={"fontSize": "20px", "color": "red","font-family": "Arial, sans-serif"}), style, False, None, False
 
             except Exception as e:
-                return dash.no_update, "Sync to the HWDB", html.Div(f"Error: {e}",style={"fontSize": "20px", "color": "red","font-family": "Arial, sans-serif"}), style, False
+                return dash.no_update, "Sync to the HWDB", html.Div(f"Error: {e}",style={"fontSize": "20px", "color": "red","font-family": "Arial, sans-serif"}), style, False, None, False
 
 

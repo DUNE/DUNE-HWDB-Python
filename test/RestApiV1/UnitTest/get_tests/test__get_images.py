@@ -33,15 +33,15 @@ class Test__get_images(unittest.TestCase):
     
     def setUp(self):
         self.start_time = time.time()
-        print(f"\nTest #{getattr(self, 'test_number', 'N/A')}: {self.__class__.__name__}.{self._testMethodName}")
-        print(f"Test started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        #print(f"\nTest #{getattr(self, 'test_number', 'N/A')}: {self.__class__.__name__}.{self._testMethodName}")
+        #print(f"Test started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
     def tearDown(self):
         end_time = time.time()
         duration = end_time - self.start_time
-        print(f"Test ended at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"Test duration: {duration:.2f} seconds")
-        
+        #print(f"Test ended at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        #print(f"Test duration: {duration:.2f} seconds")
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -67,14 +67,18 @@ class Test__get_images(unittest.TestCase):
     
     def test__get_component_type_image_list(self):
         """Get a list of images stored for a component type"""
-        print("\n=== Testing to get a list of images stored for a component type ===")
-        print("GET /api/v1/component-types/{part_type_id}/images")
-        print("Retrieving images for part_type_id: Z00100300006")
+        #print("\n=== Testing to get a list of images stored for a component type ===")
+        #print("GET /api/v1/component-types/{part_type_id}/images")
+        #print("Retrieving images for part_type_id: Z00100300006")
 
         expected_fields = {
             "comments", "created", "creator", "image_id", "image_name",
             "library", "link"
         }
+
+        self.test_info["endpoint"] = f"GET : /component-types/Z00100300006/images and /img/image_id"
+        self.test_info["description"] = "Get an image (broccoli.jpeg) from a component type"
+        self.test_info["check"] = "if status=OK and see if data has a content with the expected key names"
 
         try:
             resp = get_component_type_image_list("Z00100300006")
@@ -91,23 +95,41 @@ class Test__get_images(unittest.TestCase):
                 logger.info("\n" + textimage)
                 break
 
-        except AssertionError as err:
-            logger.error(f"Assertion Error: {repr(err)}")
-            logger.info(f"server response:\n{json.dumps(resp, indent=4)}")
-            raise err 
+        except Exception as e:
+            # Try to get raw server response if available
+            api_resp = getattr(e, "response", None)
+
+            if api_resp is not None:
+                # If the API wrapper supports .json(), use it
+                try:
+                    self.test_info["error"] = json.dumps(api_resp.json(), indent=4)
+                except Exception:
+                    # Fallback: raw string body
+                    self.test_info["error"] = api_resp.text
+            else:
+                # Nothing from server, probably client-side issue
+                self.test_info["error"] = str(e)
+
+            # Preserve traceback for summary
+            logger.error(f"Exception: {repr(e)}")
+            raise
     
     #----------------------------------------------------------------------------- 
     
     def test__get_hwitem_image_list(self):
         """Get a list of images stored for an item"""
-        print("\n=== Testing to get a list of images stored for an item ===")
-        print("GET /api/v1/components/{part_id}/images")
-        print("Retrieving images for part_id: Z00100300006-00001")
+        #print("\n=== Testing to get a list of images stored for an item ===")
+        #print("GET /api/v1/components/{part_id}/images")
+        #print("Retrieving images for part_id: Z00100300006-00001")
 
         expected_fields = {
             "comments", "created", "creator", "image_id", "image_name",
             "library", "link"
         }
+
+        self.test_info["endpoint"] = f"GET : /components/Z00100300006-00001/images and /img/image_id"
+        self.test_info["description"] = "Get an image (image-806281868.jpg) from a component type"
+        self.test_info["check"] = "if status=OK and see if data has a content with the expected key names"
 
         try:
             resp = get_hwitem_image_list("Z00100300006-00001")
@@ -124,10 +146,24 @@ class Test__get_images(unittest.TestCase):
                 logger.info("\n" + textimage)
                 break
 
-        except AssertionError as err:
-            logger.error(f"Assertion Error: {repr(err)}")
-            logger.info(f"server response:\n{json.dumps(resp, indent=4)}")
-            raise err 
+        except Exception as e:
+            # Try to get raw server response if available
+            api_resp = getattr(e, "response", None)
+
+            if api_resp is not None:
+                # If the API wrapper supports .json(), use it
+                try:
+                    self.test_info["error"] = json.dumps(api_resp.json(), indent=4)
+                except Exception:
+                    # Fallback: raw string body
+                    self.test_info["error"] = api_resp.text
+            else:
+                # Nothing from server, probably client-side issue
+                self.test_info["error"] = str(e)
+
+            # Preserve traceback for summary
+            logger.error(f"Exception: {repr(e)}")
+            raise
     
 ##############################################################################                                
 if __name__ == "__main__":

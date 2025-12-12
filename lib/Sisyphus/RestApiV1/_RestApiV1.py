@@ -4,7 +4,7 @@
 Sisyphus/RestApiV1/_RestApiV1.py
 Copyright (c) 2024 Regents of the University of Minnesota
 Author: 
-    Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
+    Alex Wagner <wagn0033@umn.edu>,Dept. of Physics and Astronomy
     Urbas Ekka <ekka0002@umn.edu>, Dept. of Physics and Astronomy
 """
 
@@ -787,8 +787,6 @@ def get_hwitem(part_id, **kwargs):
 
 #-----------------------------------------------------------------------------
 
-#def get_hwitems(part_type_id, *,
-#                page=None, size=None, fields=None, serial_number=None, part_id=None, **kwargs):
 def get_hwitems(part_type_id, *,
                 page=None, size=None, fields=None, serial_number=None, part_id=None, comments=None,
                 manufacturer=None,creator=None,country_of_origin=None,resp_institution=None,
@@ -803,6 +801,11 @@ def get_hwitems(part_type_id, *,
                 f"qaqc_uploaded={qaqc_uploaded}, is_installed={is_installed}")
     
     profile = kwargs.get('profile', config.active_profile)
+
+    #print(config.active_profile)
+    #print(config.active_profile.profile_name)
+    #print(config.active_profile.rest_api)
+    
     path = f"api/v1/component-types/{sanitize(part_type_id)}/components"
     url = f"https://{profile.rest_api}/{path}"
 
@@ -821,6 +824,7 @@ def get_hwitems(part_type_id, *,
     if fields is not None:
         params.append(("fields", ",".join(fields)))
 
+    # the followings have been newly added, as of Oct 15, 2025
     if manufacturer is not None:
         params.append(("manufacturer", manufacturer))
     if creator is not None:
@@ -839,7 +843,6 @@ def get_hwitems(part_type_id, *,
         params.append(("qaqc_uploaded", qaqc_uploaded))
     if is_installed is not None:
         params.append(("is_installed", is_installed))
-
         
     resp = _get(url, params=params, **kwargs) 
     return resp
@@ -1716,6 +1719,30 @@ def get_role(role_id, **kwargs):
     url = f"https://{profile.rest_api}/{path}"
     
     resp = _get(url, **kwargs)
+    return resp 
+    #}}}
+
+#-----------------------------------------------------------------------------
+
+def patch_role(user_id, data, **kwargs):
+    #{{{
+    """ Patches a User Role(s) to a user account, specified by user_id
+    A user_id can be obtained by, e.g.; /users/whoami | jq .data.user_id
+    Be careful that user_id is different between the two versions of the HWDB!
+
+    Structure for "data":
+        {
+            "roles": [ 34, 36 ]
+        }
+
+    """
+
+    logger.debug(f"<{func_name()}> user_id={user_id}")
+    profile = kwargs.get('profile', config.active_profile)
+    path = f"api/v1/users/{sanitize(user_id)}"
+    url = f"https://{profile.rest_api}/{path}"
+    
+    resp = _patch(url, data=data, **kwargs)
     return resp 
     #}}}
 

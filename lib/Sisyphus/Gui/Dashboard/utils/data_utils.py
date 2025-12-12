@@ -49,6 +49,23 @@ def load_data(data) -> pd.DataFrame:
             for k in list_keys:
                 del record[k]          # remove from original dict
     #-----------------------------
+    #expanded_records = []
+    #for record in flat_data:
+    #    list_keys = [k for k, v in record.items() if isinstance(v, list)]
+    #    if not list_keys:
+    #        expanded_records.append(record)
+    #        continue
+    #    max_len = max(len(record[k]) for k in list_keys)
+    #    for i in range(max_len):
+    #        new_row = {}
+    #        for k, v in record.items():
+    #            if isinstance(v, list):
+    #                new_row[k] = v[i] if i < len(v) else None
+    #            else:
+    #                new_row[k]=v
+    #        expanded_records.append(new_row)
+    #flat_data = expanded_records
+    #-----------------------------
     
     df = pd.DataFrame(flat_data)
 

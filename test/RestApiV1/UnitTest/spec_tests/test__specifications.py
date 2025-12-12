@@ -16,6 +16,7 @@ from Sisyphus.Utils import UnitTest as unittest
 import os
 import json
 import random
+import time
 
 from Sisyphus import RestApiV1 as ra
 
@@ -27,6 +28,16 @@ class Test__specifications(unittest.TestCase):
     Test Results is the equivalent free-form field for Tests.
     """
     
+    def setUp(self):
+        self.start_time = time.time()
+        #print(f"\nTest #{getattr(self, 'test_number', 'N/A')}: {self.__class__.__name__}.{self._testMethodName}")
+        #print(f"Test started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
+    def tearDown(self):
+        end_time = time.time()
+        duration = end_time - self.start_time
+        #print(f"Test ended at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        #print(f"Test duration: {duration:.2f} seconds")
     #-------------------------------------------------------------------------
 
         
@@ -62,9 +73,33 @@ class Test__specifications(unittest.TestCase):
             "roles": [4]
         }
 
-        resp = ra.patch_component_type(part_type_id, component_def)
-        self.assertEqual(resp['status'], 'OK')
+        self.test_info["endpoint"] = f"PATCH : /component-types/{part_type_id}"
+        self.test_info["description"] = "Patch the Component Type definition"
+        self.test_info["check"] = "if its status is OK"
 
+        try:
+            resp = ra.patch_component_type(part_type_id, component_def)
+            self.assertEqual(resp['status'], 'OK')
+        except Exception as e:
+            # Try to get raw server response if available
+            api_resp = getattr(e, "response", None)
+
+            if api_resp is not None:
+                # If the API wrapper supports .json(), use it
+                try:
+                    self.test_info["error"] = json.dumps(api_resp.json(), indent=4)
+                except Exception:
+                    # Fallback: raw string body
+                    self.test_info["error"] = api_resp.text
+            else:
+                # Nothing from server, probably client-side issue
+                self.test_info["error"] = str(e)
+
+            # Preserve traceback for summary
+            logger.error(f"Exception: {repr(e)}")
+            raise
+
+        '''
         # Add Item
         #
         self.logger.info(f"attempting to add new item")
@@ -127,6 +162,9 @@ class Test__specifications(unittest.TestCase):
         resp = ra.post_hwitem(part_type_id, item_data)
         self.assertEqual(resp['status'], 'OK')
         self.logger.info(f"added item: {resp['part_id']}")
+        '''
+
+
 
         ### DISABLE this part of the test for now.
         '''

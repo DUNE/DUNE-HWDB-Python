@@ -12,13 +12,24 @@ from Sisyphus.Configuration import config
 from pathlib import Path
 import os
 import re
+import time
+import threading
 #import qrcode
 
 logger = config.getLogger(__name__)
 
+# ============================================================
+#   GLOBAL SHIPMENT JOB REGISTRY (like Downloader)
+# ============================================================
+_shipment_jobs = {}   # jobid → {"processed", "total", "done", "error"}
 
+
+# ============================================================
+#   HELPERS
+# ============================================================
 def _combinedItemsLocs(itemDATA):
-
+    """Fetch merged item + location info for a PID"""
+    
     eachPID = itemDATA["part_id"]
     
     # Get item and location info
@@ -42,8 +53,32 @@ def _combinedItemsLocs(itemDATA):
     
     return each_item
 
-def _fetch_shipments(typeid: str):
+def _run_shipment_worker(jobid, items):
+    """Runs in background thread. Uses shared REST executor pool."""
+    job = _shipment_jobs[jobid]
+    try:
+        #resp = get_hwitems(typeid, size=99999)
+        #items = resp.get("data", [])
+        
+        job["total"] = len(items)
 
+        from Sisyphus.RestApiV1 import Utilities as ra_util
+        executor = ra_util._executor
+
+        processed = 0
+        for _ in executor.map(lambda d: _combinedItemsLocs(d), items):
+            processed += 1
+            job["processed"] = processed
+
+        job["done"] = True
+
+    except Exception as e:
+        job["error"] = str(e)
+        logger.error(f"[Shipment Worker] {e}")
+        
+def _fetch_shipments(typeid: str):
+    """Used only in the sync completion stage"""
+    
     # No Component Type ID was provided...
     if not typeid:
         return []
@@ -70,7 +105,10 @@ def _fetch_shipments(typeid: str):
     except Exception as e:
         logger.error(f"[Shipment] _fetch_shipments failed: {e}")
         return []
-
+    
+# ============================================================
+#   CALLBACKS
+# ============================================================
 def register_callbacks(app):
 
     # ---------------------------
@@ -83,15 +121,22 @@ def register_callbacks(app):
             Output("fetch-shipments", "style"),
             Output("fetch-shipments", "disabled"),
             Output("fetch-shipments-trigger", "data"),
+            Output("shipment-total", "data"),
+            Output("shipment-interval", "disabled"),
+            Output("shipment-items-cache", "data"),
+            Output("shipment-job-id", "data"),
+            Output("shipment-memory-store", "data", allow_duplicate=True),
         ],
         Input("fetch-shipments", "n_clicks"),
+        State("shipment-typeid", "value"),
         prevent_initial_call=True,
     )
-    def show_syncing_shipments_feedback(n_clicks):
+    def show_syncing_shipments_feedback(n_clicks, typeid):
         """Immediately update the button to orange and disable it."""
         if not n_clicks:
             raise PreventUpdate
 
+        # orange "syncing" style
         syncing_style = {
             "fontSize": "20px",
             "padding": "14px 32px",
@@ -99,15 +144,123 @@ def register_callbacks(app):
             "color": "white",
             "border": "none",
             "borderRadius": "8px",
-            "cursor": "pointer",
+            "cursor": "not-allowed",
             "transition": "all 0.2s ease-in-out",
             "marginRight": "50px",
             "gap": "15px",
         }
 
-        logger.info("[Shipment] Shipment button clicked — showing 'Syncing...' feedback")
-        return "Syncing to the HWDB...", syncing_style, True, {"trigger": True}
+        # fetch list of items to know the total
+        try:
+            resp = get_hwitems(typeid, size=99999)
+            items = resp.get("data", [])
+            total = len(items)
+            logger.info(f"[Shipment Sync] Total items = {total}")
+        except Exception as e:
+            logger.error(f"[Shipment Sync] Fetch failed: {e}")
+            return "Error fetching shipments", syncing_style, False, None, None, True, None, None, None
 
+        if not total:
+            return "No Shipments found", syncing_style, False, None, 0, True, None, None, None
+
+        # create a job id
+        jobid = f"SHIP-{int(time.time()*1000)}"
+        _shipment_jobs[jobid] = {
+            "processed": 0,
+            "total": total,
+            "done": False,
+            "error": None,
+        }
+
+        # background thread
+        thread = threading.Thread(
+            target=_run_shipment_worker,
+            args=(jobid, items),
+            daemon=True,
+        )
+        thread.start()
+
+        logger.info("[Shipment] Shipment button clicked — showing 'Syncing...' feedback")
+        
+        return "Syncing to the HWDB...", syncing_style, True, jobid, total, False, items, jobid, {"last_typeid": typeid}
+
+    # Pre-populate the input on startup
+    @app.callback(
+        Output("shipment-typeid", "value"),
+        Input("shipment-memory-store", "data"),
+        prevent_initial_call=False,
+    )
+    def preload_typeid(data):
+        if not data:
+            raise PreventUpdate
+        return data.get("last_typeid")
+
+    
+    # --------------------------------------------------------
+    # Poll background job status
+    # --------------------------------------------------------
+    @app.callback(
+        Output("fetch-shipments", "children", allow_duplicate=True),
+        Output("fetch-shipments", "style", allow_duplicate=True),
+        Output("fetch-shipments", "disabled", allow_duplicate=True),
+        Output("shipment-interval", "disabled", allow_duplicate=True),
+        Input("shipment-interval", "n_intervals"),
+        State("shipment-job-id", "data"),
+        State("shipment-total", "data"),
+        prevent_initial_call=True,
+    )
+    def update_shipment_button(_, jobid, total):
+        if not jobid:
+            raise PreventUpdate
+
+        job = _shipment_jobs.get(jobid)
+        if not job:
+            return "Error: Job missing", None, False, True
+
+        processed = job.get("processed", 0)
+        done = job.get("done", False)
+        err = job.get("error")
+
+        if err:
+            return f"Error: {err}", {"backgroundColor":"#e74c3c"}, False, True
+
+        if not done:
+            pct = int(processed * 100 / total) if total else 0
+            style = {
+                "fontSize": "20px",
+                "padding": "14px 32px",
+                "backgroundColor": "#f39c12",
+                "color": "white",
+                "border": "none",
+                "borderRadius": "8px",
+                "cursor": "not-allowed",
+                "transition": "all 0.2s",
+                "marginRight": "50px",
+            }
+            return f"{pct}% completed...", style, True, False
+
+        # finished → restore original look
+        style = {
+            "fontSize": "20px",
+            "padding": "14px 32px",
+            "backgroundColor": "#4CAF50",
+            "color": "white",
+            "border": "none",
+            "borderRadius": "8px",
+            "cursor": "pointer",
+            "marginRight": "50px",
+        }
+
+        # remove this job so no more ticks can reuse stale data
+        _shipment_jobs.pop(jobid, None)
+
+        return "Sync to the HWDB", style, False, True
+
+
+
+
+
+    
 
     @app.callback(
         [
@@ -125,8 +278,8 @@ def register_callbacks(app):
         prevent_initial_call=True,
     )
 
-    def _sync_shipments(n_clicks,typeid):
-        if not n_clicks:
+    def _sync_shipments(trigger_data,typeid):
+        if not trigger_data:
             raise dash.exceptions.PreventUpdate
 
         style = {
@@ -777,3 +930,5 @@ def register_callbacks(app):
                 "border": "1px solid #4A90E2",
             })
         return base_styles
+    
+ 
