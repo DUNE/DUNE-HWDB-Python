@@ -349,6 +349,7 @@ def plots_layout():
                             {"label": "Histogram (log-Y)", "value": "histogram_log"},
                             {"label": "Cumulative Histogram", "value": "cumhist"},
                             {"label": "Scatter", "value": "scatter"},
+                            {"label": "2D Histogram", "value": "hist2d"},
                             {"label": "Line", "value": "line"},
                             {"label": "Boxplot", "value": "box"},
                         ],
@@ -511,6 +512,38 @@ def plots_layout():
             ),
 
             html.Hr(),
+
+            # ------------------------
+            # Histogram 2D plot
+            # ------------------------
+            html.Div(
+                [
+                    html.Label(
+                        "Select X-axis:",
+                        style={"font-family": "Arial, sans-serif"}
+                    ),
+                    dcc.Dropdown(
+                        id="hist2d-x",
+                        options=[],
+                        value=None,
+                        placeholder="Select X column",
+                        style={"font-family": "Arial, sans-serif"}
+                    ),
+                    html.Label(
+                        "Select Y-axis:",
+                        style={"font-family": "Arial, sans-serif"}
+                    ),
+                    dcc.Dropdown(
+                        id="hist2d-y",
+                        options=[],
+                        value=None,
+                        placeholder="Select Y column",
+                        style={"font-family": "Arial, sans-serif"}
+                    ),
+                ],
+                id="hist2d-controls",
+                style={"display":"none"}
+            ),
 
             # ------------------------
             # Conditions controls
@@ -707,6 +740,7 @@ def plots_layout():
             dcc.Interval(id="plots-interval", interval=1000, disabled=True),
             dcc.Store(id="plot-sync-job-id", storage_type="memory"),
             dcc.Interval(id="plot-sync-interval", interval=1000, disabled=True),
+            dcc.Store(id="sync-status", data=None), # only state, no UI stuff
         ],
         style={"display": "block"},
     )

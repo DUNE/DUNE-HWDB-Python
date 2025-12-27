@@ -2,7 +2,7 @@ from dash import Input, Output, State, html, dcc, ctx
 import dash
 from dash.exceptions import PreventUpdate
 import pandas as pd
-from concurrent.futures import ThreadPoolExecutor
+from Sisyphus.RestApiV1 import Utilities as ra_util
 import base64, io, json, pickle
 from datetime import datetime
 from Sisyphus.Gui.Dashboard.utils.data_utils import load_data, GETTestLog
@@ -17,8 +17,33 @@ logger = config.getLogger(__name__)
 
 _plot_jobs = {}
 
+def normalize_scalar_lists(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.copy()
+
+    for col in df.columns:
+        series = df[col]
+
+        if series.apply(lambda v: isinstance(v, list)).any():
+            scalar_col = f"{col}__scalar"
+
+            df[scalar_col] = series.apply(
+                lambda v: v[0] if isinstance(v, list) and len(v) == 1 else None
+            )
+
+            # force numeric dtype!!
+            df[scalar_col] = pd.to_numeric(df[scalar_col], errors="coerce")
+
+    return df
+    
+    #def norm(v):
+    #    if isinstance(v, list):
+    #        return v[0] if len(v) == 1 else None
+    #    return v
+
+    #return df.applymap(norm)
+
 def _plot_sync_worker(job_id):
-    from Sisyphus.RestApiV1 import Utilities as ra_util
+    
     executor = ra_util._executor
 
     job = _plot_jobs[job_id]
@@ -34,7 +59,7 @@ def _plot_sync_worker(job_id):
 
         results = []
 
-        # --- Fetch TestLog per item (PROGRESS LOOP) ---
+        # --- Fetch Test Data (TestLog) per item (PROGRESS LOOP) ---
         futures = [executor.submit(GETTestLog, it, testtype) for it in items]
         for idx, f in enumerate(futures):
             try:
@@ -44,8 +69,10 @@ def _plot_sync_worker(job_id):
                 results.append({})
             job["processed"] = idx + 1
 
+            
         # --- Convert raw results to DataFrame ---
         data = load_data(results)
+        data = normalize_scalar_lists(data)
 
         # --- Drop unwanted keys ---
         unwanted_keys = [
@@ -57,23 +84,44 @@ def _plot_sync_worker(job_id):
         ]
         data = data.drop(columns=[c for c in data.columns if c in unwanted_keys], errors="ignore")
 
-        # --- Sort columns exactly like before ---
-        priority_item = [...]
-        priority_test = [...]
+        # --- Sort columns ---
+        priority_item = [
+            "part_id"             , "parent_part_id"      , "country_code"      , "institution_id"        , "institution_name"      ,
+            "ITEM: part_id"       , "ITEM: parent_part_id", "ITEM: country_code", "ITEM: institution_id"  , "ITEM: institution_name", 
+            "created"             , "creator_id"          , "creator_name"      , "creator_username"      , "manufacturer_id"       , "manufacturer_name",
+            "ITEM: created"       , "ITEM: creator_id"    , "ITEM: creator_name", "ITEM: creator_username", "ITEM: manufacturer_id" , "ITEM: manufacturer_name",
+            "serial_number"       , "location"            , "status_id"         , "status_name"           ,
+            "ITEM: serial_number" , "ITEM: location"      , "ITEM: status_id"   , "ITEM: status_name"     ,
+            "certified_qaqc"      , "qaqc_uploaded"       , "is_installed"      , "comments"              ,
+            "ITEM: certified_qaqc", "ITEM: qaqc_uploaded" , "ITEM: is_installed", "ITEM: comments"
+        ]
+        priority_test = ["TEST: created"       , "TEST: creator_id"    , "TEST: creator_name", "TEST: creator_username", "TEST: comments"]
 
         item_cols = sorted([c for c in data.columns if c.startswith("ITEM: ")])
         test_cols = sorted([c for c in data.columns if c.startswith("TEST: ")])
         other_cols = [c for c in data.columns if c not in item_cols + test_cols]
 
+        # Combine in the following order:
+        # Apply priority order within each group
         item_cols = [c for c in priority_item if c in item_cols] + sorted([c for c in item_cols if c not in priority_item])
         test_cols = [c for c in priority_test if c in test_cols] + sorted([c for c in test_cols if c not in priority_test])
         other_cols = [c for c in priority_item if c in other_cols] + sorted([c for c in other_cols if c not in priority_item])
 
-        sorted_cols = list(dict.fromkeys(item_cols + test_cols + other_cols))
+         # Final column order
+        sorted_cols = (
+            item_cols +
+            test_cols +
+            other_cols
+        )
+
+        # Remove possible duplicates while keeping order
+        sorted_cols = list(dict.fromkeys(sorted_cols))
+
+        # Reorder the DataFrame
         data = data[sorted_cols]
 
-        # --- Save pickle locally (unchanged logic) ---
-        from pathlib import Path
+        #--- Also, save the loaded data locally ---
+        # Determine working directory
         pref_file = Path(config.active_profile.profile_dir) / "dash_user_preferences.txt"
         if pref_file.exists():
             working_dir = pref_file.read_text().strip()
@@ -82,23 +130,48 @@ def _plot_sync_worker(job_id):
         else:
             working_dir = os.getcwd()
 
+        # Create subdirectory based on typeid, create one if it doesn't exist
         save_dir = Path(working_dir) / typeid
         save_dir.mkdir(parents=True, exist_ok=True)
-
+        
+        # Generate timestamped file name
         ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         pickle_filename = f"HWDB_downloaded_{typeid}_{ts}.pkl"
         if testtype:
             pickle_filename = f"HWDB_downloaded_{typeid}_{testtype}_{ts}.pkl"
-
         pickle_path = save_dir / pickle_filename
-        import pickle
+        
+        # Save the Pickle data
         with open(pickle_path, "wb") as f:
-            pickle.dump(data, f)
+            #pickle.dump(data, f)
+            pickle.dump(data.copy(), f, protocol=pickle.HIGHEST_PROTOCOL)
 
         # --- Store result & mark done ---
-        job["data"] = data.to_dict("records")
+        payload = data.to_dict("records")
+
+        # payload size & shape (CRITICAL)
+        try:
+            json_size_mb = len(json.dumps(payload)) / 1e6
+        except Exception as e:
+            json_size_mb = -1
+            logger.error(f"JSON size computation failed: {e}")
+
+        logger.warning(
+            f"[DATA-STORE PAYLOAD] rows={len(payload)}, "
+            f"cols={len(data.columns)}, "
+            f"json_size≈{json_size_mb:.2f} MB"
+        )
+
+
+
+        # Avoid to push full data into dcc.store.
+        #job["data"] = payload
+        job["data_path"] = str(pickle_path) # Instead, save only a reference
+        job["columns"] = list(data.columns)
         job["done"] = True
 
+
+        #job["finished_at"] = time.time()
     except Exception as e:
         job["error"] = str(e)
         job["done"] = True
@@ -110,47 +183,24 @@ def register_callbacks(app):
 
     # --------------------------------------------------------
     # Poll background job status
+    # Display the progress
     # --------------------------------------------------------
     @app.callback(
-        Output("load-json", "children", allow_duplicate=True),
-        Output("load-json", "style", allow_duplicate=True),
-        Output("load-json", "disabled", allow_duplicate=True),
-        Output("data-store", "data", allow_duplicate=True),
-        Output("downloaded-output", "children", allow_duplicate=True),
-        Output("plots-interval", "disabled", allow_duplicate=True),
-        Input("plots-interval", "n_intervals"),
-        State("plots-job-id", "data"),
+        [
+            Output("load-json", "children", allow_duplicate=True),
+            Output("load-json", "style", allow_duplicate=True),
+            Output("load-json", "disabled", allow_duplicate=True),
+            Output("data-store", "data", allow_duplicate=True),
+            Output("downloaded-output", "children", allow_duplicate=True),
+            Output("plot-sync-interval", "disabled", allow_duplicate=True),
+            Output("sync-status", "data", allow_duplicate=True),
+        ],
+        Input("plot-sync-interval", "n_intervals"),
+        State("plot-sync-job-id", "data"),
         prevent_initial_call=True,
     )
-    def poll_plots_job(n, job_id):
-        job = _plot_jobs.get(job_id)
-        if not job:
-            raise PreventUpdate
+    def update_sync_progress(n, job_id):
 
-        if job.get("error"):
-            red = {"backgroundColor": "#e74c3c", "color": "white"}
-            return f"Error: {job['error']}", red, False, None, "", True
-
-        processed = job["processed"]
-        total = job["total"]
-        pct = int(processed * 100 / total)
-
-        if not job["done"]:
-            orange = {
-                "fontSize": "20px",
-                "padding": "14px 32px",
-                "backgroundColor": "#f39c12",
-                "color": "white",
-                "border": "none",
-                "borderRadius": "8px",
-                "cursor": "not-allowed",
-                "animation": "pulse 1.5s infinite",
-                "gap": "15px",
-                "marginRight": "50px",
-            }
-            return f"{pct}% completed...", orange, True, None, "", False
-
-        # DONE — restore button
         green = {
             "fontSize": "20px",
             "padding": "14px 32px",
@@ -162,38 +212,81 @@ def register_callbacks(app):
             "gap": "15px",
             "marginRight": "50px",
         }
-        msg = f"Loaded {total} Items from the HWDB"
-        data = job["data"]
-        _plot_jobs.pop(job_id, None)
-        return "Sync to the HWDB", green, False, data, msg, True
 
-    # --------------------------------------------------------
-    # Display the progress
-    # --------------------------------------------------------
-    @app.callback(
-        [
-            Output("load-json", "children", allow_duplicate=True),
-            Output("load-json", "style", allow_duplicate=True),
-            Output("load-json", "disabled", allow_duplicate=True),
-            Output("data-store", "data", allow_duplicate=True),
-            Output("downloaded-output", "children", allow_duplicate=True),
-            Output("plot-sync-interval", "disabled", allow_duplicate=True),
-        ],
-        Input("plot-sync-interval", "n_intervals"),
-        State("plot-sync-job-id", "data"),
-        prevent_initial_call=True,
-    )
-    def update_sync_progress(n, job_id):
+        # cleanup old jobs (older than 60s) to avoid possible memory leaks without breaking intervals
+        now = time.time()
+        for jid, j in list(_plot_jobs.items()):
+            if j.get("finalized") and now - j.get("finished_at", now) > 60:
+                _plot_jobs.pop(jid, None)
+
+        
         if not job_id or job_id not in _plot_jobs:
             raise PreventUpdate
 
         job = _plot_jobs[job_id]
+
+        if not job:
+            raise PreventUpdate
+
+        # if job was already finalized and rendered, stop forever
+        if job.get("finalized"):
+
+            meta = {
+                "path": job["data_path"],
+                "columns": job["columns"],
+            }
+
+            logger.info(f"[REAL FINAL UI] meta keys={list(meta.keys())}, cols={len(job['columns'])}")
+
+            msg_final = html.Div(
+                f"Loaded {job['total']} Items from the HWDB",
+                style={"fontSize": "20px", "color": "red"}
+            )
+
+            
+            #total_final = job["total"]
+            #data_final = list(job.get("data", []))
+            #columns_final = job.get("columns", [])
+            #logger.info(f"[REAL FINAL UI] rows={len(data_final)}, cols={len(columns_final)}")
+            #msg_final = html.Div(
+            #    f"Loaded {total_final} Items from the HWDB",
+            #    style={"fontSize": "20px", "color": "red"}
+            #)
+
+            #raise PreventUpdate
+            #return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, True, dash.no_update
+            #return "Sync to the HWDB", green, dash.no_update, dash.no_update, dash.no_update, True, dash.no_update # works
+            #return "Sync to the HWDB", green, False, dash.no_update, dash.no_update, True, dash.no_update  # works
+            #return "Sync to the HWDB", green, False, dash.no_update, msg_final, True, dash.no_update # works
+
+            # Update the button and message now
+            return "Sync to the HWDB", green, False, meta, msg_final, True, {"done": True, "ts": time.time()} # works
+            #return "Sync to the HWDB", green, False, data_final, msg_final, True, {"done": True, "ts": time.time()}
+            #return (
+            #    "Sync to the HWDB",
+            #    green,
+            #    False,
+            #    data_final,
+            #    msg_final,
+            #    True, # disable interval AND render green in same tick
+            #    {"done": True, "ts": time.time()},   # sync-status
+            #)
+
+
+        
         processed = job["processed"]
         total = job["total"]
+        done = job.get("done", False)
+        err = job.get("error")
         pct = int(100 * processed / total) if total else 0
 
+
+
+        
         # update % text while job is running
-        if not job["done"]:
+        #if not job["done"]:
+        if not done:
+        #if not job["done"] or job.get("ui_done") is True:
             return (
                 f"{pct}% completed...",
                 {
@@ -212,36 +305,57 @@ def register_callbacks(app):
                 dash.no_update,
                 "",
                 False,  # keep interval alive
+                {"done": False, "ts": time.time()},   # sync-status
             )
 
-        # job finished → restore button + save data
-        data = job.get("data", [])
-        msg = html.Div(f"Loaded {total} Items from the HWDB",
-                    style={"fontSize": "20px", "color": "red"})
-
-        green = {
-            "fontSize": "20px",
-            "padding": "14px 32px",
-            "backgroundColor": "#4CAF50",
-            "color": "white",
-            "border": "none",
-            "borderRadius": "8px",
-            "cursor": "pointer",
-            "gap": "15px",
-            "marginRight": "50px",
+        
+        # job finished → FINAL render + stop interval
+        #data = list(job.get("data", []))
+        # Only the metadata
+        data = {
+            "path": job["data_path"],
+            "columns": job["columns"],
         }
+        columns = job.get("columns", [])
+        logger.info(f"[FINAL UI] rows={len(data)}, cols={len(columns)}")
+        msg = html.Div(
+            f"Loaded {total} Items from the HWDB",
+            style={"fontSize": "20px", "color": "red"}
+        )
 
-        return "Sync to the HWDB", green, False, data, msg, True,
+       
+
+
+        job["finalized"] = True
+        job["finished_at"] = time.time()
+
+        # cleanup job + stop interval
+        #_plot_jobs.pop(job_id, None)
+
+
+        #return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, True, dash.no_update
+
+        # Update the data first. Update the UI (the button and the message later)
+        return dash.no_update, dash.no_update, dash.no_update, data, dash.no_update, False, {"done": False, "ts": time.time()},
+        #return (
+        #    "Sync to the HWDB",
+        #    green,
+        #    False,
+        #    data,
+        #    msg,
+        #    True, # disable interval AND render green in same tick
+        #    {"done": True, "ts": time.time()},   # sync-status
+        #)
 
     # --------------------------------------------------------
     # Download DATA
     # --------------------------------------------------------
     @app.callback(
         [Output("data-store", "data", allow_duplicate=True),
-         Output("load-json", "children"),
+         #Output("load-json", "children", allow_duplicate=True), #
          Output("downloaded-output", "children", allow_duplicate=True), # The downloaded message
-         Output("load-json", "style"),
-         Output("load-json", "disabled"),
+         #Output("load-json", "style", allow_duplicate=True), #
+         #Output("load-json", "disabled", allow_duplicate=True), #
          Output("plot-sync-job-id", "data"),
          Output("plot-sync-interval", "disabled"),
         ],
@@ -271,9 +385,12 @@ def register_callbacks(app):
                            pre_pid, pre_serial, pre_manu, pre_creator, pre_comments, pre_location,
                            pre_country, pre_institution, pre_status, pre_installed, pre_cert, pre_uploaded):
 
+        
         trig = ctx.triggered_id
+        
         df = None
-    
+
+        # Green
         style = {
             "fontSize": "20px",            # Larger text
             "padding": "14px 32px",        # Larger button size
@@ -293,19 +410,21 @@ def register_callbacks(app):
         #if not n_clicks:
         #    raise dash.exceptions.PreventUpdate
         if trig not in ("load-json", "upload-json"):
-            raise dash.exceptions.PreventUpdate
+            raise PreventUpdate
         
         # No Component Type ID was provided...
-        if not user_string:
-            return dash.no_update, "Sync to the HWDB", "", style, False, None, False
-
+        if trig in ("load-json", "upload-json") and not user_string:
+        #if not user_string:
+            return dash.no_update,                     "",               None, dash.no_update, # do NOT touch interval
+            #return dash.no_update, "Sync to the HWDB", "", style, False, None, False,
         
 
         
         #------------------------------------------
         # Case A: user clicked “Sync to the HWDB”
         #------------------------------------------
-        if trig == "load-json":
+        if trig == "load-json" and ctx.triggered_id == "load-json":
+        #if trig == "load-json":
             #logger.info("[Sync] ⏳ Fetching data from HWDB…")
 
             logger.info("[Sync] Starting background job for HWDB sync...")
@@ -334,7 +453,7 @@ def register_callbacks(app):
                 args["size"]         = 99999
                 #+++++++++
                 if pre_pid is not None:
-                    args["pre_pid"] = pre_pid
+                    args["part_id"] = pre_pid
                 if pre_serial is not None:
                     args["serial_number"] = f"%{pre_serial}%"
                 if pre_manu is not None:
@@ -387,22 +506,12 @@ def register_callbacks(app):
                 #+++++++++
 
 
-
-
-                
-                # REST call
-                #resp = get_hwitems(user_string, size=99999)
-                resp = get_hwitems(**args)
-                #totalentry = len(resp["data"])
-                all_items = resp["data"]
-                total = len(all_items)
-
                 # Register job
                 job_id = f"PLOT-{int(time.time()*1000)}"
                 global _plot_jobs
                 _plot_jobs[job_id] = {
                     "processed": 0,
-                    "total": total,
+                    "total": 0,
                     "done": False,
                     "error": None,
                     "typeid": user_string,
@@ -432,16 +541,33 @@ def register_callbacks(app):
                     "marginRight": "50px",
                 }
 
-                return dash.no_update, "0% completed...", "", orange, True, job_id, False
+
+                    
+             
+                #return dash.no_update, "0% completed...", "", orange, True, job_id, False,
+                return (
+                    #[],                 # data-store, initialize explicitly
+                    dash.no_update,
+                    #dash.no_update,     # button text
+                    dash.no_update,     # downloaded-output
+                    #dash.no_update,     # style
+                    #dash.no_update,     # disabled
+                    job_id,             # plot-sync-job-id
+                    False,              # enable interval ONLY on true click
+                )
 
             except Exception as e:
                 logger.error(f"[Sync] ERROR while preparing sync job: {e}")
                 red = style.copy()
                 red["backgroundColor"] = "#FF0000"
-                return dash.no_update, "Sync to the HWDB", html.Div(
+                #return dash.no_update, "Sync to the HWDB", html.Div(
+                #    f"Error: {e}",
+                #    style={"fontSize": "20px", "color": "red"}
+                #    ), red, False, None, False,
+                return dash.no_update, html.Div(
                     f"Error: {e}",
                     style={"fontSize": "20px", "color": "red"}
-                    ), red, False, None, False
+                    ), None, dash.no_update, # do NOT touch interval
         
         #------------------------------------------
         # Case B: user uploaded (read) a file
@@ -457,19 +583,48 @@ def register_callbacks(app):
             try:
                 if ext in [".pkl", ".pickle"]:
                     # --- Pickle ---
-                    data = pickle.loads(decoded)
+                    df = pickle.loads(decoded)
                 elif ext in [".csv"]:
                     # --- CSV ---
-                    data = pd.read_csv(io.StringIO(decoded.decode("utf-8")))
+                    df = pd.read_csv(io.StringIO(decoded.decode("utf-8")))
                 else:
-                    return dash.no_update, f"⚠️ Unsupported file type: {ext}"
+                    return dash.no_update, f"⚠️ Unsupported file type: {ext}", None, dash.no_update
+
+                # Save file to a temp / working location
+                pref_file = Path(config.active_profile.profile_dir) / "dash_user_preferences.txt"
+                working_dir = pref_file.read_text().strip() if pref_file.exists() else os.getcwd()
+                save_path = Path(working_dir) / upload_name
+
+                with open(save_path, "wb") as f:
+                    pickle.dump(df, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+                meta = {
+                    "path": str(save_path),
+                    "columns": list(df.columns),
+                }
+
                 
-                totalentry = len(data)
+                #totalentry = len(data)
 
                 # Convert to JSON for storage
-                return data.to_dict("records"),"Sync to the HWDB",html.Div(f"Loaded {totalentry} Items from {upload_name}",style={"fontSize": "20px", "color": "red","font-family": "Arial, sans-serif"}), style, False, None, False
+                #return data.to_dict("records"),"Sync to the HWDB",html.Div(f"Loaded {totalentry} Items from {upload_name}",style={"fontSize": "20px", "color": "red","font-family": "Arial, sans-serif"}), style, False, None, False,
+                #return data.to_dict("records"),html.Div(f"Loaded {totalentry} Items from {upload_name}",style={"fontSize": "20px", "color": "red","font-family": "Arial, sans-serif"}), None, dash.no_update, # do NOT touch interval
+
+                return (
+                    meta,
+                    html.Div(
+                        f"Loaded {len(df)} Items from {upload_name}",
+                        style={"fontSize": "20px", "color": "red", "font-family": "Arial, sans-serif"},
+                    ),
+                    None,
+                    dash.no_update,
+                )
+
+            
 
             except Exception as e:
-                return dash.no_update, "Sync to the HWDB", html.Div(f"Error: {e}",style={"fontSize": "20px", "color": "red","font-family": "Arial, sans-serif"}), style, False, None, False
+                #return dash.no_update, "Sync to the HWDB", html.Div(f"Error: {e}",style={"fontSize": "20px", "color": "red","font-family": "Arial, sans-serif"}), style, False, None, False,
+                return dash.no_update, html.Div(f"Error: {e}",style={"fontSize": "20px", "color": "red","font-family": "Arial, sans-serif"}), None, dash.no_update, # do NOT touch interval
 
-
+            
+       

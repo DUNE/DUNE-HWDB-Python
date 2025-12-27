@@ -38,7 +38,7 @@ def register_callbacks(app):
         State("preferences-store", "data"),
         State("typeid-input", "value"),
         State("testtype-input", "value"),
-        State("condition-container","children"), # <--- testing
+        State("condition-container","children"),
         prevent_initial_call=True
     )
     def download_filtered(n_clicks, fields, thresholds, operators, logic_operator, filtered_data, filename, preferences, typeid, testtype,conds):
@@ -64,7 +64,13 @@ def register_callbacks(app):
             filename += ".csv"
 
         if n_clicks and filtered_data:
-            df = pd.DataFrame(filtered_data)
+            #df = pd.DataFrame(filtered_data)
+            from Sisyphus.Gui.Dashboard.utils.data_resolver import (
+                load_df_from_store,
+                apply_row_indices,
+            )
+            df_full = load_df_from_store(filtered_data)
+            df = apply_row_indices(df_full, filtered_data.get("row_indices"))
 
             # --- Local save ---
             save_dir = preferences.get("working_dir", os.getcwd())

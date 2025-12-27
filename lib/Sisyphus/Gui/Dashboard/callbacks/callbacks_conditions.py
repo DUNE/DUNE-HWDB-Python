@@ -1,7 +1,7 @@
 import pandas as pd, ast
 from dash import dcc, html, Input, Output, State, ctx
 import dash
-import base64
+import base64, pickle
 import json
 
 
@@ -11,6 +11,12 @@ from Sisyphus.Gui.Dashboard.utils.colorlog_handler import attach_color_console_h
 
 logger = config.getLogger(__name__)
 
+
+def resolve_df_from_store(store):
+    if isinstance(store, dict) and "path" in store:
+        with open(store["path"], "rb") as f:
+            return pickle.load(f)
+    return pd.DataFrame(store)
 
 # Add/remove condition input rows
 def register_callbacks(app):
@@ -24,7 +30,11 @@ def register_callbacks(app):
         prevent_initial_call=True
     )
     def update_conditions(data, add_clicks, remove_clicks, children, logic_operator):
-        df = pd.DataFrame(data)
+        
+        #df = pd.DataFrame(data)
+        df = resolve_df_from_store(data)
+
+        
         triggered = ctx.triggered_id
         children = list(children) if children else []
 

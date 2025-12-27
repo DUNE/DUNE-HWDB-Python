@@ -7,6 +7,7 @@ from dash.exceptions import PreventUpdate
 from Sisyphus.Configuration import config
 import numpy as np
 import plotly.express as px
+import pickle
 
 logger = config.getLogger(__name__)
 
@@ -22,7 +23,8 @@ def register_callbacks(app):
         Input("upload-overlay", "contents"),
         [
             State("upload-overlay", "filename"),
-            State("data-store", "data"),
+            #State("data-store", "data"),
+            State("filtered-store", "data"), 
             State("distribution-plot", "figure"),
         ],
         prevent_initial_call=True,
@@ -41,6 +43,37 @@ def register_callbacks(app):
             )
             return no_update, msg, no_update
 
+
+        # --- Rebuild main dataframe from filtered-store metadata ---
+        filtered_store_data = main_data  # rename for clarity
+
+        if (
+                not filtered_store_data
+                or not isinstance(filtered_store_data, dict)
+                or "path" not in filtered_store_data
+                or "row_indices" not in filtered_store_data
+        ):
+            msg = html.Span(
+                "Please load data and apply a filter before adding an overlay.",
+                style={"color": "orange", "fontSize": "18px"},
+            )
+            return no_update, msg, no_update
+
+        try:
+            # Load FULL dataframe (pickle created by main loader)
+            with open(filtered_store_data["path"], "rb") as f:
+                df_full = pickle.load(f)
+
+            # Apply row selection
+            main_df = df_full.iloc[filtered_store_data["row_indices"]].copy()
+
+        except Exception as e:
+            logger.error(f"[Overlay] Failed to rebuild main dataframe: {e}")
+            msg = html.Span("Failed to reconstruct main data.", style={"color": "red"})
+            return no_update, msg, no_update
+
+
+        
         # --- Read CSV ---
         #try:
         #    content_type, content_string = contents.split(",")
@@ -51,6 +84,10 @@ def register_callbacks(app):
         #    msg = html.Span(f"Error reading CSV: {e}", style={"color": "red"})
         #    return no_update, msg, no_update
 
+
+        
+
+        
         try:
             content_type, content_string = contents.split(',')
             decoded = base64.b64decode(content_string)
@@ -69,11 +106,13 @@ def register_callbacks(app):
             return no_update, msg, no_update
 
         
-        if not main_data:
-            msg = html.Span("Please load main data before overlay.", style={"color": "orange"})
-            return no_update, msg, no_update
+        #if not main_data:
+        #    msg = html.Span("Please load main data before overlay.", style={"color": "orange"})
+        #    return no_update, msg, no_update
 
-        main_df = pd.DataFrame(main_data)
+        #main_df = pd.DataFrame(main_data)
+        #df_full = load_df_from_store(filtered_store_data)
+        #main_df = apply_row_indices(df_full, filtered_store_data["row_indices"])
 
         # --- Normalize columns ---
         main_df.columns = [str(c).strip().lower() for c in main_df.columns]

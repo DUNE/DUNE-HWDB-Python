@@ -42,32 +42,43 @@ def load_data(data) -> pd.DataFrame:
         raise ValueError("Data must be a dict or list of dicts")
 
     #-----------------------------
-    for record in flat_data:         # flat_data is a list of dicts
-        # find all list-valued keys with more than one element
-        list_keys = [k for k, v in record.items() if isinstance(v, list) and len(v) > 1]
-        if list_keys:
-            for k in list_keys:
-                del record[k]          # remove from original dict
-    #-----------------------------
-    #expanded_records = []
-    #for record in flat_data:
-    #    list_keys = [k for k, v in record.items() if isinstance(v, list)]
-    #    if not list_keys:
-    #        expanded_records.append(record)
-    #        continue
-    #    max_len = max(len(record[k]) for k in list_keys)
-    #    for i in range(max_len):
-    #        new_row = {}
-    #        for k, v in record.items():
-    #            if isinstance(v, list):
-    #                new_row[k] = v[i] if i < len(v) else None
-    #            else:
-    #                new_row[k]=v
-    #        expanded_records.append(new_row)
-    #flat_data = expanded_records
+    #for record in flat_data:         # flat_data is a list of dicts
+    #    # find all list-valued keys with more than one element
+    #    list_keys = [k for k, v in record.items() if isinstance(v, list) and len(v) > 1]
+    #    if list_keys:
+    #        for k in list_keys:
+    #            del record[k]          # remove from original dict
     #-----------------------------
     
     df = pd.DataFrame(flat_data)
+
+
+    #-----------------------------
+    #### Convert string that looks like a list to real Python list
+    def try_parse_list(value):
+        """Attempt to convert stringified lists to real lists."""
+        if not isinstance(value, str):
+            return value
+        if not value.startswith("[") or not value.endswith("]"):
+            return value
+        try:
+            parsed = ast.literal_eval(value)
+            if isinstance(parsed, list):
+                return parsed
+            return value
+        except Exception:
+            return value
+        
+    # Check each column and convert rows that look like lists
+    for col in df.columns:
+        sample = df[col].dropna().astype(str).head(20)
+
+        # Heuristic: at least one row should look like a list
+        if sample.str.startswith("[").any() and sample.str.endswith("]").any():
+            df[col] = df[col].apply(try_parse_list)
+    #-----------------------------
+
+    
 
     # --- Clean column names ---
     df.columns = [str(c).replace(".", "_") for c in df.columns]
@@ -102,3 +113,4 @@ def GETTestLog(myDATA, testtype_string):
             combined[f"TEST: {k}"] = v
         
     return combined
+
