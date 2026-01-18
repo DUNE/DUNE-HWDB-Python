@@ -49,7 +49,10 @@ def _plot_sync_worker(job_id):
     job = _plot_jobs[job_id]
     args = job["args"]
     typeid = job["typeid"]
-    testtype = job["testtype"]
+    #testtype = job["testtype"]
+    testtype = (job["testtype"] or "").strip()
+    if testtype == "":
+        testtype = None
 
     try:
         resp = get_hwitems(**args)
@@ -59,16 +62,21 @@ def _plot_sync_worker(job_id):
 
         results = []
 
-        # --- Fetch Test Data (TestLog) per item (PROGRESS LOOP) ---
-        futures = [executor.submit(GETTestLog, it, testtype) for it in items]
-        for idx, f in enumerate(futures):
-            try:
-                results.append(f.result())
-            except Exception as e:
-                logger.error(f"[Plots] GETTestLog failed: {e}")
-                results.append({})
-            job["processed"] = idx + 1
-
+        if testtype:
+            # --- Fetch Test Data (TestLog) per item (PROGRESS LOOP) ---
+            futures = [executor.submit(GETTestLog, it, testtype) for it in items]
+            for idx, f in enumerate(futures):
+                try:
+                    results.append(f.result())
+                except Exception as e:
+                    logger.error(f"[Plots] GETTestLog failed: {e}")
+                    results.append({})
+                job["processed"] = idx + 1
+        else:
+            # --- No test type requested: just use the items already downloaded ---
+            for idx, it in enumerate(items):
+                results.append(it)
+                job["processed"] = idx + 1
             
         # --- Convert raw results to DataFrame ---
         data = load_data(results)

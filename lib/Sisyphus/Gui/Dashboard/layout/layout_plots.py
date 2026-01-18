@@ -349,7 +349,7 @@ def plots_layout():
                             {"label": "Histogram (log-Y)", "value": "histogram_log"},
                             {"label": "Cumulative Histogram", "value": "cumhist"},
                             {"label": "Scatter", "value": "scatter"},
-                            {"label": "2D Histogram", "value": "hist2d"},
+                            #{"label": "2D Histogram", "value": "hist2d"},
                             {"label": "Line", "value": "line"},
                             {"label": "Boxplot", "value": "box"},
                         ],

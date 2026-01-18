@@ -357,14 +357,44 @@ def register_callbacks(app):
                         return go.Figure()
                     
                     df = df.copy()
-                    df[x] = pd.to_numeric(df[x], errors="coerce")
-                    df[y] = pd.to_numeric(df[y], errors="coerce")
-                    df = df.dropna(subset=[x, y])
+
+                    # coerce bins safely
+                    try:
+                        nb = int(numbins) if numbins is not None else 50
+                    except Exception:
+                        nb = 50
+
+                    def coerce_axis(s: pd.Series):
+                        # Try datetime first
+                        dt = pd.to_datetime(s, errors="coerce", utc=True)
+                        if dt.notna().sum() / max(len(s), 1) > 0.8:
+                            return dt.dt.tz_convert(None), "date"
+
+                        # Try numeric
+                        num = pd.to_numeric(s, errors="coerce")
+                        if num.notna().sum() / max(len(s), 1) > 0.8:
+                            return num, "linear"
+
+                        # Otherwise categorical
+                        return s.astype(str), "category"
                     
+                    #df[x] = pd.to_numeric(df[x], errors="coerce")
+                    #df[y] = pd.to_numeric(df[y], errors="coerce")
+                    df[x], xtype = coerce_axis(df[x])
+                    df[y], ytype = coerce_axis(df[y])
+
+                    # drop only rows missing either axis after coercion
+                    df = df.dropna(subset=[x, y])
                     if df.empty:
                         return go.Figure()
                     
-                    return build_hist2d(df, x, y, numbins)
+                    #return build_hist2d(df, x, y, numbins)
+                    fig2 = px.density_heatmap(df, x=x, y=y, nbinsx=nb, nbinsy=nb)
+                    fig2.update_xaxes(type=xtype)
+                    fig2.update_yaxes(type=ytype)
+                    return fig2
+
+                
                 return go.Figure()
             except Exception as e:
                 logger.error(f"Error in build_px: {e}")
@@ -397,7 +427,8 @@ def register_callbacks(app):
         # --- Apply visual condition traces (we must expand the cond subset similarly before plotting) ---
         chips = []
 
-        if has_conditions:
+        #if has_conditions:
+        if has_conditions and primary_base not in ("hist2d",):
             fig = go.Figure()
 
             # --- Restore axis titles (px normally does this, go.Figure does not) ---
@@ -519,11 +550,19 @@ def register_callbacks(app):
             fig.update_layout(barmode="overlay")
             fig.update_traces(opacity=0.6)
 
-        # Apply log scale if selected variant
-        if primary.endswith("_log"):
-            fig.update_yaxes(type="log")
+        # Apply log scale if selected variant.... Nope!
+        # Apply log scale only where it makes sense
+        if primary_base in ("histogram", "cumhist"):
+            # these plots have a count y-axis!
+            if primary.endswith("_log"):
+                fig.update_yaxes(type="log")
+            else:
+                fig.update_yaxes(type="linear")
         else:
-            fig.update_yaxes(type="linear")
+            # box/line/etc: optional; leave it alone or handle per-chart
+            pass
+
+    
     
         
         # === Adjust layout for long X labels ===

@@ -83,7 +83,7 @@ def register_callbacks(app):
                         type="text",
                         placeholder="Enter value",
                         debounce=True,
-                        style={"width": "100px","height": "36px","fontSize": "14px", "font-family": "Arial, sans-serif",
+                        style={"width": "200px","height": "36px","fontSize": "14px", "font-family": "Arial, sans-serif",
                                 "border": "0.1px solid #ccc", "borderRadius": "5px",   
                                 "textAlign": "center","marginRight":"5px"}
                     ),
