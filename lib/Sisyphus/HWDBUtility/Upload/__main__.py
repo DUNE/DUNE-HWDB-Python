@@ -16,6 +16,8 @@ from Sisyphus.Utils.Terminal.Style import Style
 from Sisyphus import RestApiV1 as ra
 from shutil import get_terminal_size
 
+import multiprocessing as mp
+
 
 def main(argv=None):
     logger.info(f"Starting {__name__}")
@@ -38,4 +40,5 @@ def main(argv=None):
     logger.info(f"Finished {__name__} and exiting.")
 
 if __name__ == "__main__":
+    mp.freeze_support()
     main(argv=config.remaining_args)

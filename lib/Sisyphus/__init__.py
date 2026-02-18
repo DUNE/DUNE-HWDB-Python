@@ -6,16 +6,46 @@ Copyright (c) 2024 Regents of the University of Minnesota
 Author: Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
 """
 
-import os
+from pathlib import Path
+import os, sys
 
 #version = 'v1.3.0.rel.2025.07.21a'
-version = 'v1.7.1.rel.2026.01.18a'
+version = 'v1.7.2.rel.2026.02.17a'
+
 
 project_root = os.path.realpath(os.path.join(os.path.dirname(__file__), "../.."))
 
-def get_path(path):
-    """Get a path relative to the project root"""
-    return os.path.realpath(os.path.join(project_root, path))
+def _runtime_root() -> Path:
+    # Frozen (PyInstaller): _MEIPASS points to the extracted runtime dir.
+    # In onedir builds, that means ".../dist/HWDBTools/_internal"
+    if getattr(sys, "frozen", False):
+        return Path(getattr(sys, "_MEIPASS", Path(sys.executable).resolve().parent / "_internal"))
+
+    # Non-frozen: keep our existing behavior
+    if "project_root" in globals():
+        return Path(project_root)
+
+    # Fallback: walk upward from this file until we find a repo marker!
+    here = Path(__file__).resolve()
+    for p in [here] + list(here.parents):
+        if (p / "lib").is_dir() and (p / "resources").is_dir():
+            return p
+    return here.parent
+
+
+_RUNTIME_ROOT = _runtime_root()
+
+
+def get_path(rel: str) -> str:
+    rel = rel.lstrip("/").replace("\\", "/")
+    return str(_RUNTIME_ROOT / rel)
+
+#def get_path(path):
+#    """Get a path relative to the project root"""
+#    return os.path.realpath(os.path.join(project_root, path))
+
+
+
 
 def display_header():
     import Sisyphus.Configuration as Config

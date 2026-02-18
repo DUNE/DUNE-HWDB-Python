@@ -4,6 +4,7 @@ import threading, webbrowser
 from threading import Timer
 from dash import Dash, html
 import dash_bootstrap_components as dbc
+from pathlib import Path
 
 
 import os, sys, io, contextlib
@@ -34,12 +35,54 @@ from Sisyphus.Gui.Dashboard.callbacks import (
     register_overlay_callbacks,
 )
 
+def get_path(rel: str) -> str:
+    """
+    Resolve a path relative to the runtime root.
+
+    Frozen (PyInstaller onedir):
+      <dist>/HWDBTools/_internal/<rel>
+
+    Non-frozen (repo checkout):
+      <repo_root>/<rel>
+    """
+    rel = rel.lstrip("/").replace("\\", "/")
+
+    if getattr(sys, "frozen", False):
+        # In onedir, the EXE lives in <dist>/HWDBTools/
+        # and _internal is a sibling folder.
+        runtime_root = Path(sys.executable).resolve().parent / "_internal"
+        return str(runtime_root / rel)
+
+    # Non-frozen: infer repo root from this file location:
+    # lib/Sisyphus/Gui/Dashboard/__main__.py -> repo root is 5 parents up
+    # (__main__.py -> Dashboard -> Gui -> Sisyphus -> lib -> PROJECT_ROOT)
+    runtime_root = Path(__file__).resolve().parents[4]
+    return str(runtime_root / rel)
+
 #------------- create the website and interface -------
-app = Dash(
-    __name__,
+dash_kwargs = dict(
     external_stylesheets=[dbc.themes.BOOTSTRAP],
-    suppress_callback_exceptions=True
+    suppress_callback_exceptions=True,
+)
+
+if getattr(sys, "frozen", False):
+    # Frozen: our spec places Dashboard assets into _internal/assets/
+    dash_kwargs.update(
+        assets_folder=get_path("assets"),
+        assets_url_path="/assets",   # optional; Dash default is already "/assets"
     )
+
+app = Dash(__name__, **dash_kwargs)
+
+#------------- create the website and interface -------
+#app = Dash(
+#    __name__,
+#    external_stylesheets=[dbc.themes.BOOTSTRAP],
+#    suppress_callback_exceptions=True,
+#    assets_folder=get_path("assets"),
+#    assets_url_path="/assets",
+#    )
+
 app.title = "HWDB Dashboard"
 app.layout = layout
 # Force Dash to validate the layout before callback registration
