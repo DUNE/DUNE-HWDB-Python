@@ -41,16 +41,32 @@ def check_server(profile):
     # we wait until here to import because we want to process arguments and 
     # update the configuration before accessing the HWDB.
     import Sisyphus.RestApiV1 as ra
+    import Sisyphus.Configuration as cfg
+
+    auth_type = profile.authentication.get(cfg.KW_AUTH_TYPE, "unknown")
+    using_cert = (auth_type == cfg.KW_AUTH_CERT)
+    using_token = (auth_type == cfg.KW_AUTH_HTGETTOKEN)
+    
     try:
         resp = ra.whoami(profile=profile)
     except ra.CertificateError as err:
-        msg = "The server does not recognize the certificate"
+        # Only meaningful in cert mode, but keep it anyway
+        if using_cert:
+            msg = "Server rejected the client certificate"
+        else:
+            msg = "Certificate-related error occurred (unexpected in token mode)"
         config.logger.error(msg)
-        config.logger.info(f"The exception was: {err}")
+        config.logger.info(f"The exception was: {type(err).__name__}: {err}")
     except Exception as err:
-        msg = "Failed to contact server to validate certificate"
+        # Token mode + everything else
+        if using_token:
+            msg = "Failed to contact server / validate token (token-based auth)"
+        elif using_cert:
+            msg = "Failed to contact server / validate certificate (cert-based auth)"
+        else:
+            msg = "Failed to contact server (unknown auth type)"
         config.logger.error(msg)
-        config.logger.info(f"The exception was: {err}")
+        config.logger.info(f"The exception was: {type(err).__name__}: {err}")
     else:
         import json
         data = resp['data']
@@ -77,10 +93,10 @@ def show_summary(config):
 
     print(f"REST API:     {config.active_profile.rest_api} {rest_api_msg}")
    
-    sys.stdout.write("server check: (please wait)")
+    sys.stdout.write("auth/connectivity check: (please wait)")
     sys.stdout.flush()
     check_result = check_server(config.active_profile)
-    sys.stdout.write(f"\rserver check: {check_result}\033[K\n")
+    sys.stdout.write(f"\rauth/connectivity check: {check_result}\033[K\n")
 
     print()
 

@@ -5,6 +5,7 @@ Copyright (c) 2025 Regents of the University of Minnesota
 Author: 
     Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
 """
+from pathlib import Path
 
 from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
@@ -25,6 +26,9 @@ from copy import copy
 
 import subprocess
 import os
+
+import shutil
+import re
 
 ###############################################################################
 
@@ -229,6 +233,64 @@ class output_so_far:
             outs, errs = proc.communicate()
     #}}}
 
+    
+# A helper to run the frozen version:
+def _tool_exe(name: str) -> str:
+    """
+    Return the absolute path to a sibling hwdb-* tool when frozen.
+    In non-frozen mode, return just the name and let PATH resolve it.
+    """
+    if getattr(sys, "frozen", False):
+        # In onedir, sys.executable is .../HWDBTools/hwdb-configure
+        return str(Path(sys.executable).resolve().parent / name)
+    return name
+
+# Helpers for the WSL (2) case:
+def _is_wsl() -> bool:
+    # Fast path: env vars that are usually present
+    if os.environ.get("WSL_INTEROP") or os.environ.get("WSL_DISTRO_NAME"):
+        return True
+
+    # Fallback: /proc/version contains Microsoft
+    try:
+        with open("/proc/version", "r") as fp:
+            return "microsoft" in fp.read().lower()
+    except Exception:
+        return False
+
+def _pick_web_open_command() -> str | None:
+    """
+    Return a command string suitable for htgettoken --web-open-command=...
+
+    Policy:
+      - WSL: do auto-launch via Windows (wslview/explorer/cmd start), because user is local.
+      - macOS: do auto-launch via 'open'.
+      - Linux (non-WSL): DO NOT auto-launch by default (often remote/headless).
+    """
+    if _is_wsl():
+        if shutil.which("wslview"):
+            return "wslview"
+        if shutil.which("explorer.exe"):
+            return "explorer.exe"
+        if shutil.which("cmd.exe"):
+            return 'cmd.exe /c start ""'
+        # last resort inside WSL (sometimes present)
+        if shutil.which("xdg-open"):
+            return "xdg-open"
+        return None
+
+    if sys.platform == "darwin":
+        return "open"
+
+    # Linux (non-WSL): assume remote/headless -> don't try to open a browser!
+    if sys.platform.startswith("linux"):
+        return None
+
+    # other unix-like: fallback
+    if shutil.which("xdg-open"):
+        return "xdg-open"
+    return None
+
 def refresh_token(profile):
     #{{{
     #.....................................................................
@@ -241,7 +303,8 @@ def refresh_token(profile):
         tokens = [
             #'python',
             #'-u',
-            'hwdb-htgettoken',
+            #'hwdb-htgettoken',
+            _tool_exe("hwdb-htgettoken"),
             '-q',
             f'--configdir={config_dir}',
             f'--vaulttokenfile={vault_token_file}',
@@ -251,6 +314,11 @@ def refresh_token(profile):
             #'--web-open-command=',
         ]
 
+        web_open_cmd = _pick_web_open_command()
+        if web_open_cmd:
+            tokens.append(f"--web-open-command={web_open_cmd}")
+
+            
         tokens.extend(profile.authentication.get('flags', []))
            
         try:
@@ -290,21 +358,53 @@ def refresh_token(profile):
                     outer_border='normal', 
                     border_color=Style.info._fg)
 
+        # Different mesages for different platforms:
+        # Decide whether we *expect* an auto-launched browser
+        is_linux = sys.platform.startswith("linux")
+        wsl = _is_wsl()
+        web_cmd = _pick_web_open_command()
+
+        if is_linux and not wsl and not web_cmd:
+            # Non-WSL Linux: we intentionally do NOT try to auto-launch a browser.
+            browser_lines = [
+                "Linux detected:",
+                "This tool will NOT auto-launch a browser (common for SSH/headless)",
+                "Please copy/paste the URL shown below into a browser on your local machine.",
+            ]
+        else:
+            # macOS / WSL / any environment where we might try opening a browser
+            browser_lines = [
+                "htgettoken may have attempted to open a browser window.",
+                "Use that window to complete your authentication.",
+                "",
+                "If a browser window has not opened (e.g., if you're using ssh to",
+                "access a server remotely), the output below may contain a URL that",
+                "can be used to complete the authentication.",
+            ]
+
         info = ' \n '.join([
             '',
-            Style.warning(
-            #f'The call to htgettoken is taking longer than expected. ({time_elapsed})'),
-            f'The call to htgettoken is taking longer than expected.'),
+            Style.warning(f'The call to htgettoken is taking longer than expected.'),
             '',
-            'htgettoken may have attempted to open a browser window. Use this',
-            'window to complete your authentication.',
-            '',
-            'If a browser window has not opened (e.g., if you''re using ssh to',
-            'access a server remotely), the following information outputted from',
-            'htgettoken may contain a URL that can be used to complete the',
-            'authentication.',
+            *browser_lines,
             '',
         ])
+        
+        #info = ' \n '.join([
+        #    '',
+        #    Style.warning(
+        #    #f'The call to htgettoken is taking longer than expected. ({time_elapsed})'),
+        #    f'The call to htgettoken is taking longer than expected.'),
+        #    '',
+        #    'htgettoken may have attempted to open a browser window. Use this',
+        #    'window to complete your authentication.',
+        #    '',
+        #    'If a browser window has not opened (e.g., if you''re using ssh to',
+        #    'access a server remotely), the following information outputted from',
+        #    'htgettoken may contain a URL that can be used to complete the',
+        #    'authentication.',
+        #    '',
+        #])
 
         msg2 = '\n'.join([info, inner])
 

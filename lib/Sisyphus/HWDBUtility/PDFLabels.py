@@ -637,13 +637,28 @@ class PDFLabels:
         #}}}
 
 
-if __name__ == '__main__':
+#if __name__ == '__main__':
+#
+#    parts_list = sys.argv[1:]
+#
+#    pdf_labels = PDFLabels(parts_list)
+#    pdf_labels.generate_label_sheets("labels.pdf")
 
-    parts_list = sys.argv[1:]
+if __name__ == "__main__":
+    # For frozen apps (PyInstaller) to prevent child/spawn helper
+    # processes from running the real CLI.
+    import multiprocessing as _mp
+    _mp.freeze_support()
+
+    # Filter argv: only keep real component IDs, ignore any "-B" / "-S" / etc.
+    parts_list = [a for a in sys.argv[1:] if not a.startswith("-")]
+
+    if not parts_list:
+        print("Usage: hwdb-labels <COMPONENT_ID> [<COMPONENT_ID> ...]")
+        sys.exit(2)
 
     pdf_labels = PDFLabels(parts_list)
     pdf_labels.generate_label_sheets("labels.pdf")
-
 
 
 
