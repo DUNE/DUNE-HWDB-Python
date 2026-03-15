@@ -410,13 +410,18 @@ class HWItem:
        
         country_info = ut.lookup_country(it["country_code"])[0]
 
+        # in case if/when Comonent Status is null:
+        status_obj = it.get("status") or {}
+        institution_obj = it.get("institution") or {}
+
         hwdb_record = (
         {
             "part_type_id": ct["part_type_id"],
             "part_type_name": ct["full_name"],
             "serial_number": it["serial_number"],
             "part_id": it["part_id"],
-            "institution_id": it["institution"]["id"],
+            #"institution_id": it["institution"]["id"],
+            "institution_id": institution_obj.get("id"),
             "institution_name": it["institution"]["name"],
             #"country_name": ut.lookup_country_name_by_country_code(it["country_code"]),
             "country_name": country_info['name'],
@@ -424,7 +429,8 @@ class HWItem:
             "country_code": country_info['code'],
             "country": country_info['combined'],
             "comments": it["comments"],
-            "status": it["status"]["id"],
+            #"status": it["status"]["id"],
+            "status": status_obj.get("id"),
         })
         #hwdb_record["country"] = (f"({hwdb_record['country_code']}) "
         #                            f"{hwdb_record['country_name']}")
