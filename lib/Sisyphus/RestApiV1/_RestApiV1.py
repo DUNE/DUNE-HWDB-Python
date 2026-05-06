@@ -293,7 +293,27 @@ class retry:
 
 #-----------------------------------------------------------------------------
 
-DEFAULT_TIMEOUTS = (5, 10, 15, 30, 60)
+# Requests timeout format:
+#   timeout=<seconds> or timeout=(connect_timeout, read_timeout)
+#DEFAULT_TIMEOUTS = (5, 10, 15, 30, 60)
+DEFAULT_TIMEOUTS = (5, 5, 5, 5, 5)
+#DEFAULT_TIMEOUTS = (
+#    (5, 5),
+#    (5, 10),
+#    (5, 15),
+#    (5, 30),
+#    (5, 60),
+#)
+# Could also override heavy calls explicitly:
+#get_hwitems(
+#    type_id,
+#    size=100000,
+#    timeouts=[(5, 60), (5, 120), (5, 240)]
+#)
+# for quick UI status calls:
+#whoami(
+#    timeouts=[(3, 10), (3, 20)]
+#)
 
 @retry(timeouts=DEFAULT_TIMEOUTS)
 def _request(method, url, *args, return_type="json", **kwargs):
@@ -323,7 +343,20 @@ def _request(method, url, *args, return_type="json", **kwargs):
         logger.debug(msg)
 
     augmented_kwargs = {**profile.settings.get(cfg.KW_EXTRA_KWARGS, {}), **kwargs}
-        
+
+
+    # ------------------------------------------------------------
+    # Default timeout (respects caller override):
+    # - retry() may have already injected 'timeout' into kwargs
+    # - callers may pass timeout=... explicitly
+    # - otherwise use SessionManager's default (or fallback)
+    if "timeout" not in augmented_kwargs or augmented_kwargs.get("timeout") is None:
+        # Preferred: define SessionManager.default_timeout = (connect_s, read_s)
+        t = getattr(session_manager, "default_timeout", None)
+        augmented_kwargs["timeout"] = t if t is not None else (10, 60)
+    # ------------------------------------------------------------
+    
+
     extra_info = \
     [
         "Additional Information:",
@@ -829,7 +862,7 @@ def get_hwitem_barcode(part_id, write_to_file=None, **kwargs):
 #
 ##############################################################################
 
-def get_hwitem(part_id, **kwargs):
+def get_hwitem(part_id, history=False, **kwargs):
     #{{{
     """Get an individual HW Item
 
@@ -877,13 +910,17 @@ def get_hwitem(part_id, **kwargs):
             "status": "OK"
         }
     """
-
-    logger.debug(f"<{func_name()}> part_id={part_id}")
+    logger.debug(f"<{func_name()}> part_id={part_id}, history={history}")
+    #logger.debug(f"<{func_name()}> part_id={part_id}")
     profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/components/{sanitize(part_id)}"
     url = f"https://{profile.rest_api}/{path}"
-    
-    resp = _get(url, **kwargs) 
+
+    params = []
+    if history:
+        params.append(("history", "y"))
+        
+    resp = _get(url, params=params, **kwargs) 
     return resp
     #}}}
 

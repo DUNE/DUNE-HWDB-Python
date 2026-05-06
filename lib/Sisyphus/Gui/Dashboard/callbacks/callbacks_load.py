@@ -17,6 +17,67 @@ logger = config.getLogger(__name__)
 
 _plot_jobs = {}
 
+LONG_TIMEOUTS = (
+    (5, 60),
+    (5, 120),
+    (5, 180),
+)
+
+# ------------------------------------------------------------------
+# Plots tab option:
+# Fetch ITEM edited timestamp with one extra request per item:
+#   GET /components/<pid>?history=y
+#
+# Turn this off if the HWDB general get_hwitems() response starts
+# including edited time directly.
+# ------------------------------------------------------------------
+PLOTS_FETCH_ITEM_EDITED_HISTORY = True
+
+
+def _extract_latest_edited(history_resp):
+    """
+    Extract the latest specs-history timestamp from:
+        get_hwitem(part_id, history=True)
+
+    In the returned DataFrame this should become:
+        ITEM: edited
+    after load_data().
+    """
+    try:
+        specs = history_resp.get("data", {}).get("specifications", [])
+        if not isinstance(specs, list):
+            return None
+
+        created_values = [
+            s.get("created")
+            for s in specs
+            if isinstance(s, dict) and s.get("created")
+        ]
+
+        if not created_values:
+            return None
+
+        return max(created_values)
+
+    except Exception:
+        return None
+
+
+def _fetch_item_edited(part_id):
+    """
+    One extra REST request per PID.
+    """
+    try:
+        resp = get_hwitem(
+            part_id,
+            history=True,
+            timeouts=[(5, 20), (5, 45), (5, 90)],
+        )
+        return _extract_latest_edited(resp)
+    except Exception as e:
+        logger.warning(f"[Plots] Could not fetch edited timestamp for {part_id}: {e}")
+        return None
+
 def normalize_scalar_lists(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
 
@@ -56,27 +117,94 @@ def _plot_sync_worker(job_id):
 
     try:
         resp = get_hwitems(**args)
+        #resp = get_hwitems(
+        #    **args,
+        #    timeouts=LONG_TIMEOUTS,
+        #)
         items = resp["data"]
         total = len(items)
-        job["total"] = total
+        #job["total"] = total
 
+        # If enabled, we do two phases:
+        #   Phase 1: fetch ITEM edited timestamp
+        #   Phase 2: fetch test data OR append item data
+        # If disabled, we only do the original one phase.
+        fetch_item_edited_history = PLOTS_FETCH_ITEM_EDITED_HISTORY
+
+        job["total"] = total * 2 if fetch_item_edited_history else total
+        job["processed"] = 0
         results = []
+        edited_lookup = {}
 
+        if fetch_item_edited_history:
+            # ------------------------------------------------------------
+            # Phase 1: Fetch latest edited timestamp per item
+            # ------------------------------------------------------------
+            edit_futures = {}
+            for it in items:
+                pid = it.get("part_id")
+                if pid:
+                    edit_futures[executor.submit(_fetch_item_edited, pid)] = pid
+                    
+            for idx, f in enumerate(edit_futures):
+                pid = edit_futures[f]
+                try:
+                    edited_lookup[pid] = f.result()
+                except Exception as e:
+                    logger.warning(f"[Plots] edited lookup failed for {pid}: {e}")
+                    edited_lookup[pid] = None
+                    
+                job["processed"] = idx + 1
+
+            for it in items:
+                pid = it.get("part_id")
+                it["edited"] = edited_lookup.get(pid)
+                
+            progress_offset = total
+        else:
+            # No extra history requests.
+            # If the DB later includes edited directly in get_hwitems(), keep it.
+            # Otherwise, edited will simply not be added.
+            progress_offset = 0
+
+        # ---
+        
         if testtype:
             # --- Fetch Test Data (TestLog) per item (PROGRESS LOOP) ---
-            futures = [executor.submit(GETTestLog, it, testtype) for it in items]
+            futures = {
+                executor.submit(GETTestLog, it, testtype): it
+                for it in items
+            }
+
             for idx, f in enumerate(futures):
+                it = futures[f]
+                pid = it.get("part_id")
+
                 try:
-                    results.append(f.result())
+                    row = f.result()
+
+                    if fetch_item_edited_history and isinstance(row, dict):
+                        row["edited"] = edited_lookup.get(pid)
+                        row["ITEM: edited"] = edited_lookup.get(pid)
+
+                    results.append(row)
+
                 except Exception as e:
                     logger.error(f"[Plots] GETTestLog failed: {e}")
-                    results.append({})
-                job["processed"] = idx + 1
+                    fallback = dict(it)
+
+                    if fetch_item_edited_history:
+                        fallback["edited"] = edited_lookup.get(pid)
+
+                    results.append(fallback)
+
+                job["processed"] = progress_offset + idx + 1
+
         else:
             # --- No test type requested: just use the items already downloaded ---
             for idx, it in enumerate(items):
                 results.append(it)
-                job["processed"] = idx + 1
+                job["processed"] = progress_offset + idx + 1
             
         # --- Convert raw results to DataFrame ---
         data = load_data(results)
@@ -96,8 +224,8 @@ def _plot_sync_worker(job_id):
         priority_item = [
             "part_id"             , "parent_part_id"      , "country_code"      , "institution_id"        , "institution_name"      ,
             "ITEM: part_id"       , "ITEM: parent_part_id", "ITEM: country_code", "ITEM: institution_id"  , "ITEM: institution_name", 
-            "created"             , "creator_id"          , "creator_name"      , "creator_username"      , "manufacturer_id"       , "manufacturer_name",
-            "ITEM: created"       , "ITEM: creator_id"    , "ITEM: creator_name", "ITEM: creator_username", "ITEM: manufacturer_id" , "ITEM: manufacturer_name",
+            "created"             , "edited"              , "creator_id"        , "creator_name"          , "creator_username"      , "manufacturer_id"       , "manufacturer_name",
+            "ITEM: created"       , "ITEM: edited"        , "ITEM: creator_id"  , "ITEM: creator_name"    , "ITEM: creator_username", "ITEM: manufacturer_id" , "ITEM: manufacturer_name",
             "serial_number"       , "location"            , "status_id"         , "status_name"           ,
             "ITEM: serial_number" , "ITEM: location"      , "ITEM: status_id"   , "ITEM: status_name"     ,
             "certified_qaqc"      , "qaqc_uploaded"       , "is_installed"      , "comments"              ,
@@ -181,6 +309,7 @@ def _plot_sync_worker(job_id):
 
         #job["finished_at"] = time.time()
     except Exception as e:
+        logger.exception(f"[Plots] Background sync job failed: {e}")
         job["error"] = str(e)
         job["done"] = True
 
@@ -237,8 +366,21 @@ def register_callbacks(app):
             raise PreventUpdate
 
         # if job was already finalized and rendered, stop forever
+        #if job.get("finalized"):
+        #
+        #    meta = {
+        #        "path": job["data_path"],
+        #        "columns": job["columns"],
+        #    }
+        # To avoid repeated errors after a failed job has already been finalized.
         if job.get("finalized"):
-
+        
+            if job.get("error"):
+                raise PreventUpdate
+        
+            if "data_path" not in job or "columns" not in job:
+                raise PreventUpdate
+        
             meta = {
                 "path": job["data_path"],
                 "columns": job["columns"],
@@ -289,6 +431,44 @@ def register_callbacks(app):
         pct = int(100 * processed / total) if total else 0
 
 
+        # To prevent the polling callback from trying to access job["data_path"] when the worker failed.
+        if done and err:
+            logger.error(f"[Plots] Sync job failed before producing data_path: {err}")
+            
+            red = {
+                "fontSize": "20px",
+                "padding": "14px 32px",
+                "backgroundColor": "#FF0000",
+                "color": "white",
+                "border": "none",
+                "borderRadius": "8px",
+                "cursor": "pointer",
+                "gap": "15px",
+                "marginRight": "50px",
+            }
+        
+            msg = html.Div(
+                [
+                    html.Div("HWDB Sync failed.", style={"fontWeight": "bold"}),
+                    html.Div(str(err)),
+                ],
+                style={"fontSize": "18px", "color": "red"},
+            )
+        
+            job["finalized"] = True
+            job["finished_at"] = time.time()
+        
+            return (
+                "Sync to the HWDB",
+                red,
+                False,
+                dash.no_update,
+                msg,
+                True,
+                {"done": True, "error": str(err), "ts": time.time()},
+            )
+
+        
 
         
         # update % text while job is running
@@ -315,6 +495,11 @@ def register_callbacks(app):
                 False,  # keep interval alive
                 {"done": False, "ts": time.time()},   # sync-status
             )
+
+        # guard it
+        if "data_path" not in job or "columns" not in job:
+            logger.error(f"[Plots] Job marked done but missing data_path/columns. Full job={job}")
+            raise PreventUpdate
 
         
         # job finished → FINAL render + stop interval

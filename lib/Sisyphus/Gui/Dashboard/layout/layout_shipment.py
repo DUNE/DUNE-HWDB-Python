@@ -19,6 +19,8 @@ def shipment_layout():
             dcc.Store(id="shipment-total", storage_type="memory"),
             dcc.Store(id="shipment-processed", storage_type="memory"),
             dcc.Store(id="shipment-items-cache", storage_type="memory"),
+            dcc.Store(id="launch-workflow-request", storage_type="memory"),
+            dcc.Store(id="launch-workflow-opened", storage_type="memory"),
             # Title
             #html.H2(
             #    "Shipment Tracker",
@@ -34,24 +36,62 @@ def shipment_layout():
         
             # Row 1: Controls and Filters
             html.Div(
-                #style={"display": "flex", "flexWrap": "wrap", "justifyContent": "center", "gap": "10px"},
                 children=[
+                    html.Div(
+                        [
+                            html.Span(
+                                "Track",
+                                style={
+                                    "fontWeight": "600",
+                                    "fontSize": "20px",
+                                    "lineHeight": "1",
+                                },
+                            ),
+                            dbc.Switch(
+                                id="shipment-mode",
+                                value=False,
+                                persistence=True,
+                                persistence_type="local",
+                                className="shipment-mode-switch",
+                                style={
+                                    "marginLeft": "10px",
+                                    "marginRight": "10px",
+                                    "transform": "scale(1.25)",
+                                    "transformOrigin": "center",
+                                },
+                            ),
+                            html.Span(
+                                "Ship/Receive",
+                                style={
+                                    "fontWeight": "600",
+                                    "fontSize": "20px",
+                                    "lineHeight": "1",
+                                },
+                            ),
+                        ],
+                        style={
+                            "display": "flex",
+                            "alignItems": "center",
+                            "justifyContent": "flex-start",
+                            "minWidth": "300px",
+                            "marginRight": "30px",
+                        },
+                    ),
                     dcc.Input(
                         id="shipment-typeid",
                         type="text",
                         placeholder="Enter Component Type ID",
                         className="text-center",
                         style={
-                            "width": "250px",         # make it wider
-                            "height": "45px",         # make it taller
-                            "fontSize": "16px",       # larger text
+                            "width": "250px",
+                            "height": "45px",
+                            "fontSize": "16px",
                             "fontWeight": "400",
                             "padding": "10px 15px",
-                            "borderRadius": "12px",   # rounded corners
+                            "borderRadius": "12px",
                             "border": "2px solid #007BFF",
-                            #"boxShadow": "2px 2px 8px rgba(0, 0, 0, 0.2)",  # 3D effect
                             "marginLeft": "10px",
-                            "marginRight": "50px", # spacing between the input and the button
+                            "marginRight": "30px",
                             "textAlign": "center",
                         },
                     ),
@@ -60,24 +100,58 @@ def shipment_layout():
                         id="fetch-shipments",
                         n_clicks=0,
                         color="primary",
-                        #className="tg-sync-btn",
                         style = {
-                            "fontSize": "20px",            # Larger text
-                            "padding": "14px 32px",        # Larger button size
-                            "backgroundColor": "#4CAF50",  # 
+                            "fontSize": "20px",
+                            "padding": "14px 32px",
+                            "backgroundColor": "#4CAF50",
                             "color": "white",
                             "border": "none",
                             "borderRadius": "8px",
                             "justifyContent": "center",
                             "gap": "15px",
                             "cursor": "pointer",
-                            #"boxShadow": "0 6px 10px rgba(0, 0, 0, 0.3)",  # 3D effect
                             "transition": "all 0.2s ease-in-out",
-                            "marginRight": "50px",
+                            "marginRight": "20px",
                         }
                     ),
+                    dbc.Button(
+                        "Open Ship/Receive Workflow",
+                        id="launch-shipping-workflow",
+                        n_clicks=0,
+                        disabled=True,
+                        style={
+                            "display": "none",
+                            "fontSize": "18px",
+                            "padding": "12px 24px",
+                            "backgroundColor": "#6c757d",
+                            "color": "white",
+                            "border": "none",
+                            "borderRadius": "8px",
+                            "cursor": "not-allowed",
+                            "transition": "all 0.2s ease-in-out",
+                        },
+                    ),
                 ],
-                style={"display": "flex", "alignItems": "center","justifyContent": "center", "marginBottom": "1px"},
+                style={
+                    "display": "flex",
+                    "alignItems": "center",
+                    "justifyContent": "center",
+                    "flexWrap": "wrap",
+                    "gap": "10px",
+                    "marginBottom": "1px",
+                },
+            ),
+
+            html.Div(
+                id="launch-shipping-help",
+                style={
+                    "textAlign": "center",
+                    "fontSize": "15px",
+                    "color": "#666",
+                    "minHeight": "24px",
+                    "marginTop": "8px",
+                    "marginBottom": "10px",
+                },
             ),
 
             html.Br(),
@@ -141,7 +215,7 @@ def shipment_layout():
                         id="shipment-table",
                         columns=[
                             {"name": "Box PID", "id": "box_pid"},
-                            {"name": "Certificed", "id": "certified"},          # narrow placeholder column
+                            {"name": "Certified", "id": "certified"},          # narrow placeholder column
                             {"name": "Uploaded", "id": "docuploaded"},          # another narrow column
                             {"name": "Latest Location", "id": "location"},
                             {"name": "Shipped Date", "id": "shipped_date"},

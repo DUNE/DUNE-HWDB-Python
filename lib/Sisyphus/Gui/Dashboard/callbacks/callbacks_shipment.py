@@ -210,6 +210,7 @@ def register_callbacks(app):
         prevent_initial_call=True,
     )
     def update_shipment_button(_, jobid, total):
+        
         if not jobid:
             raise PreventUpdate
 
@@ -579,22 +580,22 @@ def register_callbacks(app):
                             poc_emails.append(pemails)
                     # Origin
                     if "Origin of this shipment" in eachpre:
-                        origin = f"Origin: {eachpre["Origin of this shipment"]}"
+                        origin = f"Origin: {eachpre['Origin of this shipment']}"
                     # Destination
                     if "Destination of this shipment" in eachpre:
-                        destination = f"Destination: {eachpre["Destination of this shipment"]}"
+                        destination = f"Destination: {eachpre['Destination of this shipment']}"
                     # Dimension
                     if "Dimension of this shipment" in eachpre:
-                        dimension = f"Dimension: {eachpre["Dimension of this shipment"]}"
+                        dimension = f"Dimension: {eachpre['Dimension of this shipment']}"
                     # Weight
                     if "Weight of this shipment" in eachpre:
-                        weight = f"Weight: {eachpre["Weight of this shipment"]}"
+                        weight = f"Weight: {eachpre['Weight of this shipment']}"
                     # FF name
                     if "Freight Forwarder name" in eachpre:
-                        ffname = f"FF name: {eachpre["Freight Forwarder name"]}"
+                        ffname = f"FF name: {eachpre['Freight Forwarder name']}"
                     # FF mode
                     if "Mode of Transportation" in eachpre:
-                        ffmode = f"Mode of Trans.: {eachpre["Mode of Transportation"]}"
+                        ffmode = f"Mode of Trans.: {eachpre['Mode of Transportation']}"
                     # Expected Arrival Date
                     if "Expected Arrival Date (CST)" in eachpre:
                         timestr = eachpre["Expected Arrival Date (CST)"]
@@ -606,7 +607,7 @@ def register_callbacks(app):
                         exdate = f"Expected Arrival Date: {shortertime}"
                     # Acknowledged by who?
                     if "FD Logistics team acknowledgment (name)" in eachpre:
-                        ack_name = f"Acknowledged by who?: {eachpre["FD Logistics team acknowledgment (name)"]}"
+                        ack_name = f"Acknowledged by who?: {eachpre['FD Logistics team acknowledgment (name)']}"
                     # Acknowledged when?
                     if "FD Logistics team acknowledgment (date in CST)" in eachpre:
                         timestr = eachpre["FD Logistics team acknowledgment (date in CST)"]
@@ -621,7 +622,7 @@ def register_callbacks(app):
                         if eachpre["Visual Inspection (YES = no damage)"] == "YES":
                             visinspec = f"Acknowledged by who?: Looks fine"
                         else:
-                            visinspec = f"Acknowledged by who?: {eachpre["Visual Inspection Damage"]}"
+                            visinspec = f"Acknowledged by who?: {eachpre['Visual Inspection Damage']}"
                     # Shipping Label ID
                     if "Image ID for this Shipping Sheet" in eachpre:
                         labelID = eachpre["Image ID for this Shipping Sheet"] or ""
@@ -718,7 +719,7 @@ def register_callbacks(app):
                             appcolor = "#b0b0b0"  # default gray
                     # Final approved by who?
                     if "FD Logistics team final approval (name)" in eachshi:
-                        finappn = f"Final approved by who?: {eachshi["FD Logistics team final approval (name)"]}"
+                        finappn = f"Final approved by who?: {eachshi['FD Logistics team final approval (name)']}"
                     # Final approved when?
                     if "FD Logistics team final approval (date in CST)" in eachshi:
                         timestr = eachshi["FD Logistics team final approval (date in CST)"]
@@ -759,10 +760,10 @@ def register_callbacks(app):
                         
                     # SKU
                     if "SKU" in eachwh:
-                        sku = f"SKU: {eachwh["SKU"]}"
+                        sku = f"SKU: {eachwh['SKU']}"
                     # PalletID
                     if "PalletID" in eachwh:
-                        pallet = f"PalletID: {eachwh["PalletID"]}"
+                        pallet = f"PalletID: {eachwh['PalletID']}"
                     # Scanned date/time
                     if "Scanned date/time" in eachwh:
                         timestr = eachwh["Scanned date/time"]
@@ -774,10 +775,10 @@ def register_callbacks(app):
                         scanned = f"Scanned date/time: {shortertime}"
                     # Person received
                     if "Person received" in eachwh:
-                        whreceiv = f"Person received: {eachwh["Person received"]}"
+                        whreceiv = f"Person received: {eachwh['Person received']}"
                     # Visual inspection
                     if "Visual inspection" in eachwh:
-                        whvisual = f"Visual inspection: {eachwh["Visual inspection"]}"
+                        whvisual = f"Visual inspection: {eachwh['Visual inspection']}"
 
                             
                         
@@ -932,3 +933,105 @@ def register_callbacks(app):
         return base_styles
     
  
+
+
+    @app.callback(
+        Output("launch-shipping-workflow", "style"),
+        Output("launch-shipping-workflow", "disabled"),
+        Output("launch-shipping-help", "children"),
+        Input("shipment-mode", "value"),
+        Input("shipment-table", "selected_rows"),
+        State("shipment-table", "data"),
+        prevent_initial_call=False,
+    )
+    def update_ship_receive_launcher(is_ship_receive, selected_rows, table_data):
+        hidden_style = {
+            "display": "none",
+            "fontSize": "18px",
+            "padding": "12px 24px",
+            "backgroundColor": "#6c757d",
+            "color": "white",
+            "border": "none",
+            "borderRadius": "8px",
+            "cursor": "not-allowed",
+            "transition": "all 0.2s ease-in-out",
+        }
+
+        if not is_ship_receive:
+            return hidden_style, True, ""
+
+        base_style = {
+            "display": "inline-block",
+            "fontSize": "18px",
+            "padding": "12px 24px",
+            "color": "white",
+            "border": "none",
+            "borderRadius": "8px",
+            "transition": "all 0.2s ease-in-out",
+        }
+
+        if not selected_rows or not table_data:
+            style = dict(base_style)
+            style.update({
+                "backgroundColor": "#6c757d",
+                "cursor": "not-allowed",
+            })
+            return style, True, "Ship/Receive mode: select one shipping box, then open the workflow window."
+
+        idx = selected_rows[0]
+        if idx >= len(table_data):
+            raise PreventUpdate
+
+        pid = table_data[idx].get("box_pid", "")
+        style = dict(base_style)
+        style.update({
+            "backgroundColor": "#0d6efd",
+            "cursor": "pointer",
+        })
+        return style, False, f"Ship/Receive mode: selected box {pid}. Click to open the workflow window."
+
+
+    @app.callback(
+        Output("launch-workflow-request", "data"),
+        Input("launch-shipping-workflow", "n_clicks"),
+        State("shipment-mode", "value"),
+        State("shipment-table", "selected_rows"),
+        State("shipment-table", "data"),
+        prevent_initial_call=True,
+    )
+    def request_shipping_workflow_launch(n_clicks, is_ship_receive, selected_rows, table_data):
+        if not n_clicks or not is_ship_receive:
+            raise PreventUpdate
+
+        if not selected_rows or not table_data:
+            raise PreventUpdate
+
+        idx = selected_rows[0]
+        if idx >= len(table_data):
+            raise PreventUpdate
+
+        pid = table_data[idx].get("box_pid", "")
+        if not pid:
+            raise PreventUpdate
+
+        return {
+            "url": f"/shipping-workflow?pid={pid}",
+            "pid": pid,
+            "ts": time.time(),
+        }
+
+
+    app.clientside_callback(
+        """
+        function(payload) {
+            if (!payload || !payload.url) {
+                return window.dash_clientside.no_update;
+            }
+            window.open(payload.url, "_blank", "noopener,noreferrer");
+            return payload;
+        }
+        """,
+        Output("launch-workflow-opened", "data"),
+        Input("launch-workflow-request", "data"),
+        prevent_initial_call=True,
+    )
