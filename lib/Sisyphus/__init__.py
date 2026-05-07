@@ -10,7 +10,7 @@ from pathlib import Path
 import os, sys
 
 #version = 'v1.3.0.rel.2025.07.21a'
-version = 'v1.7.5.rel.2026.03.13b'
+version = 'v1.8.1.rel.2026.05.06a'
 
 
 project_root = os.path.realpath(os.path.join(os.path.dirname(__file__), "../.."))

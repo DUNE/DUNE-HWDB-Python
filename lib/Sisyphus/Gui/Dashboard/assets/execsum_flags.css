@@ -1,0 +1,46 @@
+.execsum-flag-card{
+  border-radius: 18px;
+  padding: 14px 16px;
+  border: 2px solid rgba(0,0,0,0.08);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+
+.execsum-flag-subtitle{
+  font-weight: 800;
+  font-size: 16px;
+  color: rgba(0,0,0,0.75);
+  margin-bottom: 10px;
+}
+
+/* PASS / FAIL background */
+.execsum-pass{
+  background: rgba(25, 180, 120, 0.18);
+  border-color: rgba(25, 180, 120, 0.35);
+}
+.execsum-fail{
+  background: rgba(220, 60, 60, 0.16);
+  border-color: rgba(220, 60, 60, 0.35);
+}
+
+/* Make the switch bigger */
+.execsum-flag-switch .form-check-input{
+  width: 64px;
+  height: 34px;
+  cursor: pointer;
+}
+.execsum-flag-switch .form-check-input:checked{
+  background-color: #19b478;
+  border-color: #19b478;
+}
+.execsum-flag-switch .form-check-input:not(:checked){
+  background-color: #dc3c3c;
+  border-color: #dc3c3c;
+}
+
+/* Bigger label text (PASS/FAIL) */
+.execsum-flag-switch .form-check-label{
+  font-size: 18px;
+  font-weight: 900;
+  margin-left: 12px;
+  letter-spacing: 0.5px;
+}

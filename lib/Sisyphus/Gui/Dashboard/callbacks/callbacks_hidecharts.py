@@ -17,7 +17,8 @@ def register_callbacks(app):
     )
     def toggle_controls(chart_type):
         return (
-            {"display":"block"} if chart_type=="scatter" else {"display":"none"},
+            #{"display":"block"} if chart_type=="scatter" else {"display":"none"},
+            {"display":"block"} if chart_type in ("scatter", "hist2d") else {"display":"none"},
             {
                 "width": "160px",         # make it wider
                 "height": "20px",         # make it taller
@@ -31,9 +32,12 @@ def register_callbacks(app):
                 "marginLeft": "5px",
                 "textAlign": "center",
                 "marginLeft": "10px",
-            } if (chart_type=="histogram" or chart_type=="cumhist") else {"display":"none"},
-            {"display":"none"} if chart_type=="scatter" else {"display":"block"},
-            {"display":"none"} if chart_type=="scatter"
+            #} if (chart_type=="histogram" or chart_type=="cumhist") else {"display":"none"},
+            } if chart_type in ("histogram", "cumhist", "hist2d") else {"display":"none"},
+            {"display":"none"} if chart_type in ("scatter", "hist2d") else {"display":"block"},
+            {"display":"none"} if chart_type in ("scatter", "hist2d")
+            #{"display":"none"} if chart_type=="scatter" else {"display":"block"},
+            #{"display":"none"} if chart_type=="scatter"
                                else {
                                    "fontSize": "20px",            # Larger text
                                    "padding": "4px 32px",        # Larger button size

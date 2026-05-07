@@ -206,16 +206,16 @@ def register_typegetter_callbacks(app):
             sel.get("system") and sel.get("system_name") and \
             sel.get("subsystem") and sel.get("subsystem_name") and \
             sel.get("type") and sel.get("type_name"):
-            mystring=f"Selected: {sel.get("project_name")} ({ sel.get("project")}) → {sel.get("system_name")} ({sel.get("system")}) → {sel.get("subsystem_name")} ({sel.get("subsystem")}) → {sel.get("type_name")} ({sel.get("type")})"
+            mystring=f"Selected: {sel.get('project_name')} ({ sel.get('project')}) → {sel.get('system_name')} ({sel.get('system')}) → {sel.get('subsystem_name')} ({sel.get('subsystem')}) → {sel.get('type_name')} ({sel.get('type')})"
         elif sel.get("project") and sel.get("project_name") and \
             sel.get("system") and sel.get("system_name") and \
             sel.get("subsystem") and sel.get("subsystem_name"):
-            mystring=f"Selected: {sel.get("project_name")} ({ sel.get("project")}) → {sel.get("system_name")} ({sel.get("system")}) → {sel.get("subsystem_name")} ({sel.get("subsystem")})"
+            mystring=f"Selected: {sel.get('project_name')} ({ sel.get('project')}) → {sel.get('system_name')} ({sel.get('system')}) → {sel.get('subsystem_name')} ({sel.get('subsystem')})"
         elif sel.get("project") and sel.get("project_name") and \
             sel.get("system") and sel.get("system_name"):
-            mystring=f"Selected: {sel.get("project_name")} ({ sel.get("project")}) → {sel.get("system_name")} ({sel.get("system")})"
+            mystring=f"Selected: {sel.get('project_name')} ({ sel.get('project')}) → {sel.get('system_name')} ({sel.get('system')})"
         elif sel.get("project") and sel.get("project_name"):
-            mystring=f"Selected: {sel.get("project_name")} ({ sel.get("project")})"
+            mystring=f"Selected: {sel.get('project_name')} ({ sel.get('project')})"
         else:
             mystring="Selected: "
 

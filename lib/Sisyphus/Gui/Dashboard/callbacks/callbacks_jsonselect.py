@@ -7,7 +7,7 @@ from tkinter import filedialog
 
 # Import your Sisyphus config to locate preferences file
 from Sisyphus.Configuration import config
-from ..utils.data_utils import load_data, GETTestLog
+from Sisyphus.Gui.Dashboard.utils.data_utils import load_data, GETTestLog
 
 logger = config.getLogger(__name__)
 

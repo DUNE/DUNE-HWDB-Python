@@ -5,10 +5,11 @@ import dash_bootstrap_components as dbc
 from Sisyphus.Configuration import config
 logger = config.getLogger(__name__)
 
-from Sisyphus.Gui.Dashboard.layout.layout_typegetter import typegetter_layout
-from Sisyphus.Gui.Dashboard.layout.layout_plots      import plots_layout
-from Sisyphus.Gui.Dashboard.layout.layout_shipment   import shipment_layout
-from Sisyphus.Gui.Dashboard.layout.layout_downloader import downloader_layout
+from Sisyphus.Gui.Dashboard.layout.layout_typegetter        import typegetter_layout
+from Sisyphus.Gui.Dashboard.layout.layout_plots             import plots_layout
+from Sisyphus.Gui.Dashboard.layout.layout_shipment          import shipment_layout
+from Sisyphus.Gui.Dashboard.layout.layout_downloader        import downloader_layout
+from Sisyphus.Gui.Dashboard.layout.layout_executive_summary import execsum_layout
 
 # =========================
 # Preferences
@@ -237,6 +238,7 @@ layout = html.Div([
                     dcc.Tab(label="Plots", value="plot-tab", className="custom-tab"),
                     dcc.Tab(label="Shipment Tracker", value="shipment-tab", className="custom-tab"),
                     dcc.Tab(label="Binary/Test Downloader", value="down-tab", className="custom-tab"),
+                    dcc.Tab(label="Executive Summary", value="execsum-tab", className="custom-tab"),
                 ],
             ),
         ],
@@ -254,7 +256,8 @@ layout = html.Div([
     ),
 
     # Spacer so page content starts *below* fixed header
-    html.Div(style={"height": "230px"}),   # adjust if header height changes
+    #html.Div(style={"height": "230px"}),   # adjust if header height changes
+    html.Div(id="header-spacer", style={"height": "230px"}),
 
 
     # --------------- Tabs content ----------------
@@ -278,6 +281,11 @@ layout = html.Div([
     html.Div(
         id="down-tab-content",
         children=[downloader_layout()],
+        style={"display": "none"},  # hidden initially; switch_tabs() will show it
+    ),
+    html.Div(
+        id="execsum-tab-content",
+        children=[execsum_layout()],
         style={"display": "none"},  # hidden initially; switch_tabs() will show it
     ),
 
@@ -327,6 +335,7 @@ def register_layout_callbacks(app):
             Output("plot-tab-content", "style"),
             Output("shipment-tab-content", "style"),
             Output("down-tab-content", "style"),
+            Output("execsum-tab-content", "style"),
         ],
         Input("tabs", "value"),
     )
@@ -336,6 +345,7 @@ def register_layout_callbacks(app):
             "plot-tab": "plot-tab-content",
             "shipment-tab": "shipment-tab-content",
             "down-tab": "down-tab-content",
+            "execsum-tab": "execsum-tab-content",
         }
         return tuple(
             {"display": "block"} if tab == active_tab else {"display": "none"}
