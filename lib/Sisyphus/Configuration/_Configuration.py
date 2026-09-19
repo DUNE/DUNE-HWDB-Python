@@ -23,7 +23,11 @@ import argparse
 import subprocess
 import tempfile
 import re
-import OpenSSL
+#import OpenSSL
+try:
+    import OpenSSL  # pyOpenSSL
+except Exception:
+    OpenSSL = None
 import requests
 from datetime import datetime
 from copy import deepcopy
