@@ -45,6 +45,12 @@ class SelectPID(zw.PageWidget):
         self.find_button.setStyleSheet(zw.STYLE_SMALL_BUTTON)
         self.find_button.clicked.connect(self.lookup_pid)
         
+
+        #msg = "This is NOT going to be shipped to SURF"
+        #self.confirm_surf_checkbox = zw.ZCheckBox(owner=self, text=msg, key="confirm_surf")
+        
+
+
         self._setup_UI()
 
         #}}}
@@ -99,6 +105,21 @@ class SelectPID(zw.PageWidget):
         main_layout.addSpacing(10)
         ############
 
+        #main_layout.addWidget(qtw.QLabel("Please affirm the following:"))
+        
+        #affirm_layout = qtw.QHBoxLayout()
+        #affirm_layout.addSpacing(10)
+
+        #indented_layout = qtw.QVBoxLayout()
+        #indented_layout.addWidget(self.confirm_surf_checkbox)
+        #indented_widget = qtw.QWidget()
+        #indented_widget.setLayout(indented_layout)
+        #affirm_layout.addWidget(indented_widget)
+        #affirm_widget = qtw.QWidget()
+        #affirm_widget.setLayout(affirm_layout)
+        #main_layout.addWidget(affirm_widget)
+
+        ############
 
         main_layout.addStretch()
         #self.nav_bar = NavBar(self.workflow)

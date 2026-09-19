@@ -27,119 +27,254 @@ class Test__get_component_type(unittest.TestCase):
     
     def setUp(self):
         self.start_time = time.time()
-        print(f"\nTest #{getattr(self, 'test_number', 'N/A')}: {self.__class__.__name__}.{self._testMethodName}")
-        print(f"Test started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        #print(f"\nTest #{getattr(self, 'test_number', 'N/A')}: {self.__class__.__name__}.{self._testMethodName}")
+        #print(f"Test started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
     def tearDown(self):
         end_time = time.time()
         duration = end_time - self.start_time
-        print(f"Test ended at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"Test duration: {duration:.2f} seconds")
+        #print(f"Test ended at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        #print(f"Test duration: {duration:.2f} seconds")
+
+    #----------------------------------------------------------------------------- 
 
     def test_get_component_type(self):
         """Get component type"""
-        print("\n=== Testing to get a component type ===")
-        print("GET /api/v1/component-types/{part_type_id}")
+        #print("\n=== Testing to get a component type ===")
+        #print("GET /api/v1/component-types/{part_type_id}")
         
         part_type_id = 'Z00100300001'
-        print(f"Retrieving component type for part_type_id: {part_type_id}")
+        #print(f"Retrieving component type for part_type_id: {part_type_id}")
         
-        resp = get_component_type(part_type_id)
-        self.logger.info(f"server response:\n{json.dumps(resp, indent=4)}")
+        self.test_info["endpoint"] = f"GET : /component-types/{part_type_id}"
+        self.test_info["description"] = "Get a component type"
+        self.test_info["check"] = "if status=OK and see \"Subcomp 1\" is indeed Z00100300002"
 
-        self.assertEqual(resp['status'], "OK")
-        self.assertEqual(resp['data']['connectors']['Subcomp 1'], 'Z00100300002')
+        try:
+            resp = get_component_type(part_type_id)
+            self.logger.info(f"server response:\n{json.dumps(resp, indent=4)}")
+            self.assertEqual(resp['status'], "OK")
+            self.assertEqual(resp['data']['connectors']['Subcomp 1'], 'Z00100300002')
+        except Exception as e:
+            # Try to get raw server response if available
+            api_resp = getattr(e, "response", None)
+
+            if api_resp is not None:
+                # If the API wrapper supports .json(), use it
+                try:
+                    self.test_info["error"] = json.dumps(api_resp.json(), indent=4)
+                except Exception:
+                    # Fallback: raw string body
+                    self.test_info["error"] = api_resp.text
+            else:
+                # Nothing from server, probably client-side issue
+                self.test_info["error"] = str(e)
+
+            # Preserve traceback for summary
+            logger.error(f"Exception: {repr(e)}")
+            raise
  
     #-----------------------------------------------------------------------------    
 
     def test_get_hwitems(self):
         """Get a list of items"""
-        print("\n=== Testing to get a list of items ===")
-        print("GET /api/v1/component-types/{part_type_id}/components")
+        #print("\n=== Testing to get a list of items ===")
+        #print("GET /api/v1/component-types/{part_type_id}/components")
 
         part_type_id = 'Z00100110001'
         page, size = 1, 20
-        print(f"Retrieving items for part_type_id: {part_type_id}, page: {page}, size: {size}")
+        #print(f"Retrieving items for part_type_id: {part_type_id}, page: {page}, size: {size}")
 
-        resp = get_hwitems(part_type_id, page=page, size=size)            
-        self.logger.info(f"server response:\n{json.dumps(resp, indent=4)}")
-        
-        self.assertEqual(resp['status'], "OK")
-        self.assertIsInstance(resp['data'][0]['component_id'], int)
-        self.assertIsInstance(resp['data'][0]['creator']['id'], int)
+        self.test_info["endpoint"] = f"GET : /component-types/{part_type_id}/components"
+        self.test_info["description"] = "Get a list of items for a given component type"
+        self.test_info["check"] = "if status=OK and see if the first item has \"component id\" and \"creator id\" defined"
+
+        try:
+            resp = get_hwitems(part_type_id, page=page, size=size)            
+            self.logger.info(f"server response:\n{json.dumps(resp, indent=4)}")
+            self.assertEqual(resp['status'], "OK")
+            self.assertIsInstance(resp['data'][0]['component_id'], int)
+            self.assertIsInstance(resp['data'][0]['creator']['id'], int)
+        except Exception as e:
+            # Try to get raw server response if available
+            api_resp = getattr(e, "response", None)
+
+            if api_resp is not None:
+                # If the API wrapper supports .json(), use it
+                try:
+                    self.test_info["error"] = json.dumps(api_resp.json(), indent=4)
+                except Exception:
+                    # Fallback: raw string body
+                    self.test_info["error"] = api_resp.text
+            else:
+                # Nothing from server, probably client-side issue
+                self.test_info["error"] = str(e)
+
+            # Preserve traceback for summary
+            logger.error(f"Exception: {repr(e)}")
+            raise
 
     #-----------------------------------------------------------------------------    
     
     def test_component_type_connectors(self):
         """Get subcomponents for component type"""
-        print("\n=== Testing to get subcomponents for component type ===")
-        print("GET /api/v1/component-types/{part_type_id}/connectors")
+        #print("\n=== Testing to get subcomponents for component type ===")
+        #print("GET /api/v1/component-types/{part_type_id}/connectors")
 
         part_type_id = 'Z00100300001' 
-        print(f"Retrieving connectors for part_type_id: {part_type_id}")
+
+        #print(f"Retrieving connectors for part_type_id: {part_type_id}")
         
-        resp = get_component_type_connectors(part_type_id)
-        self.logger.info(f"server response:\n{json.dumps(resp, indent=4)}")
-        
-        self.assertEqual(resp['status'], "OK")
-        self.assertEqual(resp['data']['Subcomp 1'], 'Z00100300002')
+        self.test_info["endpoint"] = f"GET : /component-types/{part_type_id}/connectors"
+        self.test_info["description"] = "Get subcomponents for a gievn component type"
+        self.test_info["check"] = "if status=OK and see \"Subcomp 1\" is indeed Z00100300002"
+
+        try:
+            resp = get_component_type_connectors(part_type_id)
+            self.logger.info(f"server response:\n{json.dumps(resp, indent=4)}")
+            self.assertEqual(resp['status'], "OK")
+            self.assertEqual(resp['data']['Subcomp 1'], 'Z00100300002')
+        except Exception as e:
+            # Try to get raw server response if available
+            api_resp = getattr(e, "response", None)
+
+            if api_resp is not None:
+                # If the API wrapper supports .json(), use it
+                try:
+                    self.test_info["error"] = json.dumps(api_resp.json(), indent=4)
+                except Exception:
+                    # Fallback: raw string body
+                    self.test_info["error"] = api_resp.text
+            else:
+                # Nothing from server, probably client-side issue
+                self.test_info["error"] = str(e)
+
+            # Preserve traceback for summary
+            logger.error(f"Exception: {repr(e)}")
+            raise
 
     #-----------------------------------------------------------------------------    
     
     def test_component_type_specifications(self):
         """Get specification definition for component type"""
-        print("\n=== Testing to get specification definition for component type ===")
-        print("GET /api/v1/component-types/{part_type_id}/specifications")
+        #print("\n=== Testing to get specification definition for component type ===")
+        #print("GET /api/v1/component-types/{part_type_id}/specifications")
     
         part_type_id = 'Z00100300001'
-        print(f"Retrieving specifications for part_type_id: {part_type_id}")
+        #print(f"Retrieving specifications for part_type_id: {part_type_id}")
         
-        resp = get_component_type_specifications(part_type_id)
-        self.logger.info(f"server response:\n{json.dumps(resp, indent=4)}")
-        
-        self.assertEqual(resp['status'], "OK")
-        self.assertEqual(resp['data'][0]['creator'], "Alex Wagner")
-        self.assertEqual(resp['data'][0]['datasheet']['Widget ID'], None)
+        self.test_info["endpoint"] = f"GET : /component-types/{part_type_id}/specifications"
+        self.test_info["description"] = "Get Item Specs definition of a component type"
+        self.test_info["check"] = "if status=OK and see \"creator\" is Alex Wagner and \"Widget ID\" is None"
+
+        try:
+            resp = get_component_type_specifications(part_type_id)
+            self.logger.info(f"server response:\n{json.dumps(resp, indent=4)}")
+            self.assertEqual(resp['status'], "OK")
+            self.assertEqual(resp['data'][0]['creator'], "Alex Wagner")
+            self.assertEqual(resp['data'][0]['datasheet']['Widget ID'], None)
+        except Exception as e:
+            # Try to get raw server response if available
+            api_resp = getattr(e, "response", None)
+
+            if api_resp is not None:
+                # If the API wrapper supports .json(), use it
+                try:
+                    self.test_info["error"] = json.dumps(api_resp.json(), indent=4)
+                except Exception:
+                    # Fallback: raw string body
+                    self.test_info["error"] = api_resp.text
+            else:
+                # Nothing from server, probably client-side issue
+                self.test_info["error"] = str(e)
+
+            # Preserve traceback for summary
+            logger.error(f"Exception: {repr(e)}")
+            raise
 
     #-----------------------------------------------------------------------------    
     
     def test_component_types_by_proj_sys(self):
         """Get a list of component types by project and system"""  
-        print("\n=== Testing to get a list of component types by project and system ===")  
-        print("GET /api/v1/component-types/{project_id}/{system_id}")
+        #print("\n=== Testing to get a list of component types by project and system ===")  
+        #print("GET /api/v1/component-types/{project_id}/{system_id}")
     
         proj_id = 'Z'
         sys_id = 1
         page, size = 1, 100
-        print(f"Retrieving component types for project: {proj_id}, system: {sys_id}, page: {page}, size: {size}")
+        #print(f"Retrieving component types for project: {proj_id}, system: {sys_id}, page: {page}, size: {size}")
 
-        resp = get_component_types(proj_id, sys_id, page=page, size=size)
-        self.logger.info(f"server response:\n{json.dumps(resp, indent=4)}")
+        self.test_info["endpoint"] = f"GET : /component-types/{proj_id}/{sys_id}"
+        self.test_info["description"] = "Get a list of component types under Project=Z and System ID = 1 w/ page=1, size=100"
+        self.test_info["check"] = "if status=OK and see if the first type has \"category\" and \"creator id\" defined"
 
-        self.assertEqual(resp['status'], "OK")
-        self.assertIsInstance(resp['data'][0]['category'], str)
-        self.assertIsInstance(resp['data'][0]['creator']['id'], int)
+        try:
+            resp = get_component_types(proj_id, sys_id, page=page, size=size)
+            self.logger.info(f"server response:\n{json.dumps(resp, indent=4)}")
+            self.assertEqual(resp['status'], "OK")
+            self.assertIsInstance(resp['data'][0]['category'], str)
+            self.assertIsInstance(resp['data'][0]['creator']['id'], int)
+        except Exception as e:
+            # Try to get raw server response if available
+            api_resp = getattr(e, "response", None)
+
+            if api_resp is not None:
+                # If the API wrapper supports .json(), use it
+                try:
+                    self.test_info["error"] = json.dumps(api_resp.json(), indent=4)
+                except Exception:
+                    # Fallback: raw string body
+                    self.test_info["error"] = api_resp.text
+            else:
+                # Nothing from server, probably client-side issue
+                self.test_info["error"] = str(e)
+
+            # Preserve traceback for summary
+            logger.error(f"Exception: {repr(e)}")
+            raise
 
     #-----------------------------------------------------------------------------    
     
     def test_component_types_by_proj_sys_subsys(self):
         """Get a list of component types by project, system, and subsystem"""
-        print("\n=== Testing to get a list of component types by project, system, and subsystem ===")
-        print("GET /api/v1/component-types/{project_id}/{system_id}/{subsystem_id}")
+        #print("\n=== Testing to get a list of component types by project, system, and subsystem ===")
+        #print("GET /api/v1/component-types/{project_id}/{system_id}/{subsystem_id}")
             
         proj_id = 'Z'
         sys_id = 1
         subsys_id = 1
         page, size = 1, 100
-        print(f"Retrieving component types for project: {proj_id}, system: {sys_id}, subsystem: {subsys_id}, page: {page}, size: {size}")
+        #print(f"Retrieving component types for project: {proj_id}, system: {sys_id}, subsystem: {subsys_id}, page: {page}, size: {size}")
 
-        resp = get_component_types(proj_id, sys_id, subsys_id, page=page, size=size)
-        self.logger.info(f"server response:\n{json.dumps(resp, indent=4)}")
+        self.test_info["endpoint"] = f"GET : /component-types/{proj_id}/{sys_id}/{subsys_id}"
+        self.test_info["description"] = "Get a list of component types under Project=Z, System ID = 1, and Subsystem ID = 1 w/ page=1, size=100"
+        self.test_info["check"] = "if status=OK and see if the first type has \"category\" and \"creator id\" defined"
 
-        self.assertEqual(resp['status'], "OK")
-        self.assertIsInstance(resp['data'][0]['category'], str)
-        self.assertIsInstance(resp['data'][0]['creator']['id'], int)
+        try:
+            resp = get_component_types(proj_id, sys_id, subsys_id, page=page, size=size)
+            self.logger.info(f"server response:\n{json.dumps(resp, indent=4)}")
+            self.assertEqual(resp['status'], "OK")
+            self.assertIsInstance(resp['data'][0]['category'], str)
+            self.assertIsInstance(resp['data'][0]['creator']['id'], int)
+        except Exception as e:
+            # Try to get raw server response if available
+            api_resp = getattr(e, "response", None)
 
+            if api_resp is not None:
+                # If the API wrapper supports .json(), use it
+                try:
+                    self.test_info["error"] = json.dumps(api_resp.json(), indent=4)
+                except Exception:
+                    # Fallback: raw string body
+                    self.test_info["error"] = api_resp.text
+            else:
+                # Nothing from server, probably client-side issue
+                self.test_info["error"] = str(e)
+
+            # Preserve traceback for summary
+            logger.error(f"Exception: {repr(e)}")
+            raise
+        
 #=================================================================================
 
 if __name__ == "__main__":

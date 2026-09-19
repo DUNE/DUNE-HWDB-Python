@@ -134,12 +134,19 @@ default_schema_fields_by_record_type = \
         **default_universal_fields,
 
         # for record_type 'Test' or 'Test Image':
-        "Test Name": {KW_TYPE:"null,string", KW_COLUMN:"Comments", KW_DEFAULT:None},
+        "Test Name": {KW_TYPE:"null,string", KW_COLUMN:"Test Name", KW_DEFAULT:None},
 
-        # for record_type 'Item Image" or 'Test Image':
-        "Comments": {KW_TYPE:"string", KW_COLUMN:"Comments", KW_DEFAULT:""},
-        "Image File": {KW_TYPE:"null,string", KW_COLUMN:"File", KW_DEFAULT:None},
-        "Save As": {KW_TYPE:"null,string", KW_COLUMN:"Save As", KW_DEFAULT:None},
+        # allow multiple image rows per PID/test
+        "Images": {
+            KW_TYPE: "group",
+            KW_KEY: ["Image File", "Save As", "Comments", "History Order"],
+            KW_MEMBERS: {
+                "Comments": {KW_TYPE:"string", KW_COLUMN:"Comments", KW_DEFAULT:""},
+                "Image File": {KW_TYPE:"null,string", KW_COLUMN:"Image File", KW_DEFAULT:None},
+                "Save As": {KW_TYPE:"null,string", KW_COLUMN:"Save As", KW_DEFAULT:None},
+                "History Order": {KW_TYPE:"null,integer", KW_COLUMN:"History Order", KW_DEFAULT:0},
+            }
+        }
     }
 }
 #}}}

@@ -195,42 +195,91 @@ class Sheet:
         sheetname = self.sheetname
 
 
+        logger.debug(
+            "Reading sheet: filename=%r filetype=%r sheetname=%r "
+            "exists=%s readable=%s size=%s pandas=%s",
+            filename,
+            filetype,
+            sheetname,
+            os.path.isfile(filename),
+            os.access(filename, os.R_OK),
+            os.path.getsize(filename) if os.path.isfile(filename) else None,
+            pd.__version__,
+        )
         # make read_excel and read_csv look the same, so we don't
         # have to keep handling each case differently.
+        #if filetype == DKT_EXCEL:
+        #    #print("SETTING EXCEL READ")
+        #    def read_sheet(**kwargs):
+        #        #print("READING EXCEL")
+        #        try:
+        #            return pd.read_excel(
+        #                        filename,
+        #                        sheetname,
+        #                        keep_default_na=False,
+        #                        **kwargs)
+        #        except ValueError as err:
+        #            msg = f"Could not load sheet '{sheetname}' from '{filename}'"
+        #            logger.error(msg)
+        #            logger.info(err)
+        #            raise ValueError(msg)
+        #
+        # Make the error output more obvious!
         if filetype == DKT_EXCEL:
-            #print("SETTING EXCEL READ")
             def read_sheet(**kwargs):
-                #print("READING EXCEL")
                 try:
                     return pd.read_excel(
-                                filename,
-                                sheetname,
-                                keep_default_na=False,
-                                **kwargs)
-                except ValueError as err:
+                        filename,
+                        sheet_name=sheetname,
+                        keep_default_na=False,
+                        **kwargs)
+                except Exception as err:
                     msg = f"Could not load sheet '{sheetname}' from '{filename}'"
-                    logger.error(msg)
-                    logger.info(err)
-                    raise ValueError(msg)
+                    logger.exception(
+                        "%s | original exception: %s: %s",
+                        msg,
+                        type(err).__name__,
+                        err,
+                    )
+                    raise ValueError(msg) from err
+        #elif filetype == DKT_CSV:
+        #    #print("SETTING CSV READ")
+        #    def read_sheet(**kwargs):
+        #        #print("READING CSV")
+        #        try:
+        #            return pd.read_csv(
+        #                        filename,
+        #                        keep_default_na=False,
+        #                        skip_blank_lines=False,
+        #                        **kwargs)
+        #        except ValueError as err2:
+        #            msg = f"Could not load '{filename}'"
+        #            logger.error(msg)
+        #            logger.info(f"err")
+        #            raise ValueError(msg)
+        #
+        # Make the error output more obvious!
         elif filetype == DKT_CSV:
-            #print("SETTING CSV READ")
             def read_sheet(**kwargs):
-                #print("READING CSV")
                 try:
                     return pd.read_csv(
-                                filename,
-                                keep_default_na=False,
-                                skip_blank_lines=False,
-                                **kwargs)
-                except ValueError as err2:
+                        filename,
+                        keep_default_na=False,
+                        skip_blank_lines=False,
+                        **kwargs)
+                except Exception as err:
                     msg = f"Could not load '{filename}'"
-                    logger.error(msg)
-                    logger.info(f"err")
-                    raise ValueError(msg)
+                    logger.exception(
+                        "%s | original exception: %s: %s",
+                        msg,
+                        type(err).__name__,
+                        err,
+                    )
+                    raise ValueError(msg) from err
         else:
             msg = f"Unknown File Type '{filetype}'"
             logger.error(msg)
-            logger.info(f"err")
+            #logger.info(f"err")
             raise ValueError(msg)
 
         # Read only the first two columns of the sheet, which we will analyze

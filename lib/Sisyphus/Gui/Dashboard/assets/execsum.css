@@ -1,0 +1,69 @@
+/*
+.ag-theme-alpine .ag-row.execsum-hide-leaf {
+  display: none !important;
+}
+.execsum-hide-leaf { display: none !important; }
+*/
+
+.ag-row.execsum-hide-leaf {
+  height: 0 !important;
+  min-height: 0 !important;
+  border: 0 !important;
+}
+.ag-row.execsum-hide-leaf .ag-cell {
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+
+
+/* Sticky header for AG Grid (the sub-component table) */
+.ag-theme-alpine .ag-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+/* Reduce the horizontal indent per group level */
+/*
+#execsum-subcomp-grid .ag-cell-wrapper {
+  padding-left: 0px !important;
+}
+*/
+
+/* This is the indent AG Grid adds per level */
+#execsum-subcomp-grid .ag-row-group-indent {
+  width: 10px !important;     /* default is bigger; try 10–14 */
+}
+
+/* Also reduce the space reserved for the expand/collapse icon */
+#execsum-subcomp-grid .ag-group-expanded,
+#execsum-subcomp-grid .ag-group-contracted {
+  margin-right: 4px !important;
+}
+
+/* Reduce indent per tree level (AG Grid v29+ uses this CSS variable) */
+#execsum-subcomp-grid {
+    --ag-row-group-indent-size: 8px;   /* try 8px, 10px, 12px */
+    --ag-group-indent-size: 8px;       /* fallback name for some versions */
+}
+
+/* Some versions also use a second variable name */
+#execsum-subcomp-grid {
+  --ag-group-indent-size: 10px;
+}.ag-theme-alpine
+
+/* Keep the icon spacing tighter */
+#execsum-subcomp-grid .ag-group-expanded,
+#execsum-subcomp-grid .ag-group-contracted {
+  margin-right: 4px !important;
+}
+
+/* Optional: reduce extra padding inside the group cell wrapper */
+/*
+#execsum-subcomp-grid .ag-cell-wrapper {
+  padding-left: 0 !important;
+}
+*/
+
+

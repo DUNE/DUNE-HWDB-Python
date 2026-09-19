@@ -4,7 +4,7 @@
 Sisyphus/RestApiV1/_RestApiV1.py
 Copyright (c) 2024 Regents of the University of Minnesota
 Author: 
-    Alex Wagner <wagn0033@umn.edu>, Dept. of Physics and Astronomy
+    Alex Wagner <wagn0033@umn.edu>,Dept. of Physics and Astronomy
     Urbas Ekka <ekka0002@umn.edu>, Dept. of Physics and Astronomy
 """
 
@@ -293,7 +293,27 @@ class retry:
 
 #-----------------------------------------------------------------------------
 
-DEFAULT_TIMEOUTS = (5, 10, 15, 30, 60)
+# Requests timeout format:
+#   timeout=<seconds> or timeout=(connect_timeout, read_timeout)
+#DEFAULT_TIMEOUTS = (5, 10, 15, 30, 60)
+DEFAULT_TIMEOUTS = (5, 5, 5, 5, 5)
+#DEFAULT_TIMEOUTS = (
+#    (5, 5),
+#    (5, 10),
+#    (5, 15),
+#    (5, 30),
+#    (5, 60),
+#)
+# Could also override heavy calls explicitly:
+#get_hwitems(
+#    type_id,
+#    size=100000,
+#    timeouts=[(5, 60), (5, 120), (5, 240)]
+#)
+# for quick UI status calls:
+#whoami(
+#    timeouts=[(3, 10), (3, 20)]
+#)
 
 @retry(timeouts=DEFAULT_TIMEOUTS)
 def _request(method, url, *args, return_type="json", **kwargs):
@@ -323,7 +343,20 @@ def _request(method, url, *args, return_type="json", **kwargs):
         logger.debug(msg)
 
     augmented_kwargs = {**profile.settings.get(cfg.KW_EXTRA_KWARGS, {}), **kwargs}
-        
+
+
+    # ------------------------------------------------------------
+    # Default timeout (respects caller override):
+    # - retry() may have already injected 'timeout' into kwargs
+    # - callers may pass timeout=... explicitly
+    # - otherwise use SessionManager's default (or fallback)
+    if "timeout" not in augmented_kwargs or augmented_kwargs.get("timeout") is None:
+        # Preferred: define SessionManager.default_timeout = (connect_s, read_s)
+        t = getattr(session_manager, "default_timeout", None)
+        augmented_kwargs["timeout"] = t if t is not None else (10, 60)
+    # ------------------------------------------------------------
+    
+
     extra_info = \
     [
         "Additional Information:",
@@ -634,10 +667,30 @@ def get_component_type_image_list(part_type_id, **kwargs):
 
 #-----------------------------------------------------------------------------
 
-def post_component_type_image(part_type_id, image_payload, **kwargs):
-    #{{{    
-    """Add an image to a Component Type"""
-    raise NotImplementedError("Coming soon!")
+def post_component_type_image(part_type_id, data, filename, **kwargs):
+    #{{{
+    """Add an image for a Component Type
+
+    To add a comment, you need to put it in 'data', e.g.,
+    data = {
+        "comments": "this is my comment"
+    }
+    """
+    
+    logger.debug(f"<{func_name()}> part_type_id={part_type_id}, filename={filename}")
+    profile = kwargs.get('profile', config.active_profile)
+    path = f"api/v1/component-types/{sanitize(part_type_id)}/images"
+    url = f"https://{profile.rest_api}/{path}"
+
+    with open(filename, 'rb') as fp:
+        files = {
+                **{key: (None, value) for key, value in data.items()},
+                "image": fp
+        }
+        resp = _request("post", url, 
+                json=data, files=files, 
+                **kwargs)
+    return resp
     #}}}
 
 #-----------------------------------------------------------------------------
@@ -658,13 +711,95 @@ def get_test_image_list(part_id, test_id, **kwargs):
 
 #-----------------------------------------------------------------------------
 
-def post_test_image(test_id, data, filename, **kwargs):
+#def post_test_image(test_id, data, filename, **kwargs):
+def post_test_image(part_id, test_type_name, data, filename, hist_order=0, **kwargs):
     #{{{
-    """Add an image to a given test oid
-    
-    The oid represents a test record for a test type for an item.
+    """Add an image to a given test history entry for an item.
+
+    Parameters
+    ----------
+    part_id : str
+        HW item PID, e.g. "Z00100200040-00001"
+
+    test_type_name : str
+        Test type name, e.g. "CPA_Parts_FR4_main QC check"
+
+    data : dict
+        Extra form fields to send along with the upload, e.g.
+            {
+                "comments": "this is my comment"
+            }
+
+    filename : str
+        Local path to the image/PDF file to upload.
+
+    hist_order : int, default=0
+        Which history entry to target:
+            0 -> latest
+            1 -> 2nd latest
+            2 -> 3rd latest
+            etc.
+
+    Notes
+    -----
+    This function first calls get_hwitem_test(..., history=True) to obtain
+    the list of historical test entries, then selects the desired entry by
+    hist_order and uploads the image to that specific test_id.
     """
-    raise NotImplementedError("Coming soon!")
+
+    logger.debug(
+        f"<{func_name()}> part_id={part_id}, test_type_name={test_type_name}, "
+        f"filename={filename}, hist_order={hist_order}"
+    )
+
+    if not isinstance(hist_order, int) or hist_order < 0:
+        raise ValueError("hist_order must be a non-negative integer")
+
+    profile = kwargs.get('profile', config.active_profile)
+
+    # Obtain the test history entries for this part_id / test_type_name
+    test_resp = get_hwitem_test(part_id, test_type_name, history=True, **kwargs)
+    test_history = test_resp.get("data", [])
+    
+    if not isinstance(test_history, list) or len(test_history) == 0:
+        raise ValueError(
+            f"No test history entries found for part_id='{part_id}', "
+            f"test_type_name='{test_type_name}'"
+        )
+
+    if hist_order >= len(test_history):
+        raise ValueError(
+            f"hist_order={hist_order} is out of range for "
+            f"{len(test_history)} test history entr{'y' if len(test_history)==1 else 'ies'} "
+            f"for part_id='{part_id}', test_type_name='{test_type_name}'"
+        )
+
+    selected_test = test_history[hist_order]
+    test_id = selected_test.get("id", None)
+
+    if test_id is None:
+        raise InvalidResponse(
+            f"Could not determine test_id for part_id='{part_id}', "
+            f"test_type_name='{test_type_name}', hist_order={hist_order}"
+        )
+
+    path = f"api/v1/component-tests/{sanitize(test_id)}/images"
+    url = f"https://{profile.rest_api}/{path}"
+
+    filename = os.path.expanduser(filename)
+    
+    with open(filename, 'rb') as fp:
+        files = {
+            **{key: (None, value) for key, value in data.items()},
+            "image": fp
+        }
+        resp = _request("post", url,
+            files=files,
+            **kwargs
+        )
+
+    return resp
+
     #}}}
 
 #-----------------------------------------------------------------------------
@@ -727,7 +862,7 @@ def get_hwitem_barcode(part_id, write_to_file=None, **kwargs):
 #
 ##############################################################################
 
-def get_hwitem(part_id, **kwargs):
+def get_hwitem(part_id, history=False, **kwargs):
     #{{{
     """Get an individual HW Item
 
@@ -775,25 +910,41 @@ def get_hwitem(part_id, **kwargs):
             "status": "OK"
         }
     """
-
-    logger.debug(f"<{func_name()}> part_id={part_id}")
+    logger.debug(f"<{func_name()}> part_id={part_id}, history={history}")
+    #logger.debug(f"<{func_name()}> part_id={part_id}")
     profile = kwargs.get('profile', config.active_profile)
     path = f"api/v1/components/{sanitize(part_id)}"
     url = f"https://{profile.rest_api}/{path}"
-    
-    resp = _get(url, **kwargs) 
+
+    params = []
+    if history:
+        params.append(("history", "y"))
+        
+    resp = _get(url, params=params, **kwargs) 
     return resp
     #}}}
 
 #-----------------------------------------------------------------------------
 
 def get_hwitems(part_type_id, *,
-                page=None, size=None, fields=None, serial_number=None, part_id=None, **kwargs):
+                page=None, size=None, fields=None, serial_number=None, part_id=None, comments=None,
+                manufacturer=None,creator=None,country_of_origin=None,resp_institution=None,
+                status=None,location=None,certified_qaqc=None,qaqc_uploaded=None,is_installed=None,**kwargs):
     #{{{
     logger.debug(f"<{func_name()}> part_type_id={part_type_id},"
                 f"page={page}, size={size}, fields={fields}, "
-                f"serial_number={serial_number}, part_id={part_id}")
+                f"serial_number={serial_number}, part_id={part_id}, comments={comments},"
+                f"manufacturer={manufacturer}, creator={creator},"
+                f"country_of_origin={country_of_origin}, resp_institution={resp_institution},"
+                f"status={status}, location={location}, certified_qaqc={certified_qaqc},"
+                f"qaqc_uploaded={qaqc_uploaded}, is_installed={is_installed}")
+    
     profile = kwargs.get('profile', config.active_profile)
+
+    #print(config.active_profile)
+    #print(config.active_profile.profile_name)
+    #print(config.active_profile.rest_api)
+    
     path = f"api/v1/component-types/{sanitize(part_type_id)}/components"
     url = f"https://{profile.rest_api}/{path}"
 
@@ -806,10 +957,32 @@ def get_hwitems(part_type_id, *,
         params.append(("serial_number", serial_number))
     if part_id is not None:
         params.append(("part_id", part_id))
+    if comments is not None:
+        params.append(("comments", comments))
     ## *** currently broken in REST API
     if fields is not None:
         params.append(("fields", ",".join(fields)))
 
+    # the followings have been newly added, as of Oct 15, 2025
+    if manufacturer is not None:
+        params.append(("manufacturer", manufacturer))
+    if creator is not None:
+        params.append(("creator", creator))
+    if country_of_origin is not None:
+        params.append(("country_of_origin", country_of_origin))
+    if resp_institution is not None:
+        params.append(("resp_institution", resp_institution))
+    if status is not None:
+        params.append(("status", status))
+    if location is not None:
+        params.append(("location", location))
+    if certified_qaqc is not None:
+        params.append(("certified_qaqc", certified_qaqc))
+    if qaqc_uploaded is not None:
+        params.append(("qaqc_uploaded", qaqc_uploaded))
+    if is_installed is not None:
+        params.append(("is_installed", is_installed))
+        
     resp = _get(url, params=params, **kwargs) 
     return resp
     #}}}
@@ -1685,6 +1858,30 @@ def get_role(role_id, **kwargs):
     url = f"https://{profile.rest_api}/{path}"
     
     resp = _get(url, **kwargs)
+    return resp 
+    #}}}
+
+#-----------------------------------------------------------------------------
+
+def patch_role(user_id, data, **kwargs):
+    #{{{
+    """ Patches a User Role(s) to a user account, specified by user_id
+    A user_id can be obtained by, e.g.; /users/whoami | jq .data.user_id
+    Be careful that user_id is different between the two versions of the HWDB!
+
+    Structure for "data":
+        {
+            "roles": [ 34, 36 ]
+        }
+
+    """
+
+    logger.debug(f"<{func_name()}> user_id={user_id}")
+    profile = kwargs.get('profile', config.active_profile)
+    path = f"api/v1/users/{sanitize(user_id)}"
+    url = f"https://{profile.rest_api}/{path}"
+    
+    resp = _patch(url, data=data, **kwargs)
     return resp 
     #}}}
 

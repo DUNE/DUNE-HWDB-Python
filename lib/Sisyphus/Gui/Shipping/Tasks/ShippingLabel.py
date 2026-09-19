@@ -14,6 +14,7 @@ import Sisyphus
 try:
     from reportlab.pdfgen import canvas
     from reportlab.lib import units
+    from reportlab.lib.utils import ImageReader
     _reportlab_available = True
 
 except ModuleNotFoundError:
@@ -22,6 +23,13 @@ import PIL.Image
 import io
 import base64
 import tempfile
+
+# needed to generate bar-code
+from reportlab.graphics.shapes import Drawing
+from reportlab.graphics import renderPDF
+from reportlab.graphics.barcode import code128
+from reportlab.graphics.barcode import createBarcodeDrawing
+
 
 ###############################################################################
 
@@ -163,6 +171,151 @@ class ShippingLabel:
         self.current_top -= image_height
         #}}}
 
+    #---------------------
+    def draw_codes_side_by_side(self):
+        """
+        Draw QR (left) and barcode (right) with labels under each; 
+        matches Swift UI style.
+        """
+        cvs = self.cvs
+
+        pid = self.workflow_state['part_info']['part_id']
+        test_type = self.workflow_state['part_info']['part_type_name']
+
+        dbver = ""
+        if config.config_data["active profile"] == "development":
+            dbver = "dev"
+        else:
+            dbver = "pro"
+
+        # Layout parameters
+        #qr_size = 2.5 * units.inch
+        #barcode_height = 0.75 * units.inch
+        #barcode_width = 3.75 * units.inch
+        #gap = 0.75 * units.inch
+
+        # ----- Layout tuning to match iPad -----
+        qr_size = 2.40 * units.inch       # slightly smaller QR
+        barcode_height = 0.55 * units.inch
+        barcode_width  = 3.20 * units.inch
+        horizontal_gap = 0.70 * units.inch
+        shift_x          = 0.70 * units.inch             # shift both QR + barcode rightward
+        barcode_offset_y = 0.45 * units.inch             # lower the barcode slightly
+
+        y_top = self.current_top
+
+        x_left  = self.left_margin + shift_x
+        x_right = x_left + qr_size + horizontal_gap
+
+
+        # ----- Load QR -----
+        qr_bytes = base64.b85decode(self.workflow_state['part_info']['qr_code'])
+        qr_img = PIL.Image.open(io.BytesIO(qr_bytes))
+        #qr_img = qr_img.resize((int(qr_size), int(qr_size)))
+        qr_img = qr_img.resize((int(qr_size), int(qr_size)), PIL.Image.NEAREST)
+        qr_reader = ImageReader(qr_img)
+
+        cvs.drawImage(qr_reader, x_left, y_top - qr_size, qr_size, qr_size)
+
+        #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        # ----- Load Barcode from bar_code -----
+        #bar_bytes = base64.b85decode(self.workflow_state['part_info']['bar_code'])
+        #bar_img = PIL.Image.open(io.BytesIO(bar_bytes))
+
+        # Upscale barcode sharply (fixes low-res blur)
+        #bw, bh = bar_img.size
+        #scale_factor = 5
+        #bar_img = bar_img.resize((bw * scale_factor, bh * scale_factor), PIL.Image.NEAREST)
+
+        
+        # Resize / scale barcode to desired size
+        #bar_img = bar_img.resize((int(barcode_width), int(barcode_height)))
+        #bar_img = bar_img.resize((int(barcode_width), int(barcode_height)), PIL.Image.NEAREST)
+
+        #bar_reader = ImageReader(bar_img)
+
+        #cvs.drawImage(bar_reader, x_right, y_top - barcode_height,
+        #                  barcode_width, barcode_height)
+
+        # ----- Generate crisp Code128 barcode -----
+        barcode_value = pid
+        barcode_obj = code128.Code128(
+            barcode_value,
+            barHeight=barcode_height,
+            barWidth=1.15,    # good thickness for print clarity
+        )
+
+        # Draw directly on PDF canvas
+        barcode_y = y_top - barcode_height - barcode_offset_y
+        barcode_obj.drawOn(
+            cvs,
+            x_right,
+            barcode_y
+        )
+        #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        
+        # ----- Labels under each -----
+        #def label(text, x_center, y):
+        #    cvs.setFont("Helvetica-Bold", 12)
+        #    cvs.drawCentredString(x_center, y, text)
+
+        # centers
+        #qr_center = x_left + qr_size / 2
+        #bar_center = x_right + barcode_width / 2
+
+        # Label Y positioning (just below QR)
+        #y = y_top - qr_size - 14
+        #y_bar = y_top - 3*barcode_height
+
+        #---
+        #label(dbver, qr_center, y)
+        #label(dbver, bar_center, y_bar)
+        #y -= 14
+        #y_bar -= 14
+
+        #label(test_type, qr_center, y)
+        #label(test_type, bar_center, y_bar)
+        #y -= 14
+        #y_bar -= 14
+
+        #label(pid, qr_center, y)
+        #label(pid, bar_center, y_bar)
+        #---
+        
+
+        # Move down page cursor
+        #self.current_top = y - 0.35 * units.inch
+        #self.current_top = y_bar - 0.35 * units.inch
+
+        # ONE Combined Label Block (centered)
+        def label(text, x_center, y):
+            cvs.setFont("Helvetica-Bold", 14)
+            cvs.drawCentredString(x_center, y, text)
+
+        # centers
+        qr_center = x_left + qr_size / 2
+        bar_center = x_right + barcode_width / 2
+
+        # Center between the two
+        combined_center = (qr_center + bar_center) / 2
+
+        # Choose the lower of QR bottom or barcode bottom
+        label_y_start = min(
+            y_top - qr_size,
+            barcode_y
+        ) - 30  # slight spacing
+
+        # Render centered labels
+        y_lbl = label_y_start
+        label(dbver,     combined_center, y_lbl);  y_lbl -= 14
+        label(test_type, combined_center, y_lbl);  y_lbl -= 14
+        label(pid,       combined_center, y_lbl);  y_lbl -= 16
+
+        # Update vertical cursor
+        self.current_top = y_lbl - 0.35 * units.inch
+        
+    #---------------------
+        
     def draw_logo(self): #{{{
         cvs = self.cvs   
  
@@ -306,12 +459,16 @@ class ShippingLabel:
         self.draw_label("DUNE Shipping Sheet", 24, height=0.5*units.inch)
         self.blank_space(0.375 * units.inch)
 
-        self.draw_qr(size=2.5*units.inch)
-        self.blank_space(0.125 * units.inch)
+        #--------------------------------------------
+        #self.draw_qr(size=2.5*units.inch)
+        #self.blank_space(0.125 * units.inch)
 
-        self.draw_label(self.workflow_state['part_info']['part_type_name'], 16, height=22.5)
-        self.draw_label(self.workflow_state['part_info']['part_id'], 16, height=22.5)
-
+        #self.draw_label(self.workflow_state['part_info']['part_type_name'], 16, height=22.5)
+        #self.draw_label(self.workflow_state['part_info']['part_id'], 16, height=22.5)
+        self.draw_codes_side_by_side()
+        self.blank_space(0.25 * units.inch)
+        #--------------------------------------------
+        
         self.blank_space(0.25 * units.inch)
 
 

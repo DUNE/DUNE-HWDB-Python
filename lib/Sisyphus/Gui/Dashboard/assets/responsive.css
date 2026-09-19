@@ -1,0 +1,339 @@
+/* ============================================================
+   HWDB Dashboard – Responsive Tweaks (ALL TABS)
+   ============================================================ */
+
+/* ---------------------------
+   GLOBAL: Tabs horizontally scrollable on small screens
+---------------------------- */
+#tabs {
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+}
+#tabs .custom-tab {
+  display: inline-block;
+  white-space: nowrap;
+}
+#header-container { padding-bottom: 8px; }
+
+/* ------------------------------------------------------------
+   GLOBAL helper: let Dash tables scroll horizontally if needed
+   (useful when fixed widths would otherwise crush columns)
+------------------------------------------------------------ */
+.dash-table-container {
+  max-width: 100%;
+}
+.dash-table-container .dash-spreadsheet-container {
+  max-width: 100%;
+}
+
+/* ============================================================
+   <= 992px (small laptops / large tablets)
+   Header tightening + gentle downscales
+============================================================ */
+@media (max-width: 992px) {
+
+  /* Preferences button smaller */
+  .pref-btn {
+    font-size: 16px !important;
+    padding: 8px 12px !important;
+    top: 12px !important;
+    left: 12px !important;
+  }
+
+  #preferences-pane { width: 360px !important; }
+
+  #header-container img {
+    height: 44px !important;
+    min-height: 28px !important;
+    margin-right: 10px !important;
+  }
+
+  #header-container h1 {
+    font-size: 30px !important;
+    line-height: 34px !important;
+    white-space: normal !important;
+    text-align: center !important;
+  }
+
+  #db-version-display {
+    font-size: 14px !important;
+    margin-top: 4px !important;
+  }
+
+  #tabs .custom-tab {
+    font-size: 14px !important;
+    padding: 10px 12px !important;
+    border-radius: 12px !important;
+    margin: 0 6px 6px 0 !important;
+  }
+
+  #app-version {
+    font-size: 14px !important;
+    padding: 6px 10px !important;
+    left: 12px !important;
+    bottom: 12px !important;
+  }
+
+  /* ---------- Type Getter: reduce giant right margin on sync buttons ---------- */
+  .tg-sync-btn {
+    margin-right: 10px !important;
+  }
+}
+
+/* ============================================================
+   <= 768px (tablets / phones)
+   STACK major control rows in each tab
+============================================================ */
+@media (max-width: 768px) {
+
+  /* ---------- Header spacer (your fixed header grows on mobile) ---------- */
+  #header-spacer { height: 260px !important; }
+  #preferences-pane { width: 320px !important; }
+  .pref-btn { font-size: 14px !important; padding: 8px 10px !important; }
+
+  #header-container img { height: 40px !important; min-height: 26px !important; }
+  #header-container h1 { font-size: 26px !important; line-height: 30px !important; }
+  #db-version-display { font-size: 13px !important; }
+
+  /* ============================================================
+     TAB 1: Type Getter
+     - Make header rows wrap nicely
+     - Shrink table typography a bit
+  ============================================================ */
+  #typegetter-root { padding: 12px !important; }
+
+  .tg-page-header {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+
+  .tg-page-title {
+    width: 100% !important;
+    text-align: center !important;
+    margin: 4px 0 0 0 !important;
+  }
+
+  .tg-sync-btn {
+    width: min(92vw, 420px) !important;
+    margin-right: 0 !important;
+  }
+
+  /* Dash DataTable font sizing (Type Getter tables) */
+  #tg-table-projects, #tg-table-systems, #tg-table-subsystems, #tg-table-types {
+    font-size: 14px !important;
+  }
+  /* allow horizontal scroll if needed */
+  #typegetter-root .dash-table-container { overflow-x: auto !important; }
+
+
+  /* ============================================================
+     TAB 2: Plots
+     - The big top row must wrap/stack
+     - Kill huge marginRight:50px
+     - Make dropdowns/inputs full-width-ish
+  ============================================================ */
+
+  /* This targets the flex row that contains: typeid-input, testtype-input,
+     load-json, upload-json, upload-overlay. Since it’s inline-style flex,
+     we override children sizing instead.
+  */
+  #typeid-input,
+  #testtype-input {
+    width: min(92vw, 520px) !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  #load-json {
+    width: min(92vw, 520px) !important;
+    margin-right: 0 !important;
+  }
+
+  /* Upload buttons are inside the Upload component */
+  #upload-json button,
+  #upload-overlay button {
+    width: min(92vw, 520px) !important;
+    margin-right: 0 !important;
+  }
+
+  /* Reduce vertical whitespace */
+  #plot-tab-content hr { margin: 14px 0 !important; }
+
+  /* Dropdown widths */
+  #chart-type { width: min(92vw, 420px) !important; margin-right: 0 !important; }
+  #plot-column { width: 100% !important; }
+  #value-filter { width: min(92vw, 520px) !important; }
+
+  /* Conditions row: stack nicely */
+  #logic-operator {
+    width: min(92vw, 220px) !important;
+    margin-right: 0 !important;
+  }
+  #add-condition {
+    width: min(92vw, 520px) !important;
+    margin-right: 0 !important;
+  }
+  #upload-conditions button {
+    width: min(92vw, 520px) !important;
+  }
+
+  /* CSV save row: stack */
+  #csv-filename {
+    width: min(92vw, 520px) !important;
+    margin-right: 0 !important;
+  }
+  #btn-download {
+    width: min(92vw, 520px) !important;
+    margin-top: 10px !important;
+  }
+
+  /* Graph full width */
+  #distribution-plot { width: 100% !important; }
+
+
+  /* ============================================================
+     TAB 3: Shipment Tracker
+     - Stack top input + sync button
+     - Stack details section (history + accordion) vertically
+  ============================================================ */
+  #shipment-tab-content { padding: 10px !important; }
+
+  #shipment-typeid {
+    width: min(92vw, 420px) !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  #fetch-shipments {
+    width: min(92vw, 420px) !important;
+    margin-right: 0 !important;
+  }
+
+  /* Summary cards: keep readable */
+  #shipment-summary-cards {
+    gap: 10px !important;
+  }
+  .summary-card {
+    width: min(92vw, 520px) !important;
+  }
+
+  /* Make tables horizontally scroll if needed */
+  #shipment-tab-content .dash-table-container { overflow-x: auto !important; }
+
+  /* Details section becomes vertical */
+  #shipment-details-section {
+    flex-direction: column !important;
+    gap: 14px !important;
+  }
+  #shipment-history-container,
+  #shipment-info-cards {
+    width: 100% !important;
+    flex: 1 1 auto !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* Button rows in accordions: don’t overflow */
+  .shiplabel-btn,
+  .bol-btn,
+  .proforma-btn,
+  .approval-btn {
+    width: min(92vw, 520px) !important;
+  }
+
+
+  /* ============================================================
+     TAB 4: Binary/Test Downloader
+     - Stack “reference pid / testname / sync”
+     - Make schema/list blocks full width
+  ============================================================ */
+  #downloader-tab-content { padding: 12px !important; }
+
+  /* Mode selector: wrap */
+  #downloader-tab-content > div {
+    max-width: 100%;
+  }
+
+  #downloader-refpid,
+  #downloader-testname {
+    width: min(92vw, 520px) !important;
+  }
+
+  #downloader-sync {
+    width: min(92vw, 520px) !important;
+  }
+
+  /* PID range inputs */
+  #downloader-first-pid,
+  #downloader-last-pid {
+    width: min(92vw, 520px) !important;
+  }
+
+  #downloader-start-download {
+    width: min(92vw, 520px) !important;
+  }
+
+  /* Binary section input + sync */
+  #binary-id-input {
+    width: min(92vw, 520px) !important;
+  }
+  #binary-sync-button,
+  #binary-download-button {
+    width: min(92vw, 520px) !important;
+  }
+
+  /* File list: readable on phone */
+  #binary-file-list-container {
+    max-height: 320px !important;
+    overflow-x: auto !important;
+  }
+  #binary-file-checklist {
+    font-size: 14px !important;
+  }
+
+
+  /* ============================================================
+     TAB 5: Executive Summary
+     (you already have most of this; just a couple of safe extras)
+  ============================================================ */
+  #execsum-inner { padding: 10px !important; }
+  #execsum-inner .dash-table-container { overflow-x: auto !important; }
+
+  /* If the details are visible, force column layout on mobile */
+  #execsum-details-section {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+  #execsum-details-section > div {
+    width: 100% !important;
+  }
+}
+
+/* ============================================================
+   <= 420px (very small phones)
+============================================================ */
+@media (max-width: 420px) {
+
+  #header-container img { height: 32px !important; min-height: 24px !important; }
+  #header-container h1 { font-size: 22px !important; line-height: 26px !important; }
+  #db-version-display { font-size: 12px !important; }
+
+  #tabs .custom-tab {
+    font-size: 13px !important;
+    padding: 9px 10px !important;
+    min-width: 140px;
+    text-align: center;
+  }
+
+  #header-spacer { height: 300px !important; }
+
+  #app-version {
+    font-size: 12px !important;
+    padding: 6px 10px !important;
+    opacity: 0.85;
+  }
+}

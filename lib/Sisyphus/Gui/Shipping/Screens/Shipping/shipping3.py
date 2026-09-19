@@ -52,8 +52,9 @@ class Shipping3(PageWidget):
 
         main_layout.addSpacing(15)
 
+        self.mess1 = qtw.QLabel("Please affirm before continuing:")
         main_layout.addWidget(
-            qtw.QLabel("Please affirm before continuing:")
+            self.mess1
         )
         main_layout.addWidget(
             #QCheckBox("Yes, this looks correct")
@@ -126,11 +127,31 @@ class Shipping3(PageWidget):
     def refresh(self):
         super().refresh()
 
-        if self.confirm_email_contents.isChecked():
-            self.nav_bar.continue_button.setEnabled(True)
-        else:
-            self.nav_bar.continue_button.setEnabled(False)
+        # --- dynamically show/hide things ---
+        select_pid_state = self.workflow_state.get("SelectPID", {})
+        is_surf = select_pid_state.get("confirm_surf", False)
 
+        if not is_surf:
+            self.mess1.hide()
+            self.confirm_email_contents.hide()
+            self.instructions.hide()
+            self.email_contents.hide()
+            self.confirm_email_contents.hide()
+        else:
+            self.mess1.show()
+            self.confirm_email_contents.show()
+            self.instructions.show()
+            self.email_contents.show()
+            self.confirm_email_contents.show()
+
+
+        if is_surf:
+            if self.confirm_email_contents.isChecked():
+                self.nav_bar.continue_button.setEnabled(True)
+            else:
+                self.nav_bar.continue_button.setEnabled(False)
+        else:
+            self.nav_bar.continue_button.setEnabled(True)
 
 
     #}}}

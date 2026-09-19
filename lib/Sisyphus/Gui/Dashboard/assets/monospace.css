@@ -1,0 +1,7 @@
+dcc.Checklist(
+    id="binary-file-checklist",
+    options=[],
+    value=[],
+    style={"fontFamily": "Courier New, monospace", "fontSize": "15px"},
+    labelStyle={"display": "block", "marginBottom": "4px"},
+)

@@ -63,8 +63,9 @@ class PreShipping5(PageWidget):
 
         main_layout.addSpacing(15)
 
+        self.mess_label = qtw.QLabel("Please affirm before continuing:")
         main_layout.addWidget(
-            qtw.QLabel("Please affirm before continuing:")
+            self.mess_label
         )
         main_layout.addWidget(
             #QCheckBox("Yes, this looks correct")
@@ -164,6 +165,7 @@ class PreShipping5(PageWidget):
         #{{{
         #print("Creating CSV...")
 
+        
         #self.csv_filename = f"{self.workflow_state['part_info']['part_id']}-preshipping.csv"
         mycurrenttime = datetime.now().strftime("%Y-%m-%d-%H-%M")
         self.csv_filename = f"{self.workflow_state['part_info']['part_id']}-preshipping-{mycurrenttime}.csv"
@@ -240,10 +242,27 @@ class PreShipping5(PageWidget):
     def refresh(self):
         super().refresh()
 
-        if self.confirm_email_contents.isChecked():
-            self.nav_bar.continue_button.setEnabled(True)
-        else:
-            self.nav_bar.continue_button.setEnabled(False)
+        # --- dynamically show/hide things ---
+        select_pid_state = self.workflow_state.get("SelectPID", {})
+        is_surf = select_pid_state.get("confirm_surf", False)
 
+        if not is_surf:
+            self.email_contents.hide()
+            self.confirm_email_contents.hide()
+            self.instructions.hide()
+            self.mess_label.hide()
+        else:
+            self.email_contents.show()
+            self.confirm_email_contents.show()
+            self.instructions.show()
+            self.mess_label.show()
+
+        if is_surf:
+            if self.confirm_email_contents.isChecked():
+                self.nav_bar.continue_button.setEnabled(True)
+            else:
+                self.nav_bar.continue_button.setEnabled(False)
+        else:
+            self.nav_bar.continue_button.setEnabled(True)
     #}}}
         

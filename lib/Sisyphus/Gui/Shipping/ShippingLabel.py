@@ -14,6 +14,7 @@ import Sisyphus
 try:
     from reportlab.pdfgen import canvas
     from reportlab.lib import units
+    from reportlab.lib.utils import ImageReader
     _reportlab_available = True
 
 except ModuleNotFoundError:
@@ -22,6 +23,13 @@ import PIL.Image
 import io
 import base64
 import tempfile
+
+# needed to generate bar-code
+from reportlab.graphics.shapes import Drawing
+from reportlab.graphics import renderPDF
+from reportlab.graphics.barcode import code128
+from reportlab.graphics.barcode import createBarcodeDrawing
+
 
 ###############################################################################
 
@@ -128,12 +136,18 @@ class ShippingLabel:
  
         img_bytes = base64.b85decode(self.workflow_state['part_info']['qr_code'].encode())
         img_obj = PIL.Image.open(io.BytesIO(img_bytes))
-        cropped_obj = img_obj.crop((40, 40, 410, 410))
-        
-        if size is None:
-            image_width, image_height = 3.0 * units.inch, 3.0 * units.inch
-        else:
-            image_width, image_height = size, size
+        #cropped_obj = img_obj.crop((40, 40, 410, 410))
+       
+        size = size or 3.0 * units.inch
+ 
+        image_width, image_height = size, size
+
+        if self.current_top - image_height < 0.5 * units.inch:
+            # There is less than half an inch remaining on the page, so we
+            # should start a new page.
+            cvs.showPage()
+            self.current_top = self.page_height - self.top_margin
+
 
         if self.debug:
             self.draw_rectangle(
@@ -145,7 +159,8 @@ class ShippingLabel:
                 fill=0xccffcc) 
 
         with tempfile.NamedTemporaryFile() as tf:
-            cropped_obj.save(tf, 'png')
+            #cropped_obj.save(tf, 'png')
+            img_obj.save(tf, 'png')
             cvs.drawImage(
                 tf.name,
                 (self.page_width - image_width) * 0.5,
@@ -156,6 +171,153 @@ class ShippingLabel:
         self.current_top -= image_height
         #}}}
 
+    #---------------------
+    def draw_codes_side_by_side(self):
+        """
+        Draw QR (left) and barcode (right) with labels under each; 
+        matches Swift UI style.
+        """
+        cvs = self.cvs
+
+        pid = self.workflow_state['part_info']['part_id']
+        test_type = self.workflow_state['part_info']['part_type_name']
+
+        dbver = ""
+        if config.config_data["active profile"] == "development":
+            dbver = "dev"
+        else:
+            dbver = "pro"
+
+        # Layout parameters
+        #qr_size = 2.5 * units.inch
+        #barcode_height = 0.75 * units.inch
+        #barcode_width = 3.75 * units.inch
+        #gap = 0.75 * units.inch
+
+        # ----- Layout tuning to match iPad -----
+        qr_size = 2.40 * units.inch       # slightly smaller QR
+        barcode_height = 0.55 * units.inch
+        barcode_width  = 3.20 * units.inch
+        horizontal_gap = 0.70 * units.inch
+
+        # **SHIFT EVERYTHING RIGHT**
+        shift_x = 0.70 * units.inch
+
+        y_top = self.current_top
+
+        x_left = self.left_margin + shift_x
+        x_right = x_left + qr_size + horizontal_gap
+
+
+        # ----- Load QR -----
+        qr_bytes = base64.b85decode(self.workflow_state['part_info']['qr_code'])
+        qr_img = PIL.Image.open(io.BytesIO(qr_bytes))
+        #qr_img = qr_img.resize((int(qr_size), int(qr_size)))
+        qr_img = qr_img.resize((int(qr_size), int(qr_size)), PIL.Image.NEAREST)
+        qr_reader = ImageReader(qr_img)
+
+        cvs.drawImage(qr_reader, x_left, y_top - qr_size, qr_size, qr_size)
+
+        #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        # ----- Load Barcode from bar_code -----
+        #bar_bytes = base64.b85decode(self.workflow_state['part_info']['bar_code'])
+        #bar_img = PIL.Image.open(io.BytesIO(bar_bytes))
+
+        # Upscale barcode sharply (fixes low-res blur)
+        #bw, bh = bar_img.size
+        #scale_factor = 5
+        #bar_img = bar_img.resize((bw * scale_factor, bh * scale_factor), PIL.Image.NEAREST)
+
+        
+        # Resize / scale barcode to desired size
+        #bar_img = bar_img.resize((int(barcode_width), int(barcode_height)))
+        #bar_img = bar_img.resize((int(barcode_width), int(barcode_height)), PIL.Image.NEAREST)
+
+        #bar_reader = ImageReader(bar_img)
+
+        #cvs.drawImage(bar_reader, x_right, y_top - barcode_height,
+        #                  barcode_width, barcode_height)
+
+        # ----- Generate crisp Code128 barcode -----
+        barcode_value = pid
+        barcode_obj = code128.Code128(
+            barcode_value,
+            barHeight=barcode_height,
+            barWidth=1.15,    # good thickness for print clarity
+        )
+
+        # Draw directly on PDF canvas
+        barcode_vertical_offset = 0.40 * units.inch  # adjust as needed
+        barcode_obj.drawOn(
+            cvs,
+            x_right,
+            y_top - barcode_height - barcode_vertical_offset
+        )
+        #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        
+        # ----- Labels under each -----
+        #def label(text, x_center, y):
+        #    cvs.setFont("Helvetica-Bold", 12)
+        #    cvs.drawCentredString(x_center, y, text)
+
+        # centers
+        #qr_center = x_left + qr_size / 2
+        #bar_center = x_right + barcode_width / 2
+
+        # Label Y positioning (just below QR)
+        #y = y_top - qr_size - 14
+        #y_bar = y_top - 3*barcode_height
+
+        #---
+        #label(dbver, qr_center, y)
+        #label(dbver, bar_center, y_bar)
+        #y -= 14
+        #y_bar -= 14
+
+        #label(test_type, qr_center, y)
+        #label(test_type, bar_center, y_bar)
+        #y -= 14
+        #y_bar -= 14
+
+        #label(pid, qr_center, y)
+        #label(pid, bar_center, y_bar)
+        #---
+        
+
+        # Move down page cursor
+        #self.current_top = y - 0.35 * units.inch
+        #self.current_top = y_bar - 0.35 * units.inch
+
+        # ----- Labels under each -----
+        def label(text, x_center, y):
+            cvs.setFont("Helvetica-Bold", 12)
+            cvs.drawCentredString(x_center, y, text)
+
+        # centers
+        qr_center = x_left + qr_size / 2
+        bar_center = x_right + barcode_width / 2
+
+        # Label Y positioning (just below QR)
+        y = y_top - qr_size - 14
+        y_bar = y_top - 3*barcode_height
+
+        label(dbver, qr_center, y)
+        label(dbver, bar_center, y_bar)
+        y -= 14
+        y_bar -= 14
+
+        label(test_type, qr_center, y)
+        label(test_type, bar_center, y_bar)
+        y -= 14
+        y_bar -= 14
+
+        label(pid, qr_center, y)
+        label(pid, bar_center, y_bar)
+
+        self.current_top = y - 0.35 * units.inch
+        
+    #---------------------
+        
     def draw_logo(self): #{{{
         cvs = self.cvs   
  
@@ -165,6 +327,12 @@ class ShippingLabel:
         aspect_ratio = logo_pil.size[0]/logo_pil.size[1]
         image_width = self.page_usable_width
         image_height = image_width / aspect_ratio
+        
+        if self.current_top - image_height < 0.5 * units.inch:
+            # There is less than half an inch remaining on the page, so we
+            # should start a new page.
+            cvs.showPage()
+            self.current_top = self.page_height - self.top_margin
 
         if self.debug:
             self.draw_rectangle(
@@ -189,6 +357,10 @@ class ShippingLabel:
     def blank_space(self, space): #{{{
         cvs = self.cvs
 
+        # Don't worry about going to a new page here. Let the next non-blank
+        # item figure it out. Otherwise, we would end up going to a new page
+        # only to put the blank space right at the top.
+
         if self.debug:
             self.draw_rectangle(
                     self.left_margin,
@@ -197,6 +369,7 @@ class ShippingLabel:
                     space,
                     stroke=0x888888,
                     fill=0xcccccc)
+
         self.current_top -= space                    
         #}}}
 
@@ -207,6 +380,12 @@ class ShippingLabel:
         if height is None:
             height = font_size * 4/3
         v_off = (height - font_size * 4/3) / 2
+        
+        if self.current_top - height < 0.5 * units.inch:
+            # There is less than half an inch remaining on the page, so we
+            # should start a new page.
+            cvs.showPage()
+            self.current_top = self.page_height - self.top_margin
 
         cvs.saveState()
 
@@ -282,18 +461,22 @@ class ShippingLabel:
         self.draw_label("DUNE Shipping Sheet", 24, height=0.5*units.inch)
         self.blank_space(0.375 * units.inch)
 
-        self.draw_qr(size=2.5*units.inch)
-        self.blank_space(0.125 * units.inch)
+        #--------------------------------------------
+        #self.draw_qr(size=2.5*units.inch)
+        #self.blank_space(0.125 * units.inch)
 
-        self.draw_label(self.workflow_state['part_info']['part_type_name'], 16, height=22.5)
-        self.draw_label(self.workflow_state['part_info']['part_id'], 16, height=22.5)
-
+        #self.draw_label(self.workflow_state['part_info']['part_type_name'], 16, height=22.5)
+        #self.draw_label(self.workflow_state['part_info']['part_id'], 16, height=22.5)
+        self.draw_codes_side_by_side()
+        self.blank_space(0.25 * units.inch)
+        #--------------------------------------------
+        
         self.blank_space(0.25 * units.inch)
 
 
         self.draw_label("Responsible Person's Name", 14)
         self.draw_label(
-                self.workflow_state['PreShipping2']['approver_name'], 
+                self.workflow_state['PreShipping3']['approver_name'], 
                 font_size=14,
                 box=True)
         
@@ -301,7 +484,7 @@ class ShippingLabel:
         
         self.draw_label("Email Address(es)", 14)
         self.draw_label(
-                self.workflow_state['PreShipping2']['approver_email'], 
+                self.workflow_state['PreShipping3']['approver_email'], 
                 font_size=14,
                 box=True)
 

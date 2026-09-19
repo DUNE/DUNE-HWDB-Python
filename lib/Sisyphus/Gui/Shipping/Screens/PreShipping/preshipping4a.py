@@ -35,6 +35,7 @@ class PreShipping4a(PageWidget):
         self.hts_code = zw.ZLineEdit(page=self, key='hts_code')
         
         self.shipment_origin = zw.ZLineEdit(page=self, key='shipment_origin')
+        self.shipment_destination = zw.ZLineEdit(page=self, key='shipment_destination')
         self.dimension = zw.ZLineEdit(page=self, key='dimension')
         self.weight = zw.ZLineEdit(page=self, key='weight')
 
@@ -48,12 +49,11 @@ class PreShipping4a(PageWidget):
 
         ########################################
 
-        group_box_1 = qtw.QGroupBox()
+        self.group_box_1 = qtw.QGroupBox()
 
         group_box_1_layout = qtw.QVBoxLayout()
-        group_box_1_layout.addWidget(
-            qtw.QLabel("Will this be a domestic or international shipment?")
-        )
+        mess1 = qtw.QLabel("Will this be a domestic or international shipment?")
+        group_box_1_layout.addWidget(mess1)
 
 
         '''
@@ -64,7 +64,7 @@ class PreShipping4a(PageWidget):
         group_box_1_layout.addWidget(self.destination_type.button('International'))       
 
         group_box_2 = qtw.QGroupBox()
-        group_box_2_layout = qtw.QVBoxLayout() 
+        group_box_2_layout = qtw.QVBoxLayout()
         intl_label_1 = qtw.QLabel("For international shipment:")
         intl_label_2 = qtw.QLabel(
                 "Provide your Harmonized Tariff Schedule (HTS) code.\n"
@@ -83,9 +83,9 @@ class PreShipping4a(PageWidget):
     
         group_box_1_layout.addWidget(group_box_2)
     
-        group_box_1.setLayout(group_box_1_layout)
+        self.group_box_1.setLayout(group_box_1_layout)
 
-        main_layout.addWidget(group_box_1)
+        main_layout.addWidget(self.group_box_1)
 
         ################
         ################
@@ -93,26 +93,31 @@ class PreShipping4a(PageWidget):
         main_layout.addWidget(qtw.QLabel("Provide the shipment's origin:"))
         main_layout.addWidget(self.shipment_origin)
 
+        main_layout.addWidget(qtw.QLabel("Provide the shipment's destination:"))
+        main_layout.addWidget(self.shipment_destination)
+       
         ################
 
 
-        dim_wt_label = qtw.QLabel(
+        self.dim_wt_label = qtw.QLabel(
                 "Provide the dimension (length x width x height) and weight of your shipment. "
                 "Don't forget to provide their units as well (inches, m, lbs, kg, etc.)"
         )
-        dim_wt_label.setWordWrap(True)
-        main_layout.addWidget(dim_wt_label)
+        self.dim_wt_label.setWordWrap(True)
+        main_layout.addWidget(self.dim_wt_label)
 
         dim_wt_layout = qtw.QVBoxLayout()
 
         dim_layout = qtw.QHBoxLayout()
-        dim_layout.addWidget(qtw.QLabel("Dimension"))
+        self.dim_label = qtw.QLabel("Dimension")
+        dim_layout.addWidget(self.dim_label)
         dim_layout.addWidget(self.dimension)
         dim_widget = qtw.QWidget()
         dim_widget.setLayout(dim_layout)
 
         wt_layout = qtw.QHBoxLayout()
-        wt_layout.addWidget(qtw.QLabel("Weight"))
+        self.weight_label = qtw.QLabel("Weight")
+        wt_layout.addWidget(self.weight_label)
         wt_layout.addWidget(self.weight)
         wt_widget = qtw.QWidget()
         wt_widget.setLayout(wt_layout)
@@ -124,6 +129,20 @@ class PreShipping4a(PageWidget):
         main_layout.addWidget(dim_wt_widget)
 
         ################
+        # ----------------------------------------------------------------------
+        # Auto-fill shipment destination if "Shipping to SURF" was selected
+        # ----------------------------------------------------------------------
+        #select_pid_state = self.workflow_state.get("SelectPID", {})
+        #is_surf = select_pid_state.get("confirm_surf", False)
+        #if is_surf:
+            # Example destination text — customize as you like
+        #    self.shipment_destination.setText("SD Warehouse/SURF")
+        #    self.shipment_destination.setReadOnly(True)
+        #else:
+            # Ensure editable if not SURF
+        #    self.shipment_destination.setReadOnly(False)
+        #    self.shipment_destination.setText("")
+        ################
 
         main_layout.addStretch()
 
@@ -132,10 +151,42 @@ class PreShipping4a(PageWidget):
         self.setLayout(main_layout)
         #}}}
 
+    
+    
+
+        
     def refresh(self):
         #{{{
         super().refresh()
 
+        # --- dynamically update destination based on SelectPID state ---
+        select_pid_state = self.workflow_state.get("SelectPID", {})
+        is_surf = select_pid_state.get("confirm_surf", False)
+
+        if is_surf:
+            self.shipment_destination.setText("SD Warehouse/SURF")
+           
+
+           
+
+        # --- dynamically show/hide things ---
+        if not is_surf:
+            self.group_box_1.hide()
+            self.dim_wt_label.hide()
+            self.dim_label.hide()
+            self.dimension.hide()
+            self.weight_label.hide()
+            self.weight.hide()
+        else:
+             self.group_box_1.show()
+             self.dim_wt_label.show()
+             self.dim_label.show()
+             self.dimension.show()
+             self.weight_label.show()
+             self.weight.show()
+        # ---------------------------------------------------------------
+
+        
         if self.page_state.get('shipping_service_type', None) == 'International':
             self.hts_code.setEnabled(True)
             if len(self.hts_code.text()) == 0:
@@ -144,12 +195,22 @@ class PreShipping4a(PageWidget):
         else:
             self.hts_code.setEnabled(False)
 
-        if (
-                len(self.shipment_origin.text()) > 0
-                and len(self.dimension.text()) > 0
-                and len(self.weight.text()) > 0 ):
-            self.nav_bar.continue_button.setEnabled(True)
+        if is_surf:
+            if (
+                    len(self.shipment_origin.text()) > 0
+                    and len(self.shipment_destination.text()) > 0
+                    and len(self.dimension.text()) > 0
+                    and len(self.weight.text()) > 0 ):
+                self.nav_bar.continue_button.setEnabled(True)
+            else:
+                self.nav_bar.continue_button.setEnabled(False)
         else:
-            self.nav_bar.continue_button.setEnabled(False)
-    
+            if (
+                    len(self.shipment_origin.text()) > 0
+                    and len(self.shipment_destination.text()) > 0 ):
+                self.nav_bar.continue_button.setEnabled(True)
+            else:
+                self.nav_bar.continue_button.setEnabled(False)
+
+            
         #}}}

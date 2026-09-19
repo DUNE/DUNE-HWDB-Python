@@ -90,12 +90,25 @@ class Receiving2(PageWidget):
         #}}}
 
     def update_location(self):
-        with self.wait():
-            ok = dbt.update_locations_and_detach(
-                            part_id=self.part_id, 
-                            location=self.page_state["location"]['institution_id'],
-                            arrived=self.page_state["arrived"],
-                            comments=self.page_state["comments"])
+
+        # --- dynamically update destination based on SelectPID state ---
+        select_pid_state = self.workflow_state.get("SelectPID", {})
+        is_transshipping = select_pid_state.get("confirm_transshipping", False)
+
+        if not is_transshipping:
+            with self.wait():
+                ok = dbt.update_locations_and_detach(
+                    part_id=self.part_id, 
+                    location=self.page_state["location"]['institution_id'],
+                    arrived=self.page_state["arrived"],
+                    comments=self.page_state["comments"])
+        else:
+            with self.wait():
+                ok = dbt.update_location(
+                    part_id=self.part_id, 
+                    location=self.page_state["location"]['institution_id'],
+                    arrived=self.page_state["arrived"],
+                    comments=self.page_state["comments"])
         return True
 
     def on_navigate_next(self):

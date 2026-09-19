@@ -74,6 +74,10 @@ class Shipping6(PageWidget):
         #{{{
         #print("Creating CSV...")
 
+        # --- dynamically update destination based on SelectPID state ---
+        select_pid_state = self.workflow_state.get("SelectPID", {})
+        is_surf = select_pid_state.get("confirm_surf", False)
+        
         mycurrenttime = datetime.now().strftime("%Y-%m-%d-%H-%M")
         self.csv_filename = f"{self.workflow_state['part_info']['part_id']}-shipping-{mycurrenttime}.csv"
         #self.csv_filename = f"{self.workflow_state['part_info']['part_id']}-preshipping.csv"
@@ -109,30 +113,32 @@ class Shipping6(PageWidget):
                 "DUNE PID",
                 self.workflow_state['part_info']['part_id']
             ])
-            csvwriter.writerow([
-                "Image ID for BoL",
-                self.workflow_state['Shipping2']['bol_info']['image_id']
-            ])
-            csvwriter.writerow([
-                "Image ID for the final approval message",
-                self.workflow_state['Shipping4']['approval_info']['image_id']
-            ])
-            csvwriter.writerow([
-                "FD Logistics team final approval (name)",
-                self.workflow_state['Shipping4']['approved_by']
-            ])
-            csvwriter.writerow([
-                "FD Logistics team final approval (date in CT)",
-                self.workflow_state['Shipping4']['approved_time']
-            ])
-            csvwriter.writerow([
-                "DUNE Shipping Sheet has been attached",
-                self.workflow_state['Shipping4']['confirm_attached_sheet']
-            ])
-            csvwriter.writerow([
-                "This shipment has been adequately insured for transit",
-                self.workflow_state['Shipping4']['confirm_insured']
-            ])
+
+            if is_surf:
+                csvwriter.writerow([
+                    "Image ID for BoL",
+                    self.workflow_state['Shipping2']['bol_info']['image_id']
+                    ])
+                csvwriter.writerow([
+                    "Image ID for the final approval message",
+                    self.workflow_state['Shipping4']['approval_info']['image_id']
+                    ])
+                csvwriter.writerow([
+                    "FD Logistics team final approval (name)",
+                    self.workflow_state['Shipping4']['approved_by']
+                    ])
+                csvwriter.writerow([
+                    "FD Logistics team final approval (date in CT)",
+                    self.workflow_state['Shipping4']['approved_time']
+                    ])
+                csvwriter.writerow([
+                    "DUNE Shipping Sheet has been attached",
+                    self.workflow_state['Shipping4']['confirm_attached_sheet']
+                    ])
+                csvwriter.writerow([
+                    "This shipment has been adequately insured for transit",
+                    self.workflow_state['Shipping4']['confirm_insured']
+                    ])
             #csvwriter.writerow([
             #    "Sub-component PID",
             #    "Component Type Name",

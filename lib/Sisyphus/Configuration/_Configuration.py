@@ -831,21 +831,61 @@ class Config:
         #}}}
 
     def get_latest_release_version(self):
-        if getattr(self, "tag_name", None) is None:
-            resp = requests.get("https://api.github.com/repos/DUNE/DUNE-HWDB-Python/releases/latest")   
-            self.latest_release_version = resp.json()["tag_name"]
+        # The release check is informational only.  A temporary GitHub/API
+        # problem must never prevent Sisyphus (in particular hwdb-upload)
+        # from starting.
+        if getattr(self, "latest_release_version", None) is not None:
+            return self.latest_release_version
+
+        # If we have a previously cached value in config.json, keep it as a
+        # fallback in case today's network check cannot be completed.
+        cached_version = None
+        try:
+            cached_version = self.config_data.get("version", {}).get(
+                    "latest release version")
+        except (AttributeError, TypeError):
+            pass
+
+        try:
+            resp = requests.get(
+                    "https://api.github.com/repos/DUNE/DUNE-HWDB-Python/releases/latest",
+                    timeout=10)
+            resp.raise_for_status()
+            data = resp.json()
+            tag_name = data.get("tag_name") if isinstance(data, dict) else None
+            if not tag_name:
+                raise ValueError("GitHub response did not contain 'tag_name'")
+            self.latest_release_version = tag_name
+        except (requests.RequestException, ValueError, TypeError) as ex:
+            # Falling back to the cached version (or the running version)
+            # makes the version check fail-safe.  The actual HWDB operation
+            # can then continue normally.
+            self.latest_release_version = cached_version or Sisyphus.version
+            logging.getLogger(__name__).warning(
+                    "Could not check the latest Sisyphus release; "
+                    "continuing with version information '%s'. Reason: %s",
+                    self.latest_release_version, ex)
+
         return self.latest_release_version
 
     def newer_version_exists(self):
         re_version = re.compile(r"""
                 ^[v]{0,1}(?P<version>.*)$
             """, re.VERBOSE)
-        current_version = tuple(re_version.match(Sisyphus.version)["version"].split("."))
 
-        latest_version = tuple(
-                re_version.match(self.get_latest_release_version())["version"].split("."))
+        try:
+            current_match = re_version.match(str(Sisyphus.version))
+            latest_match = re_version.match(str(self.get_latest_release_version()))
+            if current_match is None or latest_match is None:
+                return False
 
-        return latest_version > current_version
+            current_version = tuple(current_match["version"].split("."))
+            latest_version = tuple(latest_match["version"].split("."))
+            return latest_version > current_version
+        except (AttributeError, TypeError, ValueError):
+            # A malformed/unexpected release string should only suppress the
+            # update notice; it should not stop the requested Sisyphus command.
+            return False
 
  
 def run_tests():

@@ -38,24 +38,26 @@ class PreShipping4b(PageWidget):
 
         ########################################
 
-        ff_label = qtw.QLabel(
+        self.mess_label = qtw.QLabel(
                 "Provide name(s) of your Freight Forwarder (FF; such as FedEx or UPS. "
                 "USPS is not allowed) and mode(s) of transportation (truck, air, ship, "
                 "rail, etc.):"
         )
-        ff_label.setWordWrap(True)
-        main_layout.addWidget(ff_label)
+        self.mess_label.setWordWrap(True)
+        main_layout.addWidget(self.mess_label)
 
         ff_mode_layout = qtw.QVBoxLayout()
 
         ff_layout = qtw.QHBoxLayout()
-        ff_layout.addWidget( qtw.QLabel("Name of FF:") )
+        self.ff_label = qtw.QLabel("Name of FF:")
+        ff_layout.addWidget(self.ff_label)
         ff_layout.addWidget( self.freight_forwarder )
         ff_widget = qtw.QWidget()
         ff_widget.setLayout(ff_layout)
 
         mode_layout = qtw.QHBoxLayout()
-        mode_layout.addWidget( qtw.QLabel("Mode:") )
+        self.mode_label = qtw.QLabel("Mode:")
+        mode_layout.addWidget( self.mode_label )
         mode_layout.addWidget( self.mode_of_transportation )
         mode_widget = qtw.QWidget()
         mode_widget.setLayout(mode_layout)
@@ -72,8 +74,8 @@ class PreShipping4b(PageWidget):
         main_layout.addSpacing(10)
 
 
-
-        main_layout.addWidget(qtw.QLabel("Provide the expected arrival time (Central Time):"))
+        self.time_label = qtw.QLabel("Provide the expected arrival time (Central Time):")
+        main_layout.addWidget(self.time_label)
         main_layout.addWidget( self.expected_arrival_time)
 
 
@@ -88,11 +90,34 @@ class PreShipping4b(PageWidget):
 
     def refresh(self):
         super().refresh()
-        
-        if (
-                len(self.freight_forwarder.text()) > 0
-                and len(self.mode_of_transportation.text()) > 0):
-            self.nav_bar.continue_button.setEnabled(True)
-        else:
-            self.nav_bar.continue_button.setEnabled(False)
 
+        # --- dynamically show/hide things ---
+        select_pid_state = self.workflow_state.get("SelectPID", {})
+        is_surf = select_pid_state.get("confirm_surf", False)
+        if not is_surf:
+            self.mess_label.hide()
+            self.ff_label.hide()
+            self.freight_forwarder.hide()
+            self.mode_label.hide()
+            self.mode_of_transportation.hide()
+            self.time_label.hide()
+            self.expected_arrival_time.hide()
+        else:
+            self.mess_label.show()
+            self.ff_label.show()
+            self.freight_forwarder.show()
+            self.mode_label.show()
+            self.mode_of_transportation.show()
+            self.time_label.show()
+            self.expected_arrival_time.show()
+
+
+        if is_surf:
+            if (
+                    len(self.freight_forwarder.text()) > 0
+                    and len(self.mode_of_transportation.text()) > 0):
+                self.nav_bar.continue_button.setEnabled(True)
+            else:
+                self.nav_bar.continue_button.setEnabled(False)
+        else:
+            self.nav_bar.continue_button.setEnabled(True)

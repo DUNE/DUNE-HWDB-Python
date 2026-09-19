@@ -1,0 +1,27 @@
+/* Container for the branch node's label text */
+.json-branch-label {
+    font-weight: bold;
+    margin-top: 4px;
+    margin-left: 4px;
+    font-family: monospace;
+}
+
+/* Special styling for the "(list detected...)" lines */
+.json-list-label {
+    font-weight: normal;
+    font-style: italic;
+    color: #777;
+}
+
+/* Children of a branch: this gets the vertical dashed line */
+.json-branch-children {
+    margin-left: 18px;      /* space for the line */
+    padding-left: 10px;     /* indent children content */
+    border-left: 1px dashed #ccc;
+}
+
+/* Optional: a bit of spacing between leaves */
+.json-leaf {
+    margin-top: 2px;
+    margin-bottom: 2px;
+}

@@ -18,6 +18,29 @@ be set to None to effectively remove it.)
 
 contents = \
 {
+    "code image options": {
+        "qr": {
+            # Keep the complete HWDB QR image. This prevents the leading
+            # character of the embedded PID from being clipped.
+            "crop box": None,
+
+            # Set this to True in custom_labels.py to remove the PID printed
+            # inside the downloaded HWDB image. You can then add a separate
+            # "part id" element in the layout.
+            "remove embedded text": False,
+
+            # Advanced caption-removal settings.
+            "caption detection threshold": 245,
+            "minimum caption gap": 3,
+            "replacement bottom padding": "match top",
+        },
+        "bar": {
+            # Preserve the historical HWDB barcode crop. Use None to keep the
+            # complete downloaded barcode image.
+            "crop box": (30, 11, 658, 189),
+            "remove embedded text": False,
+        },
+    },
     "page sizes": {
         "A4": {
             "units": "mm",

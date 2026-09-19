@@ -42,17 +42,17 @@ class PreShipping2(PageWidget):
         #    qtw.QLabel("Provide the name and email of the QA Rep")
         #)
 
-        QARepmess = qtw.QLabel("Provide the name and email address of your Consortium QA Representative "
-                       "who has approved this shipment by setting both the Consortium Certified Status flag and the All QA/QC Test and Documentation flag in the HWDB.")
-        QARepmess.setWordWrap(True)
+        self.QARepmess = qtw.QLabel("Provide the name and email address of your Consortium QA Representative "
+                        "who has approved this shipment by setting both the Consortium Certified Status flag and the All QA/QC Test and Documentation flag in the HWDB.")
+        self.QARepmess.setWordWrap(True)
         #QARepmess.setStyleSheet("""
         #        font-size: 14pt;
         #    """)
-        main_layout.addWidget(QARepmess)
+        main_layout.addWidget(self.QARepmess)
 
-        main_layout.addWidget(
-            qtw.QLabel("(For multiple email addresses, each address should be separated by a comma)")
-        )
+        self.QARepmessMultiple = qtw.QLabel("(For multiple email addresses, each address should be separated by a comma)")
+        main_layout.addWidget(self.QARepmessMultiple)
+
         
 
         ################
@@ -60,14 +60,16 @@ class PreShipping2(PageWidget):
         contact_info_layout = qtw.QVBoxLayout()
 
         name_layout = qtw.QVBoxLayout()
-        name_layout.addWidget(qtw.QLabel("Name"))
+        self.name_label = qtw.QLabel("Name")
+        name_layout.addWidget(self.name_label)
         #name_layout.addWidget(QLineEdit("Joe Schmoe"))
         name_layout.addWidget(self.qa_rep_name)
         name_layout_widget = qtw.QWidget(self)
         name_layout_widget.setLayout(name_layout)
         
         email_layout = qtw.QVBoxLayout()
-        email_layout.addWidget(qtw.QLabel("Email"))
+        self.email_label = qtw.QLabel("Email")
+        email_layout.addWidget(self.email_label)
         email_layout.addWidget(self.qa_rep_email)
         email_layout_widget = qtw.QWidget(self)
         email_layout_widget.setLayout(email_layout)
@@ -98,6 +100,20 @@ class PreShipping2(PageWidget):
         #main_layout.addWidget(test_info_widget)
 
         ################
+        #select_pid_state = self.workflow_state.get("SelectPID", {})
+        #is_surf = select_pid_state.get("confirm_surf", False)
+        #if not is_surf:
+        #    self.qa_rep_name.setReadOnly(True)
+        #    self.qa_rep_email.setReadOnly(True)
+        #else:
+        #    self.qa_rep_name.setEnabled(True)
+        #    self.qa_rep_name.setReadOnly(False)
+        #    self.qa_rep_name.setStyleSheet("")
+        #    self.qa_rep_email.setEnabled(True)
+        #    self.qa_rep_email.setReadOnly(False)
+        #    self.qa_rep_name.setStyleSheet("")
+        #    self.qa_rep_email.setStyleSheet("")
+        ################
         main_layout.addStretch()
 
         main_layout.addWidget(self.nav_bar)
@@ -108,9 +124,32 @@ class PreShipping2(PageWidget):
     def refresh(self):
         super().refresh()
 
-        if ( len(self.qa_rep_name.text()) > 0 
-                and len(self.qa_rep_email.text()) > 0 ):
-                #and len(self.test_info.toPlainText()) > 0 ):
-            self.nav_bar.continue_button.setEnabled(True)
+        # show this only if shipping to SURF
+        select_pid_state = self.workflow_state.get("SelectPID", {})
+        is_surf = select_pid_state.get("confirm_surf", False)
+        # --- dynamically show/hide things ---
+        if not is_surf:
+            self.QARepmess.hide()
+            self.QARepmessMultiple.hide()
+            self.name_label.hide()
+            self.qa_rep_name.hide()
+            self.email_label.hide()
+            self.qa_rep_email.hide()
         else:
-            self.nav_bar.continue_button.setEnabled(False)
+            self.QARepmess.show()
+            self.QARepmessMultiple.show()
+            self.name_label.show()
+            self.qa_rep_name.show()
+            self.email_label.show()
+            self.qa_rep_email.show()
+
+
+        if is_surf:
+            if ( len(self.qa_rep_name.text()) > 0 
+                    and len(self.qa_rep_email.text()) > 0 ):
+                #and len(self.test_info.toPlainText()) > 0 ):
+                self.nav_bar.continue_button.setEnabled(True)
+            else:
+                self.nav_bar.continue_button.setEnabled(False)
+        else:
+            self.nav_bar.continue_button.setEnabled(True)

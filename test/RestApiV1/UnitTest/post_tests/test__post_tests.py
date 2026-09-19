@@ -28,14 +28,14 @@ class Test__post_tests(unittest.TestCase):
     
     def setUp(self):
         self.start_time = time.time()
-        print(f"\nTest #{getattr(self, 'test_number', 'N/A')}: {self.__class__.__name__}.{self._testMethodName}")
-        print(f"Test started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        #print(f"\nTest #{getattr(self, 'test_number', 'N/A')}: {self.__class__.__name__}.{self._testMethodName}")
+        #print(f"Test started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
     def tearDown(self):
         end_time = time.time()
         duration = end_time - self.start_time
-        print(f"Test ended at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"Test duration: {duration:.2f} seconds")
+        #print(f"Test ended at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        #print(f"Test duration: {duration:.2f} seconds")
     
     @unittest.skip("adds too much data to be run daily")
     def test_post_test_type(self):
@@ -59,8 +59,8 @@ class Test__post_tests(unittest.TestCase):
         print(f"A new test type 'unittest2' has been created for part_type_id {part_type_id}")
 
     def test_post_test_good(self):
-        print("\n=== Testing to post a test with valid data ===")
-        print("POST /api/v1/components/{part_id}/tests")
+        #print("\n=== Testing to post a test with valid data ===")
+        #print("POST /api/v1/components/{part_id}/tests")
 
         part_id = "Z00100300001-00360"
 
@@ -74,14 +74,37 @@ class Test__post_tests(unittest.TestCase):
             "test_type": "unittest1"
         }
         
-        resp = post_test(part_id, data)
-        logger.info(f"Response from post: {resp}")
-        self.assertEqual(resp["status"], "OK")
-        print(f"A new test of type 'unittest1' has been successfully posted for part_id {part_id}")
+        self.test_info["endpoint"] = f"POST : /components/{part_id}/tests"
+        self.test_info["description"] = f"Post a test to Test Type Name =  unittest1 of PID = {part_id}"
+        self.test_info["check"] = "if the status is OK"
+
+        try:
+            resp = post_test(part_id, data)
+            logger.info(f"Response from post: {resp}")
+            self.assertEqual(resp["status"], "OK")
+            #print(f"A new test of type 'unittest1' has been successfully posted for part_id {part_id}")
+        except Exception as e:
+            # Try to get raw server response if available
+            api_resp = getattr(e, "response", None)
+
+            if api_resp is not None:
+                # If the API wrapper supports .json(), use it
+                try:
+                    self.test_info["error"] = json.dumps(api_resp.json(), indent=4)
+                except Exception:
+                    # Fallback: raw string body
+                    self.test_info["error"] = api_resp.text
+            else:
+                # Nothing from server, probably client-side issue
+                self.test_info["error"] = str(e)
+
+            # Preserve traceback for summary
+            logger.error(f"Exception: {repr(e)}")
+            raise
 
     def test_post_test_missing(self):
-        print("\n=== Testing to post a test with missing data ===")
-        print("POST /api/v1/components/{part_id}/tests")
+        #print("\n=== Testing to post a test with missing data ===")
+        #print("POST /api/v1/components/{part_id}/tests")
 
         part_id = "Z00100300001-00360"
 
@@ -95,11 +118,34 @@ class Test__post_tests(unittest.TestCase):
             "test_type": "unittest1"
         }
       
-        with self.assertRaises(ra.exceptions.BadSpecificationFormat): 
-            logger.warning("NOTE: The following subtest raises an exception. This is normal.")
-            resp = post_test(part_id, data)
-            logger.info(f"Response from post: {resp}")
-        print(f"Test passed: BadSpecificationFormat exception raised as expected for part_id {part_id}")
+        self.test_info["endpoint"] = f"POST : /components/{part_id}/tests"
+        self.test_info["description"] = f"Post a test to Test Type Name =  unittest1 of PID = {part_id} with a missing Key"
+        self.test_info["check"] = f"if BadSpecificationFormat exception raised as expected for part_id {part_id}"
+
+        try:
+            with self.assertRaises(ra.exceptions.BadSpecificationFormat): 
+                logger.warning("NOTE: The following subtest raises an exception. This is normal.")
+                resp = post_test(part_id, data)
+                logger.info(f"Response from post: {resp}")
+            #print(f"Test passed: BadSpecificationFormat exception raised as expected for part_id {part_id}")
+        except Exception as e:
+            # Try to get raw server response if available
+            api_resp = getattr(e, "response", None)
+
+            if api_resp is not None:
+                # If the API wrapper supports .json(), use it
+                try:
+                    self.test_info["error"] = json.dumps(api_resp.json(), indent=4)
+                except Exception:
+                    # Fallback: raw string body
+                    self.test_info["error"] = api_resp.text
+            else:
+                # Nothing from server, probably client-side issue
+                self.test_info["error"] = str(e)
+
+            # Preserve traceback for summary
+            logger.error(f"Exception: {repr(e)}")
+            raise
 
     def test_post_test_bad(self):
         print("\n=== Testing to post a test with an invalid selection ===")

@@ -1,0 +1,718 @@
+body {
+    background-color: #f9f9fb;
+    font-family: "Segoe UI", Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.dash-debug-menu {
+    display: none !important; /* hide debug overlay */
+}
+
+/* Tab styling */
+.tab {
+    border: none !important;
+    background-color: #ffffff !important;
+    /*box-shadow: 0 2px 8px rgba(0,0,0,0.1);*/
+    border-radius: 8px;
+    transition: all 0.3s ease-in-out;
+}
+
+.tab--selected {
+    background-color: #0078D4 !important;
+    color: white !important;
+}
+
+/* Buttons hover effect */
+/* Apply hover effect only to regular buttons, not accordion headers */
+/*button:hover:not(.accordion-button) {*/
+button:hover {
+    transform: scale(1.03);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    transition: 0.2s;
+}
+
+#open-preferences:hover {
+    transform: scale(1.07);
+    background: linear-gradient(145deg, #5aa0ff, #2f6fcc);
+    box-shadow: 4px 4px 8px rgba(0,0,0,0.4), -3px -3px 6px rgba(255,255,255,0.25);
+}
+#preferences-pane {
+    background-color: rgba(40, 40, 50, 0.75);
+    color: white;
+    border-right: 1px solid rgba(255,255,255,0.15);
+    backdrop-filter: blur(10px);
+}
+#directory-browser a:hover {
+    background-color: rgba(255,255,255,0.15);
+    border-radius: 6px;
+    padding: 4px;
+}
+/* ---------------------------------------- */
+/* Preferences button hover */
+.pref-btn:hover {
+  transform: scale(1.04);
+  background: rgba(110,110,130,0.45);
+}
+
+/* Offcanvas title */
+.pref-title {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #fff;
+  margin-bottom: 6px;
+}
+
+/* Directory links */
+.pref-browser a {
+  display: block;
+  color: #ddd;
+  text-decoration: none;
+  font-size: 14px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+}
+
+.pref-browser a:hover {
+  background-color: rgba(255,255,255,0.08);
+}
+
+/* Selected directory */
+.pref-browser a.selected {
+  background-color: rgba(0, 136, 255, 0.25);
+  color: #fff;
+  font-weight: 500;
+}
+/*
+#upload-json button {
+  display: inline-block;
+  vertical-align: middle;
+  width: 280px;
+  text-align: center;
+}
+*/
+/* style the number-of-bins input explicitly */
+#numbins-input {
+  width: 170px !important;
+  height: 35px !important;
+  font-size: 17px !important;
+  border-radius: 6px !important;
+  border: 1px solid #888 !important;
+  background-color: #f5f5f5 !important;
+  text-align: center !important;
+  color: #222 !important;
+  outline: none!important;
+  padding: 4px 8px !important;
+  font-family: "Arial", sans-serif !important;
+  font-weight: 400 !important;
+  box-shadow: none !important;
+  transition: border-color 0.2s ease, background-color 0.2s ease !important;
+}
+#numbins-input:focus {
+   border-color: #4CAF50;
+   background-color: #ffffff;
+   font-weight: 400 !important;
+   box-shadow: none;
+}
+/*----------------- Pre-Filters ------------------ */
+/*----------------- Pre-Filters ------------------*/
+.prefilter-panel {
+    background: linear-gradient(180deg, #F5F6F7, #ECECEC);
+    border-radius: 14px;
+    padding: 18px 22px;
+    margin-bottom: 18px;
+    box-shadow: none;
+    transition: all 0.3s ease-in-out;
+}
+
+.prefilter-panel:hover {
+    box-shadow: 0 8px 18px rgba(0,0,0,0.25);
+}
+
+.prefilter-title {
+    text-align: left;
+    font-size: 22px;
+    color: #333;
+    margin-bottom: 12px;
+    font-weight: 700;
+    text-shadow: 0 1px 1px rgba(255,255,255,0.7);
+}
+
+/* Grid layout for filters */
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+    gap: 14px 16px;
+    justify-content: start;
+}
+
+/* Individual filter cell */
+.filter-cell label {
+    font-weight: 600;
+    font-size: 14px;
+    color: #444;
+    margin-bottom: 4px;
+    display: block;
+    font-family: "Arial", sans-serif;
+}
+
+/* Common look for inputs and dropdowns */
+.filter-cell input,
+.filter-cell .Select-control {
+    font-family: "Arial", sans-serif !important;
+    font-size: 20px !important;
+    background-color: #D9DDDC !important;
+    color: gray !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 4px 8px !important;
+    box-shadow: none !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+/* Dropdown text fix (inside react-select) */
+.filter-cell .Select-value-label,
+.filter-cell .Select-placeholder {
+    color: gray !important;
+    font-family: "Arial", sans-serif !important;
+    font-size: 18px !important;
+}
+
+/* Hover states */
+.filter-cell input:hover,
+.filter-cell .Select-control:hover {
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Apply Filters button */
+.prefilter-button {
+    background: linear-gradient(180deg, #5E9FFF, #3B6BFF);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 24px;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: none;
+    transition: all 0.2s ease-in-out;
+}
+
+.prefilter-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 18px rgba(0, 0, 0, 0.4);
+    background: linear-gradient(180deg, #4D8DFF, #2F5FE8);
+}
+
+/* Uniform height for all pre-filter inputs and dropdowns */
+.filter-cell input,
+.filter-cell .Select-control {
+    height: 42px !important;           /* consistent height */
+    line-height: 42px !important;      /* vertically center text */
+    display: flex !important;          /* align content */
+    align-items: center !important;    /* vertically center text inside */
+    box-sizing: border-box !important; /* ensure padding doesn’t expand height */
+    padding: 0 10px !important;
+}
+
+
+/* Adjust the position of the dropdown arrow for pre-filters */
+.filter-cell .Select-arrow-zone {
+    position: absolute !important;
+    right: 10px !important;        /* move arrow to right edge */
+    top: 50% !important;           /* vertical centering */
+    transform: translateY(-50%) !important;
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    pointer-events: none !important; /* ensures clicks go through */
+}
+
+/* Make sure dropdown content doesn't overlap with arrow */
+.filter-cell .Select-control {
+    position: relative !important;
+    padding-right: 30px !important; /* create space for the arrow */
+}
+
+/* Optionally make the arrow slightly darker for visibility */
+.filter-cell .Select-arrow {
+    border-color: gray transparent transparent transparent !important;
+    opacity: 0.8 !important;
+}
+
+
+/* Optional: tighten spacing inside dropdown labels */
+.filter-cell .Select-value-label,
+.filter-cell .Select-placeholder {
+    line-height: 42px !important;
+}
+
+/* Style the placeholder text inside Dash dropdowns */
+.filter-cell .Select-placeholder {
+    font-size: 16px !important;              /* match normal text */
+    font-family: "Arial", sans-serif !important;
+    color: #7a7a7a !important;               /* softer gray than the main text */
+    opacity: 0.9 !important;                 /* optional: slightly faded */
+    line-height: 42px !important;            /* vertically centered with field height */
+}
+
+/* Optional: keep consistent font for selected values as well */
+.filter-cell .Select-value-label {
+    font-size: 16px !important;
+    font-family: "Arial", sans-serif !important;
+    color: gray !important;
+    line-height: 42px !important;
+}
+
+/* Make input placeholders match dropdown placeholder style */
+.filter-cell input::placeholder {
+    font-size: 16px !important;
+    font-family: "Arial", sans-serif !important;
+    color: #7a7a7a !important;      /* same as dropdown placeholder */
+    opacity: 0.9 !important;        /* slightly softer tone */
+}
+
+/* Allow wrapping of long selected values in the dropdown field */
+.filter-cell .Select-value-label {
+    white-space: normal !important;    /* allow line breaks */
+    word-break: break-word !important; /* wrap at word boundaries */
+    overflow: visible !important;      /* ensure full text shows */
+    text-overflow: clip !important;    /* disable the ellipsis */
+    line-height: 1.2em !important;     /* compact vertical spacing */
+    max-height: none !important;       /* no vertical clipping */
+    display: block !important;
+}
+
+/* Allow wrapping of long option labels inside the dropdown menu */
+.filter-cell .Select-option {
+    white-space: normal !important;
+    word-break: break-word !important;
+    line-height: 1.3em !important;
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+}
+
+/* Optional: ensure dropdown menu grows naturally to fit wrapped text */
+.filter-cell .Select-menu-outer {
+    max-height: 300px !important;  /* adjust as needed */
+    overflow-y: auto !important;
+}
+
+/* Hide the 'x' clear icon completely */
+.filter-cell .Select-clear-zone {
+    display: flex !important;
+    align-items: center;
+    justify-content: flex-end;   /* move to far right */
+    position: absolute;          /* fix position */
+    right: 8px;                  /* distance from right edge */
+    top: 50%;
+    transform: translateY(-50%); /* vertically center */
+    z-index: 2;                  /* ensure it's above text */
+}
+
+/* Vertically center selected text */
+.filter-cell .Select-control {
+    display: flex !important;
+    align-items: center !important;      /* center everything vertically */
+    height: 42px !important;             /* your uniform height */
+    line-height: 42px !important;
+    position: relative !important;
+    padding-top: 2px !important; 
+}
+
+/* Keep the value label centered relative to new offset */
+.filter-cell .Select-value-label,
+.filter-cell .Select-placeholder {
+    display: inline-flex !important;
+    align-items: center !important;
+    line-height: 1.2em !important;
+    padding-top: 1px !important;   /* fine-tune internal alignment */
+}
+
+/* --- Different colors for placeholder vs selected / typed text --- */
+
+/* Placeholder (hint) style */
+.filter-cell .Select-placeholder,
+.filter-cell input::placeholder {
+    color: #7a7a7a !important;       /* soft gray */
+    opacity: 0.85 !important;
+}
+
+/* When user selects a value (Dropdown) */
+.filter-cell .Select-value-label {
+    color: #0066cc !important;          /* dark black-gray */
+    opacity: 1 !important;
+    font-weight: 500 !important;     /* slightly bolder for clarity */
+}
+
+/* When user types text (Input box) */
+.filter-cell input {
+    color: #0066cc !important;          /* same dark tone */
+    opacity: 1 !important;
+    font-weight: 10 !important;
+}
+/*------------------ Shipment Tracker -----------------*/
+.summary-card {
+    background-color: #D9DDDC;
+    color: #004C99;
+    border-radius: 10px;
+    padding: 10px 18px;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    min-width: 200px;
+}
+/*
+.summary-card:hover {
+    background-color: #C9D3F3;
+    transition: all 0.2s ease-in-out;
+}
+*/
+
+/* Add hover effect for modal background */
+#qr-modal {
+  backdrop-filter: blur(2px);
+}
+
+/* Add hover animation for the modal buttons */
+#download-label-btn:hover {
+  background-color: #367DD9;
+  transition: 0.2s ease;
+}
+#close-qr-modal:hover {
+  background-color: #666;
+  transition: 0.2s ease;
+}
+
+/* Hover effect for all table rows */
+.dash-table-container .dash-spreadsheet-container tr:hover {
+    background-color: #E3F2FD !important;
+    cursor: pointer;
+}
+
+/* --- Uniform border for the active/selected cell --- */
+.dash-table-container .dash-spreadsheet-container td.focused,
+.dash-table-container .dash-spreadsheet-container td.cell--active,
+.dash-table-container .dash-spreadsheet-container td.cell--selected {
+    background-color: #D1E9FF !important;          /* same as selected row */
+    border-color: #4A90E2 !important;              /* override all four sides */
+    border-top-color: #4A90E2 !important;
+    border-left-color: #4A90E2 !important;
+    border-right-color: #4A90E2 !important;
+    border-bottom-color: #4A90E2 !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* --- Also remove any residual outline Dash adds --- */
+.dash-table-container .dash-spreadsheet-container td:focus,
+.dash-table-container .dash-spreadsheet-container td:focus-within {
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: #4A90E2 !important;
+}
+
+/* ---------- Tabs container ---------- */
+.custom-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin: 25px 0;
+    border: none !important;
+}
+
+/* ---------- Individual tabs ---------- */
+.custom-tab {
+    background-color: #f5f7fa !important;
+    border-radius: 12px !important;
+    padding: 12px 36px !important;
+    font-size: 18px !important;
+    font-weight: 500 !important;
+    color: #1b1f24 !important;
+    border: 1px solid rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.2s ease-in-out;
+    box-shadow: none !important; /* remove 3D shadow */
+}
+
+
+/* --- Force selected tab to be blue (final override) --- */
+.tab--selected,
+.custom-tab[aria-selected="true"],
+.custom-tab[aria-selected="true"] > div {
+    background-color: #0078D4 !important;   /* Microsoft-style vivid blue */
+    color: white !important;
+    font-weight: 600 !important;
+    border: 1px solid #0078D4 !important;
+    opacity: 1 !important;
+    filter: none !important;
+    box-shadow: none !important;
+}
+
+/* --- FINAL OVERRIDE: force selected tab solid blue --- */
+.tab--selected,
+.tab--selected > div,
+.custom-tab[aria-selected="true"],
+.custom-tab[aria-selected="true"] > div {
+    background-color: #0078D4 !important;   /* vivid blue */
+    background-image: none !important;      /* remove default gradient */
+    color: #ffffff !important;              /* white text */
+    border: 1px solid #0078D4 !important;
+    font-weight: 500 !important;            /* match unselected */
+    font-size: 18px !important;             /* match unselected */
+    font-family: "Segoe UI", Arial, sans-serif !important; /* identical family */
+    opacity: 1 !important;
+    filter: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;           /* ensure flat text */
+}
+
+/* keep a consistent left margin for the first tab, even when selected */
+.custom-tab:first-child,
+.custom-tab:first-child[aria-selected="true"],
+.custom-tab:first-child > div,
+.custom-tab:first-child[aria-selected="true"] > div {
+    margin-left: 10px !important;
+}
+
+/* for info cards in Shipment Tracker */
+.info-card {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    padding: 6px 10px;          /* ↓ smaller vertical padding */
+    font-size: 15px;            /* optional: slightly smaller font */
+    font-weight: 500;
+    color: #004C99;
+    text-align: left;
+    min-height: 30px;           /* ↓ shorter default height */
+    display: flex;
+    align-items: center;
+    transition: all 0.25s ease-in-out;
+    margin-bottom: 8px;         /* slightly reduced spacing between cards */
+}
+/*
+.info-card:hover {
+    background-color: #f2f6ff;
+    transform: scale(1.01);
+}
+*/
+
+.accordion-button {
+    font-size: 17px;
+    font-weight: 600;
+    background-color: rgba(74, 144, 226, 0.15);
+    color: #004C99;
+    border-radius: 8px;
+    transition: background-color 0.2s ease-in-out;
+}
+.accordion-button:not(.collapsed) {
+    background-color: rgba(74, 144, 226, 0.3);
+    color: #003366;
+}
+.accordion-body {
+    background-color: #F9FAFB;
+    border-radius: 0 0 8px 8px;
+    padding: 10px 15px;
+}
+
+/* 🔒 FINAL BOOTSTRAP OVERRIDE — completely disable accordion hover/transition */
+.accordion-button {
+  transition: none !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.accordion-button::after {
+  transition: none !important;
+  transform: none !important;
+}
+
+/* neutralize Bootstrap variable-based transitions */
+:root {
+  --bs-accordion-btn-transition: none !important;
+  --bs-accordion-btn-icon-transition: none !important;
+}
+
+/* kill focus & hover animations entirely */
+.accordion-button:hover,
+.accordion-button:focus,
+.accordion-button:active,
+.accordion-button:focus-visible {
+  transform: none !important;
+  box-shadow: none !important;
+  transition: none !important;
+  outline: none !important;
+}
+
+/* === DASH TABLE OVERRIDE — disable hover, focus, transition globally === */
+.dash-table-container .dash-spreadsheet-container tr:hover,
+.dash-table-container .dash-spreadsheet-container tr:hover td,
+.dash-table-container .dash-spreadsheet-container tr:hover th,
+.dash-table-container .dash-spreadsheet-container td:focus,
+.dash-table-container .dash-spreadsheet-container td:focus-within {
+    background: inherit !important;
+    transform: none !important;
+    box-shadow: none !important;
+    border-color: inherit !important;
+    transition: none !important;
+    outline: none !important;
+    cursor: default !important;
+}
+/* === Harmonize Box Info table appearance === */
+#box-info-table .dash-spreadsheet-container {
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Soft borders and neutral background for all cells */
+#box-info-table .dash-spreadsheet-container td,
+#box-info-table .dash-spreadsheet-container th {
+    border: 1px solid #E0E0E0 !important;   /* light gray borders */
+    background-color: #FAFAFA !important;   /* soft white background */
+}
+
+/* Optional: make the header light blue to match accordion */
+#box-info-table .dash-spreadsheet-container th {
+    background-color: rgba(74, 144, 226, 0.15) !important;
+    color: #004C99 !important;
+    font-weight: 600 !important;
+}
+
+/* Round the outer container */
+#box-info-table .dash-table-container {
+    border-radius: 10px !important;
+    overflow: hidden !important;
+    border: 1px solid #E0E0E0 !important;
+    box-shadow: none !important;
+}
+
+/* shipping info cards gree= #4CAF50 */
+.shiplabel-btn {
+    font-size: 15px;
+    padding: 8px 18px;
+    background-color: #b0b0b0;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    font-weight: 600;
+    width: auto;           /* compact width */
+    display: inline-block; /* shrink to content */
+}
+
+.shiplabel-btn:hover {
+    background-color: #b0b0b0;
+    transform: scale(1.03);
+}
+
+/* shipping info cards gree= #4CAF50 */
+.bol-btn {
+    font-size: 15px;
+    padding: 8px 18px;
+    background-color: #b0b0b0;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    font-weight: 600;
+    width: auto;           /* compact width */
+    display: inline-block; /* shrink to content */
+}
+
+.bol-btn:hover {
+    background-color: #b0b0b0;
+    transform: scale(1.03);
+}
+
+/* shipping info cards gree= #4CAF50 */
+.proforma-btn {
+    font-size: 15px;
+    padding: 8px 18px;
+    background-color: #b0b0b0;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    font-weight: 600;
+    width: auto;           /* compact width */
+    display: inline-block; /* shrink to content */
+}
+
+.proforma-btn:hover {
+    background-color: #b0b0b0;
+    transform: scale(1.03);
+}
+
+/* shipping info cards gree= #4CAF50 */
+.approval-btn {
+    font-size: 15px;
+    padding: 8px 18px;
+    background-color: #b0b0b0;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    font-weight: 600;
+    width: auto;           /* compact width */
+    display: inline-block; /* shrink to content */
+}
+
+.approval-btn:hover {
+    background-color: #b0b0b0;
+    transform: scale(1.03);
+}
+
+/* --- Remove blue header background from Shipment Tracker tables --- */
+#shipment-table .dash-header,
+#shipment-history-table .dash-header,
+#subcomp-info-table .dash-header {
+    background-color: white !important;
+    color: #333 !important;
+    border-bottom: 2px solid #ccc !important;
+}
+/* ──────────────────────────────────────────────
+   Table Header Styling (match Type Getter style)
+   ────────────────────────────────────────────── */
+#shipment-table .dash-header,
+#shipment-history-table .dash-header,
+#subcomp-info-table .dash-header {
+    background-color: #f5f5f5 !important;  /* light gray header background */
+    color: #333 !important;                /* darker text for contrast */
+    font-weight: bold;
+    font-size: 16px;
+    border-bottom: 2px solid #ccc !important;
+}
+
+/* --- Make clicked/active/selected cells keep the blue background --- */
+.dash-table-container td.dash-cell.focused,
+.dash-table-container td.cell--active,
+.dash-table-container td.cell--selected,
+.dash-table-container td.dash-cell.focused * ,
+.dash-table-container td.cell--active * ,
+.dash-table-container td.cell--selected * {
+  background-color: #D1E9FF !important;
+}
+
+/* Remove the faint white outline some builds add */
+.dash-table-container td.dash-cell.focused::after,
+.dash-table-container td.cell--active::after,
+.dash-table-container td.cell--selected::after {
+  content: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Also neutralize any default focus ring */
+.dash-table-container td.dash-cell:focus,
+.dash-table-container td.dash-cell *:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+

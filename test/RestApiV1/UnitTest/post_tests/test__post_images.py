@@ -37,14 +37,14 @@ class Test__post_images(unittest.TestCase):
     
     def setUp(self):
         self.start_time = time.time()
-        print(f"\nTest #{getattr(self, 'test_number', 'N/A')}: {self.__class__.__name__}.{self._testMethodName}")
-        print(f"Test started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        #print(f"\nTest #{getattr(self, 'test_number', 'N/A')}: {self.__class__.__name__}.{self._testMethodName}")
+        #print(f"Test started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
     def tearDown(self):
         end_time = time.time()
         duration = end_time - self.start_time
-        print(f"Test ended at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"Test duration: {duration:.2f} seconds")    
+        #print(f"Test ended at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        #print(f"Test duration: {duration:.2f} seconds")    
     
     @classmethod
     def setUpClass(cls):
@@ -82,13 +82,36 @@ class Test__post_images(unittest.TestCase):
             "comments": f"uploading {upload_file_short}",
         }            
 
-        logger.info(data)
+        self.test_info["endpoint"] = f"POST : /components/{part_id}/images"
+        self.test_info["description"] = f"Upload an image ({os.path.basename(upload_file)}) to PID = {part_id}"
+        self.test_info["check"] = "if the status is OK"
 
-        resp = post_hwitem_image(part_id, data, upload_file)
-    
-        logger.info(f"response: {resp}")
+        try:
+            logger.info(data)
 
-        #TODO: Maybe go get it again and compare? See if comments appear?
+            resp = post_hwitem_image(part_id, data, upload_file)
+            self.assertEqual(resp["status"], "OK")
+            logger.info(f"response: {resp}")
+
+            #TODO: Maybe go get it again and compare? See if comments appear?
+        except Exception as e:
+            # Try to get raw server response if available
+            api_resp = getattr(e, "response", None)
+
+            if api_resp is not None:
+                # If the API wrapper supports .json(), use it
+                try:
+                    self.test_info["error"] = json.dumps(api_resp.json(), indent=4)
+                except Exception:
+                    # Fallback: raw string body
+                    self.test_info["error"] = api_resp.text
+            else:
+                # Nothing from server, probably client-side issue
+                self.test_info["error"] = str(e)
+
+            # Preserve traceback for summary
+            logger.error(f"Exception: {repr(e)}")
+            raise
 
         #}}} 
 
@@ -168,7 +191,7 @@ def generate_image(template_path, destination_path, seed=None):
                 anchor="md", align="center", font=font1,
                 fill=0xff77ffff)
 
-        timestr = datetime.datetime.now().astimezone().strftime("%Y-%b-%d %I:%M:%S%p (%z)")
+        timestr = datetime.now().astimezone().strftime("%Y-%b-%d %I:%M:%S%p (%z)")
         shadow_text( (w-fontsize//2, h-fontsize//4), 1,
                     f"generated {timestr}",
                     anchor="rd", align="right", font=font2,

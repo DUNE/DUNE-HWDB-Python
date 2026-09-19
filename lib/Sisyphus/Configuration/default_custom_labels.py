@@ -9,6 +9,29 @@
 
 contents = \
 {
+    # Options applied to the QR/bar-code images downloaded from the HWDB.
+    #
+    # The QR crop is disabled by default so that the first character of the
+    # PID printed by the HWDB is not cut off.
+    #
+    # To remove the PID already printed at the bottom of the HWDB QR image,
+    # change "remove embedded text" below to True. Your layout can then print
+    # its own PID with an element whose "element type" is "part id".
+    "code image options": {
+        "qr": {
+            "crop box": None,
+            "remove embedded text": False,
+            "caption detection threshold": 245,
+            "minimum caption gap": 3,
+            "replacement bottom padding": "match top",
+        },
+        # Keep the historical barcode behavior. Set "crop box" to None to
+        # retain the complete barcode image downloaded from the HWDB.
+        "bar": {
+            "crop box": (30, 11, 658, 189),
+            "remove embedded text": False,
+        },
+    },
     "page sizes": {
         # Use this node to define other page sizes if you need more sizes
         # than A4 and Letter, which are already defined in default_labels.py

@@ -10,6 +10,7 @@ This is primarily needed to guess how wide to make columns in Excel.
 """
 
 import Sisyphus
+from Sisyphus import get_path
 
 import os, sys
 from PIL import ImageFont
@@ -98,7 +99,11 @@ known_fonts = \
 #}}}
 }
 
-def list_fonts(fonts=known_fonts, name="", subdir=Sisyphus.project_root):
+def list_fonts(fonts=known_fonts, name="", subdir=None):
+    # Base directory: runtime root (works frozen + non-frozen)
+    if subdir is None:
+        subdir = get_path("")  # runtime root; resources/... will be appended below
+
     if "_subdir" in fonts.keys():
         subdir = os.path.join(subdir, fonts["_subdir"])
     if "_file" in fonts.keys():
@@ -107,6 +112,15 @@ def list_fonts(fonts=known_fonts, name="", subdir=Sisyphus.project_root):
         if key.startswith("_"):
             continue
         yield from list_fonts(fonts[key], " ".join([name, key]).strip(), subdir)
+#def list_fonts(fonts=known_fonts, name="", subdir=Sisyphus.project_root):
+#    if "_subdir" in fonts.keys():
+#        subdir = os.path.join(subdir, fonts["_subdir"])
+#    if "_file" in fonts.keys():
+#        yield name, os.path.realpath(os.path.join(subdir, fonts["_file"]))
+#    for key, value in fonts.items():
+#        if key.startswith("_"):
+#            continue
+#        yield from list_fonts(fonts[key], " ".join([name, key]).strip(), subdir)
 
 
 def get_font(name, size):

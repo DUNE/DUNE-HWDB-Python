@@ -289,7 +289,57 @@ class JobManager:
                 
                 Style.info.print(f"\x1b[F    \u2022 Item Image Jobs: {job_index} / "
                             f"{len(self.item_image_jobs)}\x1b[K")
+        # .....................................................................
+        def execute_test_image_jobs():
+            if self.test_image_jobs:
+                Style.info.print(f"    \u2022 Test Image Jobs: 0 / {len(self.test_image_jobs)}\x1b[K")
+            else:
+                return
 
+            logger.info(f"{self.test_image_jobs}")
+
+            for job_index in sorted(self.test_image_jobs.keys()):
+                job = self.test_image_jobs[job_index]
+
+                if submit:
+                    # Resolve part_id if only Serial Number was provided
+                    if job['Data']['External ID'] is None:
+                        resp = ut.fetch_hwitems(
+                            job['Part Type ID'],
+                            job['Part Type Name'],
+                            job['Data']['External ID'],
+                            job['Data']['Serial Number']
+                        )
+                        job['Data']['External ID'] = list(resp)[0]
+
+                    for image_job in job['Data']['Images']:
+                        comments = image_job.get('Comments') or ""
+                        filename = image_job.get('Image File')
+
+                        if not filename:
+                            raise ValueError(
+                                f"Missing test image filename for job #{job_index}: {image_job}"
+                            )
+
+                        hist_order = image_job.get('History Order', 0)
+
+                        data = {"comments": comments}
+
+                        resp = ra.post_test_image(
+                            part_id=job['Data']['External ID'],
+                            test_type_name=job['Test Name'],
+                            data=data,
+                            filename=filename,
+                            hist_order=hist_order,
+                        )
+
+                else:
+                    time.sleep(0.01)
+
+                Style.info.print(
+                    f"\x1b[F    \u2022 Test Image Jobs: {job_index} / "
+                    f"{len(self.test_image_jobs)}\x1b[K"
+                )
         # .....................................................................
         
         if submit:
@@ -305,6 +355,7 @@ class JobManager:
         execute_item_jobs()
         execute_test_jobs()
         execute_item_image_jobs()
+        execute_test_image_jobs()
 
     def error_callback(self, *args, **kwargs):
         #print("error callback:", args, kwargs)
@@ -363,7 +414,17 @@ class JobManager:
 
 
     def add_test_image(self, job_request):
-        print('add test image')
+        def async_add_test_image(job_request):
+            with _lock:
+                self.test_image_job_count += 1
+                test_image_job_number = self.test_image_job_count
+                self.display_job_queue_status()
+
+            with _lock:
+                self.test_image_jobs[test_image_job_number] = job_request
+                self.display_job_queue_status()
+
+        self._apply(async_add_test_image, (job_request,), {}, self.regular_callback, self.error_callback)
 
     def display_job_queue_status(self):
         #{{{

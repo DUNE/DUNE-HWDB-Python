@@ -10,6 +10,7 @@ from Sisyphus.RestApiV1 import Utilities as ut
 
 import json
 import PIL.Image
+import PIL.ImageOps
 import io
 import sys
 import re
@@ -131,23 +132,21 @@ class PDFLabels:
             return pool.apply_async(async_fn, ((), {"part_id": part_id}))
 
         def get_qr_async(part_id):
-            crop_bbox = (40, 40, 410, 410)
             def async_fn(args, kwargs):
                 resp = ra.get_hwitem_qrcode(*args, **kwargs)
                 img_bytes = resp.content
                 img_obj = PIL.Image.open(io.BytesIO(img_bytes))
-                cropped_obj = img_obj.crop(crop_bbox)
-                return cropped_obj
+                img_obj.load()
+                return self._prepare_code_image(img_obj, "qr")
             return pool.apply_async(async_fn, ((), {"part_id": part_id}))
 
         def get_bar_async(part_id):
-            crop_bbox = (30, 11, 658, 189)
             def async_fn(args, kwargs):
                 resp = ra.get_hwitem_barcode(*args, **kwargs)
                 img_bytes = resp.content
                 img_obj = PIL.Image.open(io.BytesIO(img_bytes))
-                cropped_obj = img_obj.crop(crop_bbox)
-                return cropped_obj
+                img_obj.load()
+                return self._prepare_code_image(img_obj, "bar")
             return pool.apply_async(async_fn, ((), {"part_id": part_id}))
 
         parts_data_futures = {}
@@ -170,6 +169,125 @@ class PDFLabels:
             self.parts_data[part_id]['qr'] = qr_data_futures[part_id].get()
             self.parts_data[part_id]['bar'] = bar_data_futures[part_id].get()
         #}}}
+
+
+    def _prepare_code_image(self, img_obj, code_type):
+        """Apply configurable cleanup/cropping to a downloaded QR/bar image."""
+        defaults = {
+            # Keep the complete HWDB QR image by default.  The previous hard-coded
+            # (40, 40, 410, 410) crop clipped the first character of the caption.
+            "qr": {
+                "crop box": None,
+                "remove embedded text": False,
+            },
+            # Preserve the historical barcode crop unless configuration overrides it.
+            "bar": {
+                "crop box": (30, 11, 658, 189),
+                "remove embedded text": False,
+            },
+        }
+
+        options = dict(defaults.get(code_type, {}))
+        options.update(
+            self.config.get("code image options", {}).get(code_type, {}) or {}
+        )
+
+        result = img_obj.copy()
+
+        if options.get("remove embedded text", False):
+            result = self._remove_embedded_bottom_text(result, options)
+
+        crop_box = options.get("crop box")
+        if crop_box is not None:
+            if len(crop_box) != 4:
+                raise ValueError(
+                    f"{code_type} 'crop box' must contain four values: "
+                    "(left, top, right, bottom)"
+                )
+
+            width, height = result.size
+            left, top, right, bottom = crop_box
+            left = 0 if left is None else int(left)
+            top = 0 if top is None else int(top)
+            right = width if right is None else min(int(right), width)
+            bottom = height if bottom is None else min(int(bottom), height)
+
+            if not (0 <= left < right <= width and 0 <= top < bottom <= height):
+                raise ValueError(
+                    f"Invalid {code_type} crop box {crop_box} for image size "
+                    f"{result.size}"
+                )
+            result = result.crop((left, top, right, bottom))
+
+        return result
+
+    @staticmethod
+    def _remove_embedded_bottom_text(img_obj, options):
+        """Remove a caption below a QR/bar code while retaining a quiet zone.
+
+        The HWDB QR image has a blank horizontal gap between the square QR symbol
+        and its printed PID.  We detect that gap, discard everything below it, and
+        replace the removed area with white space.  Keeping white space below the
+        symbol preserves the QR quiet zone and keeps the original image dimensions
+        stable for existing layouts.
+        """
+        gray = img_obj.convert("L")
+        width, height = gray.size
+        threshold = int(options.get("caption detection threshold", 245))
+        minimum_gap = max(1, int(options.get("minimum caption gap", 3)))
+
+        pixels = gray.load()
+        dark_rows = []
+        for y in range(height):
+            dark_rows.append(any(pixels[x, y] < threshold for x in range(width)))
+
+        try:
+            first_dark_row = dark_rows.index(True)
+        except ValueError:
+            return img_obj.copy()
+
+        # Find a blank run in the lower half that has dark caption pixels below it.
+        gap_start = None
+        y = max(first_dark_row + 1, height // 2)
+        while y < height:
+            if dark_rows[y]:
+                y += 1
+                continue
+
+            run_start = y
+            while y < height and not dark_rows[y]:
+                y += 1
+            run_length = y - run_start
+
+            if run_length >= minimum_gap and any(dark_rows[y:]):
+                gap_start = run_start
+                break
+
+        if gap_start is None:
+            logger.warning(
+                "Requested removal of embedded text, but no caption gap was "
+                "detected; leaving the downloaded image unchanged."
+            )
+            return img_obj.copy()
+
+        padding_setting = options.get("replacement bottom padding", "match top")
+        if padding_setting == "match top":
+            bottom_padding = first_dark_row
+        else:
+            bottom_padding = max(0, int(padding_setting))
+
+        code_only = img_obj.crop((0, 0, width, gap_start))
+        cleaned = PIL.ImageOps.expand(
+            code_only, border=(0, 0, 0, bottom_padding), fill="white"
+        )
+
+        # Preserve the original height unless a custom padding explicitly makes
+        # the image taller.  This prevents existing layout sizing from changing.
+        if cleaned.height < height:
+            cleaned = PIL.ImageOps.expand(
+                cleaned, border=(0, 0, 0, height - cleaned.height), fill="white"
+            )
+        return cleaned
 
     def generate_label_sheets(self, filename):
         #{{{
@@ -637,13 +755,28 @@ class PDFLabels:
         #}}}
 
 
-if __name__ == '__main__':
+#if __name__ == '__main__':
+#
+#    parts_list = sys.argv[1:]
+#
+#    pdf_labels = PDFLabels(parts_list)
+#    pdf_labels.generate_label_sheets("labels.pdf")
 
-    parts_list = sys.argv[1:]
+if __name__ == "__main__":
+    # For frozen apps (PyInstaller) to prevent child/spawn helper
+    # processes from running the real CLI.
+    import multiprocessing as _mp
+    _mp.freeze_support()
+
+    # Filter argv: only keep real component IDs, ignore any "-B" / "-S" / etc.
+    parts_list = [a for a in sys.argv[1:] if not a.startswith("-")]
+
+    if not parts_list:
+        print("Usage: hwdb-labels <COMPONENT_ID> [<COMPONENT_ID> ...]")
+        sys.exit(2)
 
     pdf_labels = PDFLabels(parts_list)
     pdf_labels.generate_label_sheets("labels.pdf")
-
 
 
 

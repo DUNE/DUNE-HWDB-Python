@@ -40,8 +40,12 @@ class Shipping5(PageWidget):
 
         ########################################
 
-        main_layout.addWidget(
-            qtw.QLabel("Please update the Location record for this shipment."))
+        
+        #locmess = qtw.QLabel("Please update the Location record for this shipment.")
+        locmess = qtw.QLabel("The Location has been preselected to be \"In-Transit\".")
+
+        
+        main_layout.addWidget(locmess)
         main_layout.addSpacing(15)
 
         main_layout.addWidget(
@@ -75,9 +79,20 @@ class Shipping5(PageWidget):
         #{{{
         super().refresh()
 
-        if not self.shipping_location.institution_id:
-            self.nav_bar.continue_button.setEnabled(False)
-            return
+        # --- dynamically update destination based on SelectPID state ---
+        #select_pid_state = self.workflow_state.get("SelectPID", {})
+        #is_surf = select_pid_state.get("confirm_surf", False)
+
+
+        #if is_surf:
+        self.preselect_institution()
+        #print(f"self.part_id = {self.part_id} : self.page_state['location']['institution_id'] = {self.page_state['location']['institution_id']}")
+
+
+        # The location is now preset (In-Transit)
+        #if not self.shipping_location.institution_id:
+        #    self.nav_bar.continue_button.setEnabled(False)
+        #    return
 
         if not self.affirm_shipment.isChecked():
             self.nav_bar.continue_button.setEnabled(False)
@@ -100,12 +115,45 @@ class Shipping5(PageWidget):
         ok = self.update_location()
         return ok
 
+    def preselect_institution(self):
+        #target_country_code = "US"
+        #target_institution_id = 186
 
+        target_country_code = "--" # In-Transit
+        target_institution_id = 0  # In-Transit
 
+        loc = self.shipping_location
 
+        # Block signals to prevent recursive refresh
+        loc.country_widget.blockSignals(True)
+        loc.inst_widget.blockSignals(True)
 
+        # Prevent refresh loop
+        old_refresh = loc.page.refresh
+        loc.page.refresh = lambda *a, **k: None
 
+        # Now set values safely
+        loc.country_code = target_country_code
+        loc.institution_id = target_institution_id
+        loc.institution_name = loc.institutions[target_institution_id]["name"]
 
+        c_index = loc.country_widget.findData(target_country_code)
+        loc.country_widget.setCurrentIndex(c_index)
+        loc.on_selectCountry()
+        i_index = loc.inst_widget.findData(target_institution_id)
+        loc.inst_widget.setCurrentIndex(i_index)
 
+        loc.stored_value = {
+            "institution_id": target_institution_id,
+            "institution_name": loc.institution_name,
+            "country_code": target_country_code,
+        }
+        self.page_state["location"] = loc.stored_value
 
+        # Restore everything
+        loc.page.refresh = old_refresh
+        loc.country_widget.blockSignals(False)
+        loc.inst_widget.blockSignals(False)
 
+        # Optional: manual refresh if needed
+        #self.refresh()
